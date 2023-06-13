@@ -1,20 +1,33 @@
 #!/usr/bin/env bash
 
+# Default settings
+def_ip_type="external"
+def_ip_type_enabled=false
+def_ttl="auto"
+def_ttl_enabled=false
+def_proxied=true
+def_proxied_enabled=false
+def_ipv4=true
+def_ipv4_enabled=false
+def_ipv6=false
+def_ipv6_enabled=false
+
 # Colors
-end_color=$(tput sgr0)
-done_fb=$(tput setab 2 && tput setaf 0 && tput bold)
-done_c=$(tput setaf 2 && tput bold)
-err_c=$(tput setaf 1)
-load_c=$(tput setaf 3 && tput bold)
-blue_b_c=$(tput setaf 4 && tput bold)
-green_c=$(tput setaf 2)
+[[ ${TERM}=="" ]] && TPUTTERM='-T xterm-256color' || TPUTTERM=''
+end_color=$(tput ${TPUTTERM} sgr0)
+done_fb=$(tput ${TPUTTERM} setab 2 && tput ${TPUTTERM} setaf 0 && tput ${TPUTTERM} bold)
+done_c=$(tput ${TPUTTERM} setaf 2 && tput ${TPUTTERM} bold)
+err_c=$(tput ${TPUTTERM} setaf 1)
+load_c=$(tput ${TPUTTERM} setaf 3 && tput ${TPUTTERM} bold)
+warn_c=$(tput ${TPUTTERM} setaf 3)
+blue_b_c=$(tput ${TPUTTERM} setaf 4 && tput ${TPUTTERM} bold)
+green_c=$(tput ${TPUTTERM} setaf 2)
 
 # Server to check external IP
 get_ip_from="https://icanhazip.com"
 
-
 ##################################################################
-# FUNCTIONS
+# GENERIC FUNCTIONS
 done_fb_msg(){
   echo "${done_fb}$1${end_color}" 
 }
@@ -24,24 +37,53 @@ done_msg(){
 error_msg(){
   echo "${err_c}$1${end_color}" 
 }
+warn_msg(){
+  echo "${warn_c}$1${end_color}" 
+}
 blue_bold_msg(){
   echo "${blue_b_c}$1${end_color}" 
 }
 green_msg(){
   echo "${green_c}$1${end_color}" 
 }
+get_domain_settings(){
+  domain_name=${domains__name[$i]}
+  if [ $def_ip_type_enabled == false ]; then
+    domain_ip_type=${domains__ip_type[$i]}
+  else
+    domain_ip_type=${def_ip_type}
+  fi
+  if [ $def_ipv4_enabled == false ]; then
+    domain_ipv4=${domains__ipv4[$i]}
+  else
+    domain_ipv4=${def_ipv4}
+  fi
+  if [ $def_ipv6_enabled == false ]; then
+    domain_ipv6=${domains__ipv6[$i]}
+  else
+    domain_ipv6=${def_ipv6}
+  fi
+  if [ $def_ttl_enabled == false ]; then
+    domain_ttl=${domains__ttl[$i]}
+  else
+    domain_ttl=${def_ttl}
+  fi
+  echo "$domain_name $domain_ip_type $domain_ipv4 $domain_ipv6 $domain_ttl"
+}
+##################################################################
+# CLOUDFLARE API FUNCTIONS
 api_validation() {
   if [[ $1 == *"\"success\":false"* ]]; then
-    echo $1
     error_msg "Error! Can't get ${end_color}${load_c}$2${end_color}${done_c} $3 record information from Cloudflare API"
+    return 0
   else
     done_msg "Loaded ${end_color}${load_c}$2${end_color}${done_c} $3 record information from Cloudflare API"
   fi
 }
 push_validation() {
   if [[ $1 == *"\"success\":false"* ]]; then
-    echo $1
     error_msg "Error! Update $2 Failed"
+    return 0
   else
     done_msg "Pushed new $2"
   fi
@@ -49,6 +91,7 @@ push_validation() {
 external_validation(){
   if [ -z "$1" ]; then
     error_msg "Error! Can't get external $2 from $get_ip_from"
+    exit 0
   else
     blue_bold_msg "Current External $2 is: $1"
   fi
@@ -56,23 +99,299 @@ external_validation(){
 internal_validation(){
   if [ -z "$1" ]; then
     error_msg "Error! Can't read $2 from $3"
+    exit 0
   else
     done_msg "Internal $3 $2 is: $1"
   fi
 }
 read_record(){
-  echo $(curl -s -X GET "https://api.cloudflare.com/client/v4/zones/$1/dns_records?type=$2&name=$3" \
-      -H "Authorization: Bearer $cloudflare_zone_api_token" \
+  echo $(curl -s -X GET "https://api.cloudflare.com/client/v4/zones/$1/dns_records?type=$3&name=$4" \
+      -H "Authorization: Bearer $2" \
       -H "Content-Type: application/json")
 }
 write_record(){
   echo $(curl -s -X PUT "https://api.cloudflare.com/client/v4/zones/$1/dns_records/$2" \
-         -H "Authorization: Bearer $cloudflare_zone_api_token" \
+         -H "Authorization: Bearer $settings_cloudflare__zone_api_token" \
          -H "Content-Type: application/json" \
          --data "{\"type\":\"$3\",\"name\":\"$4\",\"content\":\"$5\",\"ttl\":$6,\"proxied\":$7}")
 }
 
+##################################################################
+# NETWORK FUNCTIONS
+get_ip_external(){
+  if [ "$1" == true ]; then
+    ip4=$(curl -4 -s -X GET $get_ip_from --max-time 20 )
+  else
+    ip4=""
+  fi
+  if [ "$2" == true ]; then
+    ip6=$(curl -6 -s -X GET $get_ip_from --max-time 20 )
+  else
+    ip6=""
+  fi
+    echo "$ip4" "$ip6"
+}
 
+get_ip_internal(){
+  ### Check if "IP" command is present, get the ip from interface
+  if which ip >/dev/null; then
+    ### "ip route get" (linux)
+    interface=$(ip route get 1.1.1.1 | awk '/dev/ { print $5 }')
+    if [ $1 == true]; then
+      ip4=$(ip -o -4 addr show ${interface} scope global | awk '{print $4;}' | cut -d/ -f 1)
+    else
+      ip4=""
+    fi
+    if [ $2 == true]; then
+      ip6=$(ip -o -6 addr show ${interface} scope global | awk '{print $4;}' | cut -d/ -f 1)
+    else
+      ip6=""
+    fi
+  ### if no "IP" command use "ifconfig", get the ip from interface
+  else
+    ### "route get" (macOS, Freebsd)
+    interface=$(route get 1.1.1.1 | awk '/interface:/ { print $2 }')
+    if [ $1 == true]; then
+      ip4=$(ifconfig ${interface} | grep 'inet ' | awk '{print $2}')
+    else
+      ip4=""
+    fi
+    if [ $2 == true]; then
+      ip6=$(ifconfig ${interface} | grep 'inet6 ' | awk -F '[ \t]+|/' '{print $3}' | grep -v ^::1 | grep -v ^fe80)
+    else
+      ip6=""
+    fi
+  fi
+  echo "$ip4" "$ip6" "$interface"
+}
+
+get_ip(){
+  # Get External ip from '$get_ip_from'
+  if [ "$1" == "external" ]; then
+    read ip4 ip6 < <(get_ip_external $2 $3)
+    external_validation "$ip4" "IPv4"
+    external_validation "$ip6" "IPv6"
+    printf "\n"
+  fi
+
+  ### Get Internal IP from primary interface
+  if [ "$1" == "internal" ]; then
+    read ip4 ip6 interface < <(get_ip_internal $2 $3)
+    internal_validation "$ip4" "IPv4" "$interface"
+    internal_validation "$ip6" "IPv6" "$interface"
+    printf "\n"
+  fi
+  echo "$ip4" "$ip6"
+}
+
+get_dns_record_ip(){
+  local record=$1
+  local proxied=$2
+  local zone_id=$3
+  local zone_token=$4
+  local dns_record_ip4=""
+  local dns_record_ip6=""
+
+  ### Get IP address of DNS record from 1.1.1.1 DNS server when proxied is "false"
+  if [ "${proxied}" == "false" ]; then
+    ### Check if "nslookup" command is present
+    if which nslookup >/dev/null; then
+      if [ $domain_ipv4 == true ]; then
+        dns_record_ip4=$(nslookup -query=A ${record} 1.1.1.1 | awk '/Address/ { print $2 }' | sed -n '2p')
+      fi
+      if [ $domain_ipv6 == true ]; then
+        dns_record_ip6=$(nslookup -query=AAAA ${record} 1.1.1.1 | awk '/Address/ { print $2 }' | sed -n '2p')
+      fi
+    else
+      ### if no "nslookup" command use "host" command
+      if [ $domain_ipv4 == true ]; then
+        dns_record_ip4=$(host -t A ${record} 1.1.1.1 | awk '/has address/ { print $4 }' | sed -n '1p')
+      fi
+      if [ $domain_ipv6 == true ]; then
+        dns_record_ip6=$(host -t AAAA ${record} 1.1.1.1 | awk '/has address/ { print $4 }' | sed -n '1p')
+      fi
+    fi
+
+    if [ $domain_ipv4 == true ]; then
+      if [ -z "$dns_record_ip4" ]; then
+        echo "Error! Can't resolve the ${record} IPv4 via 1.1.1.1 DNS server"
+        return 0
+      fi
+    fi
+    if [ $domain_ipv6 == true ]; then
+      if [ -z "$dns_record_ip6" ]; then
+        echo "Error! Can't resolve the ${record} IPv6 via 1.1.1.1 DNS server"
+        return 0
+      fi
+    fi
+    is_proxied4="${proxied}"
+    is_proxied6="${proxied}"
+  fi
+
+  ### Get the dns record id and current proxy status from cloudflare's api when proxied is "true"
+  if [ "${proxied}" == "true" ]; then
+    if [ $domain_ipv4 == true ]; then
+      dns_record_info4=$(read_record "$zoneid" "$zone_token" "A" "$record")
+      api_validation "$dns_record_info4" "$record" "IPv4"
+      [ $? -eq 0 ] && return 0
+      is_proxied4=$(echo ${dns_record_info4} | grep -o '"proxied":[^,]*' | grep -o '[^:]*$')
+      dns_record_ip4=$(echo ${dns_record_info4} | grep -o '"content":"[^"]*' | cut -d'"' -f 4)
+    fi
+    if [ $domain_ipv6 == true ]; then
+      dns_record_info6=$(read_record "$zoneid" "$zone_token" "AAAA" "$record")
+      api_validation "$dns_record_info6" "$record" "IPv6"
+      [ $? -eq 0 ] && return 0
+      is_proxied6=$(echo ${dns_record_info6} | grep -o '"proxied":[^,]*' | grep -o '[^:]*$')
+      dns_record_ip6=$(echo ${dns_record_info6} | grep -o '"content":"[^"]*' | cut -d'"' -f 4)
+    fi
+  fi
+
+  echo "$dns_record_ip4" "$dns_record_ip6" "$is_proxied4" "$is_proxied6"
+}
+
+##################################################################
+# Input settings validation
+settings_validation(){
+  # Check if "cloudflare_zone_id" is set
+  if [ -z "$settings_cloudflare__zone_id" ]; then
+    error_msg "Error! Cloudflare Zone ID not set"
+    exit 0
+  fi
+  # Check if "cloudflare_zone_api_token" is set
+  if [ -z "$settings_cloudflare__zone_api_token" ]; then
+    error_msg "Error! Cloudflare API Token not set"
+    exit 0
+  fi
+}
+
+settings_domains_validation(){
+  # Domains quantity
+  n_doms=${#domains__name[@]}
+
+  for (( i=0; i<${n_doms}; i++ )); 
+  do
+    # Check if "name" parameter is set
+    if [ -z "${domains__name[$i]}" ]; then
+      error_msg "Error! Domain name not set"
+      exit 0
+    fi
+
+    # Check validity of "ttl" parameter
+    if [ "${domains__ttl[$i]}" -lt 120 ] 2>/dev/null \
+    || [ "${domains__ttl[$i]}" -gt 7200 ] 2>/dev/null \
+    || [ "${domains__ttl[$i]}" != "auto" ]; then
+      warn_msg "Error! ttl out of range (120-7200) or not set to 'auto'. Force set to '${def_ttl}'"
+      def_ttl_enabled=true
+    fi
+
+    # Check validity of "proxied" parameter
+    if [ "${domains__proxied[$i]}" != "false" ] \
+    && [ "${domains__proxied[$i]}" != "true" ]; then
+      warn_msg "Error! Incorrect "proxied" parameter, choose 'true' or 'false'. Force set to '$def_proxied''"
+      def_proxied_enabled=true
+    fi
+
+    # Check validity of "what_ip" parameter
+    if [ "${domains__ip_type[$i]}" != "external" ] \
+    && [ "${domains__ip_type[$i]}" != "internal" ]; then
+      warn_msg "Error! Incorrect 'ip_type' parameter choose 'external' or 'internal'. Force set to '$def_ip_type''"
+      def_ip_type_enabled=true
+    fi
+
+    # Check if set to internal ip and proxy
+    if [ "${domains__ip_type[$i]}" == "internal" ] \
+    && [ "${domains__proxied[$i]}" == "true" ]; then
+      error_msg "Error! Internal IP cannot be Proxied"
+      exit 0
+    fi
+  done
+}
+
+settings_file_validation(){
+  if [[ -z "$1" ]]; then # If not set explicit config file and no exist default config
+    if [ ! -f ${parent_path}/update-cloudflare-records.yaml ]; then
+      error_msg "Error! Missing configuration file update-cloudflare-records.yaml or invalid syntax!"
+      exit 0
+    else
+      config_file=${parent_path}/update-cloudflare-records.yaml
+    fi
+  else
+    if [ ! -f ${parent_path}/"$1" ]; then
+      error_msg "Error! Missing configuration file '$1' or invalid syntax!"
+      exit 0
+    else
+      config_file=${parent_path}/"$1"
+    fi
+  fi
+  echo "$config_file"
+}
+
+##################################################################
+# YAML PARSER (from: https://github.com/jasperes/bash-yaml)
+parse_yaml() {
+    local yaml_file=$1
+    local prefix=$2
+    local s
+    local w
+    local fs
+
+    s='[[:space:]]*'
+    w='[a-zA-Z0-9_.-]*'
+    fs="$(echo @ | tr @ '\034')"
+
+    (
+        sed -e '/- [^\“]'"[^\']"'.*: /s|\([ ]*\)- \([[:space:]]*\)|\1-\'$'\n''  \1\2|g' |
+            sed -ne '/^--/s|--||g; s|\"|\\\"|g; s/[[:space:]]*$//g;' \
+                -e 's/\$/\\\$/g' \
+                -e "/#.*[\"\']/!s| #.*||g; /^#/s|#.*||g;" \
+                -e "s|^\($s\)\($w\)$s:$s\"\(.*\)\"$s\$|\1$fs\2$fs\3|p" \
+                -e "s|^\($s\)\($w\)${s}[:-]$s\(.*\)$s\$|\1$fs\2$fs\3|p" |
+            awk -F"$fs" '{
+            indent = length($1)/2;
+            if (length($2) == 0) { conj[indent]="+";} else {conj[indent]="";}
+            vname[indent] = $2;
+            for (i in vname) {if (i > indent) {delete vname[i]}}
+                if (length($3) > 0) {
+                    vn=""; for (i=0; i<indent; i++) {vn=(vn)(vname[i])("_")}
+                    printf("%s%s%s%s=(\"%s\")\n", "'"$prefix"'",vn, $2, conj[indent-1], $3);
+                }
+            }' |
+            sed -e 's/_=/+=/g' |
+            awk 'BEGIN {
+                FS="=";
+                OFS="="
+            }
+            /(-|\.).*=/ {
+                gsub("-|\\.", "_", $1)
+            }
+            { print }'
+    ) <"$yaml_file"
+}
+
+unset_variables() {
+    # Pulls out the variable names and unsets them.
+    local variable_string=($*)
+    unset variables
+    variables=()
+    for variable in "${variable_string[@]}"; do
+        tmpvar=$(echo "$variable" | grep '=' | sed 's/=.*//' | sed 's/+.*//')
+        variables+=("$tmpvar")
+    done
+    for variable in "${variables[@]}"; do
+        if [ -n "$variable" ]; then
+            unset "$variable"
+        fi
+    done
+}
+
+create_variables() {
+    local yaml_file="$1"
+    local prefix="$2"
+    local yaml_string
+    yaml_string="$(parse_yaml "$yaml_file" "$prefix")"
+    unset_variables "${yaml_string}"
+    eval "${yaml_string}"
+}
 
 
 ##################################################################
@@ -94,130 +413,44 @@ echo "DATE: $(date "+%Y-%m-%d %H:%M:%S")"
 printf "\n"
 
 #################################
-# VALIDATE CONFIG FILE SETTINGS
+# Locate .yaml config file or set custom config file
+read config_file < <(settings_file_validation "$1")
 
-if [[ -z "$1" ]]; then # If not set explicit config file and no exist default config
-  if ! source ${parent_path}/update-cloudflare-records.conf; then
-    error_msg "Error! Missing configuration file update-cloudflare-records.conf or invalid syntax!"
-    exit 0
-  fi
-else
-  if ! source ${parent_path}/"$1"; then
-    error_msg "Error! Missing configuration file '$1' or invalid syntax!"
-    exit 0
-  fi
-fi
+#################################
+# Create variables from .yaml config file
+create_variables "$config_file"
 
-# Check validity of "ttl" parameter
-if [ "${ttl}" -lt 120 ] || [ "${ttl}" -gt 7200 ] && [ "${ttl}" -ne 1 ]; then
-  error_msg "Error! ttl out of range (120-7200) or not set to 1"
-  exit 0
-fi
+#################################
+# VALIDATE CONFIG FILE SETTINGS (.yaml)
+settings_validation
+settings_domains_validation
 
-# Check validity of "proxied" parameter
-if [ "${proxied}" != "false" ] && [ "${proxied}" != "true" ]; then
-  error_msg "Error! Incorrect "proxied" parameter choose 'true' or 'false'"
-  exit 0
-fi
+#################################
+# Cloudflare API
+api_zone_id=$settings_cloudflare__zone_id
+api_zone_token=$settings_cloudflare__api_token
 
-# Check validity of "what_ip" parameter
-if [ "${what_ip}" != "external" ] && [ "${what_ip}" != "internal" ]; then
-  error_msg "Error! Incorrect 'what_ip' parameter choose 'external' or 'internal'"
-  exit 0
-fi
+#################################
+# Iterate over domains array
+n_doms=${#domains__name[@]}
+for (( i=0; i<${n_doms}; i++ )); do
 
-# Check if set to internal ip and proxy
-if [ "${what_ip}" == "internal" ] && [ "${proxied}" == "true" ]; then
-  error_msg "Error! Internal IP cannot be Proxied"
-  exit 0
-fi
+  ### Get ith-domain settings
+  read domain_name domain_ip_type domain_ipv4 domain_ipv6 domain_ttl < <(get_domain_settings "$i")
 
-# Get External ip from '$get_ip_from'
-if [ "${what_ip}" == "external" ]; then
-  ip4=$(curl -4 -s -X GET $get_ip_from --max-time 20 )
-  ip6=$(curl -6 -s -X GET $get_ip_from --max-time 20 )
-  external_validation "$ip4" "IPv4"
-  external_validation "$ip6" "IPv6"
-  printf "\n"
-fi
+  ### Get Host IP (external or internal)
+  read ip4 ip6 < <(get_ip "$domain_ip_type" "$domain_ipv4" "$domain_ipv6")
 
-### Get Internal IPv4 from primary interface
-if [ "${what_ip}" == "internal" ]; then
-  ### Check if "IP" command is present, get the ip from interface
-  if which ip >/dev/null; then
-    ### "ip route get" (linux)
-    interface=$(ip route get 1.1.1.1 | awk '/dev/ { print $5 }')
-    ip4=$(ip -o -4 addr show ${interface} scope global | awk '{print $4;}' | cut -d/ -f 1)
-  ### if no "IP" command use "ifconfig", get the ip from interface
-  else
-    ### "route get" (macOS, Freebsd)
-    interface=$(route get 1.1.1.1 | awk '/interface:/ { print $2 }')
-    ip4=$(ifconfig ${interface} | grep 'inet ' | awk '{print $2}')
-  fi
-  internal_validation "$ip4" "IPv4" "$interface"
-fi
+  ### Get IP Domain from DNS (proxied=false) or from Cloudflare API (proxied=true)
+  read dns_record_ip4 dns_record_ip6 is_proxied4 is_proxied6 < <(get_dns_record_ip "$domain_name" "$proxied" "$api_zone_id" "$api_zone_token")
+  ### if error getting IP from DNS or API, skip domain 'i'
+  [ $? -eq 0 ] && continue
 
-### Get Internal IPv6 from primary interface
-if [ "${what_ip}" == "internal" ]; then
-  ### Check if "IP" command is present, get the ip from interface
-  if which ip >/dev/null; then
-    ### "ip route get" (linux)
-    interface=$(ip route get 1.1.1.1 | awk '/dev/ { print $5 }')
-    ip6=$(ip -o -6 addr show ${interface} scope global | awk '{print $4;}' | cut -d/ -f 1)
-  ### if no "IP" command use "ifconfig", get the ip from interface
-  else
-    ### "route get" (macOS, Freebsd)
-    interface=$(route get 1.1.1.1 | awk '/interface:/ { print $2 }')
-    ip6=$(ifconfig ${interface} | grep 'inet6 ' | awk -F '[ \t]+|/' '{print $3}' | grep -v ^::1 | grep -v ^fe80)
-  fi
-  internal_validation "$ip4" "IPv4" "$interface"
-fi
 
-### Build coma separated array fron dns_record parameter to update multiple A records
-IFS=',' read -d '' -ra dns_records <<<"$dns_record,"
-unset 'dns_records[${#dns_records[@]}-1]'
-declare dns_records ip4_done ip6_done
+
+done
 
 for record in "${dns_records[@]}"; do
-
-  ### Get IP address of DNS record from 1.1.1.1 DNS server when proxied is "false"
-  if [ "${proxied}" == "false" ]; then
-    ### Check if "nsloopup" command is present
-    if which nslookup >/dev/null; then
-      dns_record_ip=$(nslookup -query=A ${record} 1.1.1.1 | awk '/Address/ { print $2 }' | sed -n '2p')
-      dns_record_ip6=$(nslookup -query=AAAA ${record} 1.1.1.1 | awk '/Address/ { print $2 }' | sed -n '2p')
-    else
-      ### if no "nslookup" command use "host" command
-      dns_record_ip=$(host -t A ${record} 1.1.1.1 | awk '/has address/ { print $4 }' | sed -n '1p')
-      dns_record_ip6=$(host -t AAAA ${record} 1.1.1.1 | awk '/has address/ { print $4 }' | sed -n '1p')
-    fi
-
-    if [ -z "$dns_record_ip" ]; then
-      echo "Error! Can't resolve the ${record} IPv4 via 1.1.1.1 DNS server"
-      exit 0
-    fi
-    if [ -z "$dns_record_ip6" ]; then
-      echo "Error! Can't resolve the ${record} IPv6 via 1.1.1.1 DNS server"
-      exit 0
-    fi
-    is_proxied4="${proxied}"
-    is_proxied6="${proxied}"
-  fi
-
-  ### Get the dns record id and current proxy status from cloudflare's api when proxied is "true"
-  if [ "${proxied}" == "true" ]; then
-    dns_record_info4=$(read_record "$zoneid" "A" "$record")
-    api_validation "$dns_record_info4" "$record" "IPv4"
-    is_proxied4=$(echo ${dns_record_info4} | grep -o '"proxied":[^,]*' | grep -o '[^:]*$')
-    dns_record_ip4=$(echo ${dns_record_info4} | grep -o '"content":"[^"]*' | cut -d'"' -f 4)
-  fi
-
-  if [ "${proxied}" == "true" ]; then
-    dns_record_info6=$(read_record "$zoneid" "AAAA" "$record")
-    api_validation "$dns_record_info6" "$record" "IPv6"
-    is_proxied6=$(echo ${dns_record_info6} | grep -o '"proxied":[^,]*' | grep -o '[^:]*$')
-    dns_record_ip6=$(echo ${dns_record_info6} | grep -o '"content":"[^"]*' | cut -d'"' -f 4)
-  fi
 
   ### Check if ip or proxy have changed
   if [[ ${dns_record_ip4} == ${ip4} ]] && [[ ${is_proxied4} == ${proxied} ]]; then
