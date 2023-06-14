@@ -28,7 +28,7 @@ domains:
     ip_type: external
     ipv4: true
     ipv6: true
-    proxied: false
+    proxied: true
     ttl: auto
 
 settings:
