@@ -9,7 +9,7 @@ README IN WORK, MEANWHILE I COPY DDNS-Cloudflare-Bash Readme.
 
 - TODO: Write readme
 - TODO: create record with script
-- TODO: Config file in YAML
+- *DONE*: Config file in YAML 
 
 ## About
 
