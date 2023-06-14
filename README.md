@@ -4,8 +4,46 @@ Bash script to update IPv4 and IPv6 records in Cloudflare. Update with WAN or LA
 Based on this project: [DDNS-Cloudflare-Bash](https://github.com/fire1ce/DDNS-Cloudflare-Bash)
 README IN WORK, MEANWHILE I COPY DDNS-Cloudflare-Bash Readme.
 
+## Example
+
 <img width="1062" alt="Screenshot of Termius (9-6-23, 01-13-49)" src="https://github.com/jmrplens/DynDNS_Cloudflare_IPv4-6/assets/28966312/3209e061-27ee-4644-9890-d509a8ca4a28">
 
+With this settings:
+
+```yaml
+domains:
+  - name: jmrp.dev
+    ip_type: external
+    ipv4: true
+    ipv6: true
+    proxied: true
+    ttl: auto
+  - name: git.jmrp.dev
+    ip_type: external
+    ipv4: true
+    ipv6: true
+    proxied: true
+    ttl: auto
+  - name: jenkins.jmrp.dev
+    ip_type: external
+    ipv4: true
+    ipv6: true
+    proxied: false
+    ttl: auto
+
+settings:
+  cloudflare:
+    - zone_id: #########
+    - zone_api_token: ########
+  misc:
+    - create_if_no_exist: false
+
+notifications:
+  telegram: 
+    enabled: false
+    bot_token: token
+    chat_id: id
+```
 
 - TODO: Write readme
 - TODO: create record with script
