@@ -5,46 +5,52 @@ Based on this project: [DDNS-Cloudflare-Bash](https://github.com/fire1ce/DDNS-Cl
 
 ## Example
 
-<img width="1062" alt="Screenshot of Termius (9-6-23, 01-13-49)" src="https://github.com/jmrplens/DynDNS_Cloudflare_IPv4-6/assets/28966312/3209e061-27ee-4644-9890-d509a8ca4a28">
-
-With this settings:
-
+<table>
+<tr>
+<td> Result </td> <td> Settings </td>
+</tr>
+<tr>
+<td> <img width="100%" alt="Screenshot of Termius (9-6-23, 01-13-49)" src="https://github.com/jmrplens/DynDNS_Cloudflare_IPv4-6/assets/28966312/3209e061-27ee-4644-9890-d509a8ca4a28"> </td>
+<td>
+    
 ```yaml
 domains:
-  - name: jmrp.dev
-    ip_type: external
-    ipv4: true
-    ipv6: true
-    proxied: true
-    ttl: auto
-  - name: git.jmrp.dev
-    ip_type: external
-    ipv4: true
-    ipv6: true
-    proxied: true
-    ttl: auto
-  - name: jenkins.jmrp.dev
-    ip_type: external
-    ipv4: true
-    ipv6: true
-    proxied: true
-    ttl: auto
+        - name: jmrp.dev
+          ip_type: external
+          ipv4: true
+          ipv6: true
+          proxied: true
+          ttl: auto
+        - name: git.jmrp.dev
+          ip_type: external
+          ipv4: true
+          ipv6: true
+          proxied: true
+          ttl: auto
+        - name: jenkins.jmrp.dev
+          ip_type: external
+          ipv4: true
+          ipv6: true
+          proxied: true
+          ttl: auto
 
-settings:
-  cloudflare:
-    - zone_id: #########
-    - zone_api_token: ########
-  misc:
-    - create_if_no_exist: false
+      settings:
+        cloudflare:
+          - zone_id: #########
+          - zone_api_token: ########
+        misc:
+          - create_if_no_exist: false
 
-notifications:
-  telegram: 
-    enabled: false
-    bot_token: token
-    chat_id: id
+      notifications:
+        telegram: 
+          enabled: false
+          bot_token: token
+          chat_id: id
 ```
 
-- TODO: create record with script
+</td>
+</tr>
+</table>
 
 ## About
 
@@ -162,8 +168,8 @@ domains:
 
 | **Option**                | **Example**       | **Description**                                                                                                           |
 | ------------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| cloudflare_zone_api_token | ChangeMe          | Cloudflare API Token **KEEP IT PRIVATE!!!!**                                                                              |
-| zoneid                    | ChangeMe          | Cloudflare's [Zone ID](https://developers.cloudflare.com/fundamentals/get-started/basic-tasks/find-account-and-zone-ids/) |
+| zone_api_token            | token             | Cloudflare [API Token](https://dash.cloudflare.com/profile/api-tokens) **KEEP IT PRIVATE!!!!**                                                                              |
+| zone_id                   | id                | Cloudflare's [Zone ID](https://developers.cloudflare.com/fundamentals/get-started/basic-tasks/find-account-and-zone-ids/) |
 
 ##### Cloudflare misc
 
@@ -195,12 +201,6 @@ With your config file (need to be placed in same folder)
 update-cloudflare-records yoru_config.conf
 ```
 
-Or manually
-
-```shell
-<path>/.update-cloudflare-records.sh
-```
-
 ## Automation With Crontab
 
 You can run the script via crontab
@@ -211,41 +211,61 @@ crontab -e
 
 ### Examples
 
-Run every minute
-
+<table>
+<tr>
+<td> Example </td> <td> Code </td>
+</tr>
+<tr>
+  <td> Run <a href="https://crontab.guru/every-1-minute">every minute</a> </td>
+<td>
+    
 ```shell
 * * * * * /usr/local/bin/update-cloudflare-records
 ```
 
-Run with your specific config file
-
+</td>
+</tr>
+<tr>
+  <td> Run every minute with your specific config file </td>
+<td>
+    
 ```shell
-* * * * * /usr/local/bin/update-cloudflare-records myconfig.conf
+* * * * * /usr/local/bin/update-cloudflare-records myconfig.yaml
 ```
 
-Run every 2 minutes
-
+</td>
+</tr>
+<tr>
+  <td> Run every <a href="https://crontab.guru/#*/2_*_*_*_*">every 2 minutes</a> </td>
+<td>
+    
 ```shell
 */2 * * * * /usr/local/bin/update-cloudflare-records
 ```
 
-Run at boot
-
+</td>
+</tr>
+<tr>
+  <td> Run at <a href="https://crontab.guru/#@reboot">boot</a> </td>
+<td>
+    
 ```shell
 @reboot /usr/local/bin/update-cloudflare-records
 ```
 
-Run 1 minute after boot
-
+</td>
+</tr>
+<tr>
+  <td> Run 1 minute after boot </td>
+<td>
+    
 ```shell
 @reboot sleep 60 && /usr/local/bin/update-cloudflare-records
 ```
 
-Run at 08:00
-
-```shell
-0 8 * * * /usr/local/bin/update-cloudflare-records
-```
+</td>
+</tr>
+</table>
 
 ## Logs
 
