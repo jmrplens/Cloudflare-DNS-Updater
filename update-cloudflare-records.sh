@@ -27,14 +27,14 @@ is_proxied6=""
 
 # Colors
 [[ ${TERM} == "" ]] && TPUTTERM='-T xterm-256color' || TPUTTERM=''
-end_color="$(tput ${TPUTTERM} sgr0)"
-done_fb="$(tput ${TPUTTERM} setab 2 && tput ${TPUTTERM} setaf 0 && tput ${TPUTTERM} bold)"
-done_c="$(tput ${TPUTTERM} setaf 2 && tput ${TPUTTERM} bold)"
-err_c="$(tput ${TPUTTERM} setaf 1)"
-load_c="$(tput ${TPUTTERM} setaf 3 && tput ${TPUTTERM} bold)"
-warn_c="$(tput ${TPUTTERM} setaf 3)"
-blue_b_c="$(tput ${TPUTTERM} setaf 4 && tput ${TPUTTERM} bold)"
-green_c="$(tput ${TPUTTERM} setaf 2)"
+end_color="$(tput '${TPUTTERM}' sgr0)"
+done_fb="$(tput '${TPUTTERM}' setab 2 && tput '${TPUTTERM}' setaf 0 && tput '${TPUTTERM}' bold)"
+done_c="$(tput '${TPUTTERM}' setaf 2 && tput '${TPUTTERM}' bold)"
+err_c="$(tput '${TPUTTERM}' setaf 1)"
+load_c="$(tput '${TPUTTERM}' setaf 3 && tput '${TPUTTERM}' bold)"
+warn_c="$(tput '${TPUTTERM}' setaf 3)"
+blue_b_c="$(tput '${TPUTTERM}' setaf 4 && tput '${TPUTTERM}' bold)"
+green_c="$(tput '${TPUTTERM}' setaf 2)"
 
 # Server to check external IP
 get_ip_from="https://icanhazip.com"
@@ -133,15 +133,15 @@ internal_validation() {
   fi
 }
 read_record() {
-  echo '$(curl -s -X GET "https://api.cloudflare.com/client/v4/zones/$1/dns_records?type=$3&name=$4" \
-    -H "Authorization: Bearer $2" \
-    -H "Content-Type: application/json")'
+  echo "$(curl -s -X GET 'https://api.cloudflare.com/client/v4/zones/$1/dns_records?type=$3&name=$4' \
+    -H 'Authorization: Bearer $2' \
+    -H 'Content-Type: application/json')"
 }
 write_record() {
-  echo '$(curl -s -X PUT "https://api.cloudflare.com/client/v4/zones/$1/dns_records/$2" \
-    -H "Authorization: Bearer $settings_cloudflare__zone_api_token" \
-    -H "Content-Type: application/json" \
-    --data "{\"type\":\"$3\",\"name\":\"$4\",\"content\":\"$5\",\"ttl\":$6,\"proxied\":$7}")'
+  echo "$(curl -s -X PUT 'https://api.cloudflare.com/client/v4/zones/$1/dns_records/$2' \
+    -H 'Authorization: Bearer $settings_cloudflare__zone_api_token' \
+    -H 'Content-Type: application/json' \
+    --data '{\'type\':\'$3\',\'name\':\'$4\',\'content\':\'$5\',\'ttl\':$6,\'proxied\':$7}')"
 }
 
 ##################################################################
@@ -164,28 +164,28 @@ get_ip_internal() {
   ### Check if "IP" command is present, get the ip from interface
   if which ip >/dev/null; then
     ### "ip route get" (linux)
-    interface=$(ip route get 1.1.1.1 | awk '/dev/ { print $5 }')
+    interface="$(ip route get 1.1.1.1 | awk '/dev/ { print $5 }')"
     if [ "$1" == true ]; then
-      ip4=$(ip -o -4 addr show ${interface} scope global | awk '{print $4;}' | cut -d/ -f 1)
+      ip4="$(ip -o -4 addr show ${interface} scope global | awk '{print $4;}' | cut -d/ -f 1)"
     else
       ip4=""
     fi
     if [ "$2" == true ]; then
-      ip6=$(ip -o -6 addr show ${interface} scope global | awk '{print $4;}' | cut -d/ -f 1)
+      ip6="$(ip -o -6 addr show ${interface} scope global | awk '{print $4;}' | cut -d/ -f 1)"
     else
       ip6=""
     fi
   ### if no "IP" command use "ifconfig", get the ip from interface
   else
     ### "route get" (macOS, Freebsd)
-    interface=$(route get 1.1.1.1 | awk '/interface:/ { print $2 }')
+    interface="$(route get 1.1.1.1 | awk '/interface:/ { print $2 }')"
     if [ "$1" == true ]; then
-      ip4=$(ifconfig ${interface} | grep 'inet ' | awk '{print $2}')
+      ip4="$(ifconfig ${interface} | grep 'inet ' | awk '{print $2}')"
     else
       ip4=""
     fi
     if [ "$2" == true ]; then
-      ip6=$(ifconfig ${interface} | grep 'inet6 ' | awk -F '[ \t]+|/' '{print $3}' | grep -v ^::1 | grep -v ^fe80)
+      ip6="$(ifconfig ${interface} | grep 'inet6 ' | awk -F '[ \t]+|/' '{print $3}' | grep -v ^::1 | grep -v ^fe80)"
     else
       ip6=""
     fi
@@ -428,7 +428,7 @@ fi
 LOG_FILE=${parent_path}'/update-cloudflare-records.log'
 
 ### Write last run of STDOUT & STDERR as log file and prints to screen
-exec > >(tee $LOG_FILE) 2>&1
+exec > >(tee "$LOG_FILE") 2>&1
 printf "\n"
 echo "DATE: $(date "+%Y-%m-%d %H:%M:%S")"
 printf "\n"
@@ -489,8 +489,8 @@ for ((i = 0; i < n_doms; i++)); do
     push_validation "$update_dns_record_4" "IPv4"
   fi
 
-  if [ $ip6_updatable = true ] && [ $domain_ipv6 == true ]; then
-    echo "$load_c New DNS record IPv6 of ${domain_name} is: ${dns_record_ip6}. Trying to update...$end_color"
+  if [ "$ip6_updatable" = true ] && [ "$domain_ipv6" == true ]; then
+    echo "'$load_c' New DNS record IPv6 of '${domain_name}' is: '${dns_record_ip6}'. Trying to update...'$end_color'"
 
     ### Push new dns record information to cloudflare's api
     update_dns_record_6=$(write_record "$api_zone_id" "$dns_record_id_4" "AAAA" "$domain_name" "$ip6" "$ttl" "$domain_proxied")
