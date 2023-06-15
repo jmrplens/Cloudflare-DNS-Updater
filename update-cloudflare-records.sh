@@ -137,9 +137,9 @@ read_record() {
 }
 write_record() {
   curl -s -X PUT "https://api.cloudflare.com/client/v4/zones/$1/dns_records/$2" \
-    -H "Authorization: Bearer $settings_cloudflare__zone_api_token" \
+    -H "Authorization: Bearer $3" \
     -H "Content-Type: application/json" \
-    --data "{\"type\":\"$3\",\"name\":\"$4\",\"content\":\"$5\",\"ttl\":$6,\"proxied\":$7}"
+    --data "{\"type\":\"$4\",\"name\":\"$5\",\"content\":\"$6\",\"ttl\":$7,\"proxied\":$8}"
 }
 
 ##################################################################
@@ -484,7 +484,7 @@ for ((i = 0; i < n_doms; i++)); do
     echo "$load_c New DNS record IPv4 of ${domain_name} is: ${dns_record_ip4}. Trying to update...$end_color"
 
     ### Push new dns record information to cloudflare's api
-    update_dns_record_4=$(write_record "$api_zone_id" "$dns_record_id_4" "A" "$domain_name" "$ip4" "$ttl" "$domain_proxied")
+    update_dns_record_4=$(write_record "$api_zone_id" "$dns_record_id_4" "$settings_cloudflare__zone_api_token" "A" "$domain_name" "$ip4" "$ttl" "$domain_proxied")
     push_validation "$update_dns_record_4" "IPv4"
   fi
 
@@ -492,7 +492,7 @@ for ((i = 0; i < n_doms; i++)); do
     echo "$load_c New DNS record IPv6 of ${domain_name} is: ${dns_record_ip6}. Trying to update...$end_color"
 
     ### Push new dns record information to cloudflare's api
-    update_dns_record_6=$(write_record "$api_zone_id" "$dns_record_id_6" "AAAA" "$domain_name" "$ip6" "$ttl" "$domain_proxied")
+    update_dns_record_6=$(write_record "$api_zone_id" "$dns_record_id_6" "$settings_cloudflare__zone_api_token" "AAAA" "$domain_name" "$ip6" "$ttl" "$domain_proxied")
     push_validation "$update_dns_record_6" "IPv6"
   fi
 
