@@ -57,31 +57,31 @@ notifications:
 
 ## About
 
-    - Bash Script for most **Linux**, **Unix** distributions and **MacOS**.
-    - Choose any source IP address to update **external** or **internal** _(WAN/LAN)_ for ech domain.
-    - For multiply lan interfaces like Wifi, Docker Networks and Bridges the script will automatically detects the primary Interface by priority.
-    - Cloudflare's options proxy and TTL configurable via the config file for each domain.
-    - Optional Telegram Notifications
+- Bash Script for most **Linux**, **Unix** distributions and **MacOS**.
+- Choose any source IP address to update **external** or **internal** _(WAN/LAN)_ for ech domain.
+- For multiply lan interfaces like Wifi, Docker Networks and Bridges the script will automatically detects the primary Interface by priority.
+- Cloudflare's options proxy and TTL configurable via the config file for each domain.
+- Optional Telegram Notifications
 
 
 ## Requirements
 
-    - [curl](https://everything.curl.dev/get) 
-    - Cloudflare [api-token](https://dash.cloudflare.com/profile/api-tokens) with ZONE-DNS-EDIT Permissions
-    - DNS Record must be pre created in web interface (WIP: Create record if no exist)
+- [curl](https://everything.curl.dev/get) 
+- Cloudflare [api-token](https://dash.cloudflare.com/profile/api-tokens) with ZONE-DNS-EDIT Permissions
+- DNS Record must be pre created in web interface (WIP: Create record if no exist)
 
 ### Creating Cloudflare API Token
 
 To create a CloudFlare API token for your DNS zone go to [cloudflare-api-token-url](https://dash.cloudflare.com/profile/api-tokens) and follow these steps:
 
-    1. Click Create Token
-    2. Select Create Custom Token
-    3. Provide the token a name, for example, `example.com-dns-zone-readonly`
-    4. Grant the token the following permissions:
-       - Zone - DNS - Edit
-    5. Set the zone resources to:
-       - Include - Specific Zone - `example.com`
-    6. Complete the wizard and use the generated token at the `CLOUDFLARE_API_TOKEN` variable for the container
+1. Click Create Token
+2. Select Create Custom Token
+3. Provide the token a name, for example, `example.com-dns-zone-readonly`
+4. Grant the token the following permissions:
+   - Zone - DNS - Edit
+5. Set the zone resources to:
+   - Include - Specific Zone - `example.com`
+6. Complete the wizard and use the generated token at the `CLOUDFLARE_API_TOKEN` variable for the container
 
 ## Installation
 
