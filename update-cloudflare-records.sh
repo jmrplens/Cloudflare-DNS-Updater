@@ -24,15 +24,14 @@ is_proxied4=""
 is_proxied6=""
 
 # Colors
-[[ ${TERM} == "" ]] && TPUTTERM="-T xterm-256color" || TPUTTERM=""
-end_color=$(tput ${TPUTTERM} sgr0)
-done_fb=$(tput ${TPUTTERM} setab 2 && tput ${TPUTTERM} setaf 0 && tput ${TPUTTERM} bold)
-done_c=$(tput ${TPUTTERM} setaf 2 && tput ${TPUTTERM} bold)
-err_c=$(tput ${TPUTTERM} setaf 1)
-load_c=$(tput ${TPUTTERM} setaf 3 && tput ${TPUTTERM} bold)
-warn_c=$(tput ${TPUTTERM} setaf 3)
-blue_b_c=$(tput ${TPUTTERM} setaf 4 && tput ${TPUTTERM} bold)
-green_c=$(tput ${TPUTTERM} setaf 2)
+end_color=$(tput sgr0)
+done_fb=$(tput setab 2 && tput setaf 0 && tput bold)
+done_c=$(tput setaf 2 && tput bold)
+err_c=$(tput setaf 1)
+load_c=$(tput setaf 3 && tput bold)
+warn_c=$(tput setaf 3)
+blue_b_c=$(tput setaf 4 && tput bold)
+green_c=$(tput setaf 2)
 
 # Server to check external IP
 get_ip_from="https://icanhazip.com"
