@@ -1,5 +1,7 @@
 # Dynamic DNS - Cloudflare
 
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/b2c4010d9c46471aacd749ddb1cb0517)](https://app.codacy.com/gh/jmrplens/DynDNS_Cloudflare_IPv4-6?utm_source=github.com&utm_medium=referral&utm_content=jmrplens/DynDNS_Cloudflare_IPv4-6&utm_campaign=Badge_Grade)
+
 Bash script to update IPv4 and IPv6 records in Cloudflare. Update with WAN or LAN IP.
 
 Based on this project: [DDNS-Cloudflare-Bash](https://github.com/fire1ce/DDNS-Cloudflare-Bash).
