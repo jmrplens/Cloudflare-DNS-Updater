@@ -40,27 +40,24 @@ get_ip_from="https://icanhazip.com"
 # GENERIC FUNCTIONS
 done_fb_msg() {
   echo "${done_fb}${1}${end_color}"
-  return 1
 }
 done_msg() {
   echo "${done_c}${1}${end_color}"
-  return 1
 }
 error_msg() {
   echo "${err_c}${1}${end_color}"
-  return 1
 }
 warn_msg() {
   echo "${warn_c}${1}${end_color}"
-  return 1
+}
+load_msg() {
+  echo "${load_c}${1}${end_color}"
 }
 blue_bold_msg() {
   echo "${blue_b_c}${1}${end_color}"
-  return 1
 }
 green_msg() {
   echo "${green_c}${1}${end_color}"
-  return 1
 }
 # shellcheck disable=SC2154
 get_domain_settings() {
@@ -91,6 +88,12 @@ get_domain_settings() {
     domain_ttl=${def_ttl}
   fi
   echo "$domain_name $domain_ip_type $domain_ipv4 $domain_ipv6 $domain_proxied $domain_ttl"
+}
+# shellcheck disable=SC2154
+get_api_settings() {
+  api_zone_id=$settings_cloudflare__zone_id
+  api_zone_token=$settings_cloudflare__zone_api_token
+  echo "$api_zone_id $api_zone_token"
 }
 ##################################################################
 # CLOUDFLARE API FUNCTIONS
@@ -140,6 +143,9 @@ write_record() {
     -H "Authorization: Bearer $3" \
     -H "Content-Type: application/json" \
     --data "{\"type\":\"$4\",\"name\":\"$5\",\"content\":\"$6\",\"ttl\":$7,\"proxied\":$8}"
+}
+up_to_date () {
+  done_msg "Current DNS record ${1} of ${end_color}${load_c}${2}${end_color}${done_c} is ${3} and proxy status is ${4}, no changes needed."
 }
 
 ##################################################################
@@ -210,7 +216,7 @@ get_ip() {
 }
 
 get_dns_record_ip() {
-  local record=$1
+  local domain_name=$1
   local proxied=$2
   local zone_id=$3
   local zone_token=$4
@@ -220,30 +226,30 @@ get_dns_record_ip() {
     ### Check if "nslookup" command is present
     if which nslookup >/dev/null; then
       if [ "${domain_ipv4}" == true ]; then
-        dns_record_ip4=$(nslookup -query=A "${record}" 1.1.1.1 | awk '/Address/ { print $2 }' | sed -n '2p')
+        dns_record_ip4=$(nslookup -query=A "${domain_name}" 1.1.1.1 | awk '/Address/ { print $2 }' | sed -n '2p')
       fi
       if [ "${domain_ipv6}" == true ]; then
-        dns_record_ip6=$(nslookup -query=AAAA "${record}" 1.1.1.1 | awk '/Address/ { print $2 }' | sed -n '2p')
+        dns_record_ip6=$(nslookup -query=AAAA "${domain_name}" 1.1.1.1 | awk '/Address/ { print $2 }' | sed -n '2p')
       fi
     else
       ### if no "nslookup" command use "host" command
       if [ "${domain_ipv4}" == true ]; then
-        dns_record_ip4=$(host -t A "${record}" 1.1.1.1 | awk '/has address/ { print $4 }' | sed -n '1p')
+        dns_record_ip4=$(host -t A "${domain_name}" 1.1.1.1 | awk '/has address/ { print $4 }' | sed -n '1p')
       fi
       if [ "${domain_ipv6}" == true ]; then
-        dns_record_ip6=$(host -t AAAA "${record}" 1.1.1.1 | awk '/has address/ { print $4 }' | sed -n '1p')
+        dns_record_ip6=$(host -t AAAA "${domain_name}" 1.1.1.1 | awk '/has address/ { print $4 }' | sed -n '1p')
       fi
     fi
 
     if [ "${domain_ipv4}" == true ]; then
       if [ -z "${dns_record_ip4}" ]; then
-        echo "Error! Can't resolve the ${record} IPv4 via 1.1.1.1 DNS server"
+        echo "Error! Can't resolve the ${domain_name} IPv4 via 1.1.1.1 DNS server"
         error_dom=true
       fi
     fi
     if [ "${domain_ipv6}" == true ]; then
       if [ -z "${dns_record_ip6}" ]; then
-        echo "Error! Can't resolve the ${record} IPv6 via 1.1.1.1 DNS server"
+        echo "Error! Can't resolve the ${domain_name} IPv6 via 1.1.1.1 DNS server"
         error_dom=true
       fi
     fi
@@ -254,18 +260,18 @@ get_dns_record_ip() {
   ### Get the dns record id and current proxy status from cloudflare's api when proxied is "true"
   if [ "${proxied}" == "true" ]; then
     if [ "${domain_ipv4}" == true ]; then
-      dns_record_info4=$(read_record "$zone_id" "$zone_token" "A" "$record")
+      dns_record_info4=$(read_record "$zone_id" "$zone_token" "A" "$domain_name")
+      api_validation "$dns_record_info4" "$domain_name" "IPv4"
       is_proxied4=$(echo "${dns_record_info4}" | grep -o '"proxied":[^,]*' | grep -o '[^:]*$')
       dns_record_ip4=$(echo "${dns_record_info4}" | grep -o '"content":"[^"]*' | cut -d'"' -f 4)
       dns_record_id_4=$(echo "${dns_record_info4}" | grep -o '"id":"[^"]*' | cut -d'"' -f4)
-      api_validation "$dns_record_info4" "$record" "IPv4"
     fi
     if [ "${domain_ipv6}" == true ]; then
-      dns_record_info6=$(read_record "$zone_id" "$zone_token" "AAAA" "$record")
+      dns_record_info6=$(read_record "$zone_id" "$zone_token" "AAAA" "$domain_name")
       is_proxied6=$(echo "${dns_record_info6}" | grep -o '"proxied":[^,]*' | grep -o '[^:]*$')
       dns_record_ip6=$(echo "${dns_record_info6}" | grep -o '"content":"[^"]*' | cut -d'"' -f 4)
       dns_record_id_6=$(echo "${dns_record_info6}" | grep -o '"id":"[^"]*' | cut -d'"' -f4)
-      api_validation "$dns_record_info6" "$record" "IPv6"
+      api_validation "$dns_record_info6" "$domain_name" "IPv6"
     fi
   fi
 }
@@ -447,8 +453,7 @@ settings_domains_validation
 
 #################################
 # Cloudflare API
-api_zone_id=$settings_cloudflare__zone_id
-api_zone_token=$settings_cloudflare__zone_api_token
+read -r api_zone_id api_zone_token < <(get_api_settings)
 
 #################################
 # Iterate over domains array
@@ -466,33 +471,23 @@ for ((i = 0; i < n_doms; i++)); do
   get_dns_record_ip "$domain_name" "$domain_proxied" "$api_zone_id" "$api_zone_token"
   [ $error_dom == true ] && continue
 
-  ### Check if ip or proxy have changed
+  ### Check if IPv4 or proxy have changed and update if needed
   if [ "$domain_ipv4" == true ] && [ "${dns_record_ip4}" == "${ip4}" ] && [ "${is_proxied4}" == "${domain_proxied}" ]; then
-    echo "${done_c}Current DNS record IPv4 of ${end_color}${load_c}${record}${end_color}${done_c} is ${dns_record_ip4} and proxy status is ${is_proxied4}, no changes needed${end_color}."
-    ip4_updatable=false
+    up_to_date "IPv4" "$domain_name" "$dns_record_ip4" "$is_proxied4"
   else
-    ip4_updatable=true
-  fi
-  if [ "$domain_ipv6" == true ] && [ "${dns_record_ip6}" == "${ip6}" ] && [ "${is_proxied6}" == "${domain_proxied}" ]; then
-    echo "${done_c}Current DNS record IPv6 of ${end_color}${load_c}${domain_name}${end_color}${done_c} is ${dns_record_ip6} and proxy status is ${is_proxied6}, no changes needed${end_color}."
-    ip6_updatable=false
-  else
-    ip6_updatable=true
-  fi
-
-  if [ $ip4_updatable = true ] && [ "$domain_ipv4" = true ]; then
-    echo "$load_c New DNS record IPv4 of ${domain_name} is: ${dns_record_ip4}. Trying to update...$end_color"
-
     ### Push new dns record information to cloudflare's api
-    update_dns_record_4=$(write_record "$api_zone_id" "$dns_record_id_4" "$settings_cloudflare__zone_api_token" "A" "$domain_name" "$ip4" "$ttl" "$domain_proxied")
+    load_msg "New DNS record IPv4 of ${domain_name} is: ${dns_record_ip4}. Trying to update..."
+    update_dns_record_4=$(write_record "$api_zone_id" "$dns_record_id_4" "$api_zone_token" "A" "$domain_name" "$ip4" "$ttl" "$domain_proxied")
     push_validation "$update_dns_record_4" "IPv4"
   fi
 
-  if [ $ip6_updatable = true ] && [ "$domain_ipv6" == true ]; then
-    echo "$load_c New DNS record IPv6 of ${domain_name} is: ${dns_record_ip6}. Trying to update...$end_color"
-
+  ### Check if IPv6 or proxy have changed and update if needed
+  if [ "$domain_ipv6" == true ] && [ "${dns_record_ip6}" == "${ip6}" ] && [ "${is_proxied6}" == "${domain_proxied}" ]; then
+    up_to_date "IPv6" "$domain_name" "$dns_record_ip6" "$is_proxied6"
+  else
     ### Push new dns record information to cloudflare's api
-    update_dns_record_6=$(write_record "$api_zone_id" "$dns_record_id_6" "$settings_cloudflare__zone_api_token" "AAAA" "$domain_name" "$ip6" "$ttl" "$domain_proxied")
+    load_msg "New DNS record IPv6 of ${domain_name} is: ${dns_record_ip6}. Trying to update..."
+    update_dns_record_6=$(write_record "$api_zone_id" "$dns_record_id_6" "$api_zone_token" "AAAA" "$domain_name" "$ip6" "$ttl" "$domain_proxied")
     push_validation "$update_dns_record_6" "IPv6"
   fi
 
