@@ -163,12 +163,12 @@ get_ip_internal() {
   if which ip >/dev/null; then
     ### "ip route get" (linux)
     interface=$(ip route get 1.1.1.1 | awk '/dev/ { print $5 }')
-    if [ $1 == true]; then
+    if [ $1 == true ]; then
       ip4=$(ip -o -4 addr show ${interface} scope global | awk '{print $4;}' | cut -d/ -f 1)
     else
       ip4=""
     fi
-    if [ $2 == true]; then
+    if [ $2 == true ]; then
       ip6=$(ip -o -6 addr show ${interface} scope global | awk '{print $4;}' | cut -d/ -f 1)
     else
       ip6=""
@@ -177,12 +177,12 @@ get_ip_internal() {
   else
     ### "route get" (macOS, Freebsd)
     interface=$(route get 1.1.1.1 | awk '/interface:/ { print $2 }')
-    if [ $1 == true]; then
+    if [ $1 == true ]; then
       ip4=$(ifconfig ${interface} | grep 'inet ' | awk '{print $2}')
     else
       ip4=""
     fi
-    if [ $2 == true]; then
+    if [ $2 == true ]; then
       ip6=$(ifconfig ${interface} | grep 'inet6 ' | awk -F '[ \t]+|/' '{print $3}' | grep -v ^::1 | grep -v ^fe80)
     else
       ip6=""
