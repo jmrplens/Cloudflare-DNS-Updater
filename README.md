@@ -166,7 +166,7 @@ domains:
 | ipv4                      | true              | Update IPv4 DNS Record: true/false. **Optional** (default: true)                                                          |
 | ipv6                      | true              | Update IPv6 DNS Record: true/false. **Optional** (default: true)                                                          |
 | proxied                   | true              | Use Cloudflare proxy on dns record: true/false. **Optional** (default: true)                                              |
-| ttl                       | 3600              | 120-7200 in seconds or auto. **Optional** (default: true)                                                                 |
+| ttl                       | 3600              | 120-7200 in seconds or auto. **Optional** (default: auto)                                                                 |
 
 #### Cloudflare
 
