@@ -2,6 +2,7 @@
 [![CodeFactor](https://www.codefactor.io/repository/github/jmrplens/dyndns_cloudflare_ipv4-6/badge)](https://www.codefactor.io/repository/github/jmrplens/dyndns_cloudflare_ipv4-6)
 [![Shellcheck](https://github.com/jmrplens/DynDNS_Cloudflare_IPv4-6/actions/workflows/shellcheck.yaml/badge.svg?branch=main)](https://github.com/jmrplens/DynDNS_Cloudflare_IPv4-6/actions/workflows/shellcheck.yaml)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/jmrplens/DynDNS_Cloudflare_IPv4-6/badge)](https://securityscorecards.dev/viewer/?platform=github.com&org=jmrplens&repo=DynDNS_Cloudflare_IPv4-6)
+[![OpenSSF Best Practices](https://bestpractices.coreinfrastructure.org/projects/7472/badge)](https://bestpractices.coreinfrastructure.org/projects/7472)
 
 # Dynamic DNS - Cloudflare
 
