@@ -8,9 +8,11 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
     
 
-COPY ./update-cloudflare-records.sh /usr/local/bin/update-cloudflare-records
+COPY ./update-cloudflare-records.sh /usr/local/bin
 COPY ./update-cloudflare-records.yaml /usr/local/bin
 
+RUN cp -a /usr/local/bin/update-cloudflare-records.sh /usr/local/bin/update-cloudflare-records
+RUN rm -rf /usr/local/bin/update-cloudflare-records.sh
 RUN chmod +x /usr/local/bin/update-cloudflare-records
 
 CMD ["update-cloudflare-records"]
