@@ -2,10 +2,9 @@ FROM alpine:3.18
 
 LABEL maintainer="Jose Manuel Requena Plens <jmrplens@protonmail.com>"
 
-RUN apt-get update && apt-get install -y \
-    curl=7.74.0 \
-    --no-install-recommends \
-    && rm -rf /var/lib/apt/lists/*
+RUN apk update && \
+    apk upgrade && \
+    apk add curl=8.1.2-r0
     
 
 COPY ./update-cloudflare-records.sh /usr/local/bin
