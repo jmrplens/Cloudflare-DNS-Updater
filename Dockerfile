@@ -1,4 +1,4 @@
-FROM ubuntu:latest
+FROM alpine:latest
 
 LABEL maintainer="Jose Manuel Requena Plens <jmrplens@protonmail.com>"
 
