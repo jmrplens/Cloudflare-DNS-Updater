@@ -68,14 +68,14 @@ get_domain_settings() {
     domain_ip_type=${def_ip_type}
   fi
   if [ $def_ipv4_enabled == false ]; then
-    domain_ipv4=${domains__ipv4[$i]}
+    enable_ipv4=${domains__ipv4[$i]}
   else
-    domain_ipv4=${def_ipv4}
+    enable_ipv4=${def_ipv4}
   fi
   if [ $def_ipv6_enabled == false ]; then
-    domain_ipv6=${domains__ipv6[$i]}
+    enable_ipv6=${domains__ipv6[$i]}
   else
-    domain_ipv6=${def_ipv6}
+    enable_ipv6=${def_ipv6}
   fi
   if [ $def_proxied_enabled == false ]; then
     domain_proxied=${domains__proxied[$i]}
@@ -87,7 +87,7 @@ get_domain_settings() {
   else
     domain_ttl=${def_ttl}
   fi
-  echo "$domain_name $domain_ip_type $domain_ipv4 $domain_ipv6 $domain_proxied $domain_ttl"
+  echo "$domain_name $domain_ip_type $enable_ipv4 $enable_ipv6 $domain_proxied $domain_ttl"
 }
 # shellcheck disable=SC2154
 get_api_settings() {
@@ -198,19 +198,23 @@ get_ip_internal() {
 }
 
 get_ip() {
+  local ip_type=$1
+  local enable_ipv4=$2
+  local enable_ipv6=$3
+
   # Get External ip from '$get_ip_from'
-  if [ "$1" == "external" ]; then
-    read -r ip4 ip6 < <(get_ip_external "$2" "$3")
-    external_validation "$ip4" "IPv4"
-    external_validation "$ip6" "IPv6"
+  if [ "$ip_type" == "external" ]; then
+    read -r ip4 ip6 < <(get_ip_external "$enable_ipv4" "$enable_ipv6")
+    [[ "$enable_ipv4" == true ]] && (external_validation "$ip4" "IPv4")
+    [[ "$enable_ipv6" == true ]] && (external_validation "$ip6" "IPv6")
     printf "\n"
   fi
 
   ### Get Internal IP from primary interface
-  if [ "$1" == "internal" ]; then
+  if [ "$ip_type" == "internal" ]; then
     read -r ip4 ip6 interface < <(get_ip_internal "$2" "$3")
-    internal_validation "$ip4" "IPv4" "$interface"
-    internal_validation "$ip6" "IPv6" "$interface"
+    [[ "$enable_ipv4" == true ]] && (internal_validation "$ip4" "IPv4" "$interface")
+    [[ "$enable_ipv6" == true ]] && (internal_validation "$ip6" "IPv6" "$interface")
     printf "\n"
   fi
 }
@@ -221,14 +225,14 @@ get_dns_record_ip() {
   local zone_token=$3
 
   ### Get the dns record id and current proxy status from cloudflare's api
-  if [ "${domain_ipv4}" == true ]; then
+  if [ "${enable_ipv4}" == true ]; then
     dns_record_info4=$(read_record "$zone_id" "$zone_token" "A" "$domain_name")
     api_validation "$dns_record_info4" "$domain_name" "IPv4"
     is_proxied4=$(echo "${dns_record_info4}" | grep -o '"proxied":[^,]*' | grep -o '[^:]*$')
     dns_record_ip4=$(echo "${dns_record_info4}" | grep -o '"content":"[^"]*' | cut -d'"' -f 4)
     dns_record_id_4=$(echo "${dns_record_info4}" | grep -o '"id":"[^"]*' | cut -d'"' -f4)
   fi
-  if [ "${domain_ipv6}" == true ]; then
+  if [ "${enable_ipv6}" == true ]; then
     dns_record_info6=$(read_record "$zone_id" "$zone_token" "AAAA" "$domain_name")
     is_proxied6=$(echo "${dns_record_info6}" | grep -o '"proxied":[^,]*' | grep -o '[^:]*$')
     dns_record_ip6=$(echo "${dns_record_info6}" | grep -o '"content":"[^"]*' | cut -d'"' -f 4)
@@ -422,18 +426,18 @@ n_doms=${#domains__name[@]}
 for ((i = 0; i < n_doms; i++)); do
 
   ### Get ith-domain settings
-  read -r domain_name domain_ip_type domain_ipv4 domain_ipv6 domain_proxied domain_ttl < <(get_domain_settings "$i")
+  read -r domain_name domain_ip_type enable_ipv4 enable_ipv6 domain_proxied domain_ttl < <(get_domain_settings "$i")
   [[ "${domain_ttl}" == "auto" ]] && ttl=1 || ttl=${domain_ttl}
 
-  ### Get Host IP (external or internal)
-  get_ip "$domain_ip_type" "$domain_ipv4" "$domain_ipv6"
+  ### Get Host IP (external or internal) [VARS: ip4 and ip6]
+  get_ip "$domain_ip_type" "$enable_ipv4" "$enable_ipv6"
 
   ### Get IP Domain from DNS (proxied=false) or from Cloudflare API (proxied=true)
   get_dns_record_ip "$domain_name" "$api_zone_id" "$api_zone_token"
   [ $error_dom == true ] && continue
 
   ### Check if IPv4 or proxy have changed and update if needed
-  if [ "$domain_ipv4" == true ] && [ "${dns_record_ip4}" == "${ip4}" ] && [ "${is_proxied4}" == "${domain_proxied}" ]; then
+  if [ "$enable_ipv4" == true ] && [ "${dns_record_ip4}" == "${ip4}" ] && [ "${is_proxied4}" == "${domain_proxied}" ]; then
     up_to_date "IPv4" "$domain_name" "$dns_record_ip4" "$is_proxied4"
   else
     ### Push new dns record information to cloudflare's api
@@ -443,7 +447,7 @@ for ((i = 0; i < n_doms; i++)); do
   fi
 
   ### Check if IPv6 or proxy have changed and update if needed
-  if [ "$domain_ipv6" == true ] && [ "${dns_record_ip6}" == "${ip6}" ] && [ "${is_proxied6}" == "${domain_proxied}" ]; then
+  if [ "$enable_ipv6" == true ] && [ "${dns_record_ip6}" == "${ip6}" ] && [ "${is_proxied6}" == "${domain_proxied}" ]; then
     up_to_date "IPv6" "$domain_name" "$dns_record_ip6" "$is_proxied6"
   else
     ### Push new dns record information to cloudflare's api
