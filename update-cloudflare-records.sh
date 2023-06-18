@@ -22,6 +22,8 @@ dns_record_ip6=""
 dns_record_id_6=""
 is_proxied4=""
 is_proxied6=""
+is_proxiable4=""
+is_proxiable6=""
 
 # Colors
 end_color=$(tput sgr0)
@@ -98,7 +100,8 @@ get_api_settings() {
 ##################################################################
 # CLOUDFLARE API FUNCTIONS
 api_validation() {
-  if [[ "$1" == *"\"success\":false"* ]]; then
+  success_api=$(echo "${1}" | grep -o '"success":[^,]*' | grep -o '[^:]*$')
+  if [ "$success_api" == false ]; then
     error_msg "Error! Can't get ${end_color}${load_c}$2${end_color}${done_c} $3 record information from Cloudflare API"
     error_dom=true
   else
@@ -107,7 +110,8 @@ api_validation() {
   fi
 }
 push_validation() {
-  if [[ $1 == *"\"success\":false"* ]]; then
+  success_api=$(echo "${1}" | grep -o '"success":[^,]*' | grep -o '[^:]*$')
+  if [ "$success_api" == false ]; then
     error_msg "Error! Update $2 Failed"
     error_dom=true
   else
@@ -204,7 +208,7 @@ get_ip() {
 
   # Get External ip from '$get_ip_from'
   if [ "$ip_type" == "external" ]; then
-    read -r ip4 ip6 < <(get_ip_external "$enable_ipv4" "$enable_ipv6")
+    read -r ip4 ip6 <<< "$(get_ip_external "$enable_ipv4" "$enable_ipv6")"
     [[ "$enable_ipv4" == true ]] && (external_validation "$ip4" "IPv4")
     [[ "$enable_ipv6" == true ]] && (external_validation "$ip6" "IPv6")
     printf "\n"
@@ -212,7 +216,7 @@ get_ip() {
 
   ### Get Internal IP from primary interface
   if [ "$ip_type" == "internal" ]; then
-    read -r ip4 ip6 interface < <(get_ip_internal "$2" "$3")
+    read -r ip4 ip6 interface <<< "$(get_ip_internal "$2" "$3")"
     [[ "$enable_ipv4" == true ]] && (internal_validation "$ip4" "IPv4" "$interface")
     [[ "$enable_ipv6" == true ]] && (internal_validation "$ip6" "IPv6" "$interface")
     printf "\n"
@@ -229,15 +233,19 @@ get_dns_record_ip() {
     dns_record_info4=$(read_record "$zone_id" "$zone_token" "A" "$domain_name")
     api_validation "$dns_record_info4" "$domain_name" "IPv4"
     is_proxied4=$(echo "${dns_record_info4}" | grep -o '"proxied":[^,]*' | grep -o '[^:]*$')
+    is_proxiable4=$(echo "${dns_record_info4}" | grep -o '"proxiable":[^,]*' | grep -o '[^:]*$')
     dns_record_ip4=$(echo "${dns_record_info4}" | grep -o '"content":"[^"]*' | cut -d'"' -f 4)
     dns_record_id_4=$(echo "${dns_record_info4}" | grep -o '"id":"[^"]*' | cut -d'"' -f4)
+    [[ "$is_proxiable4" == false ]] && domain_proxied=false
   fi
   if [ "${enable_ipv6}" == true ]; then
     dns_record_info6=$(read_record "$zone_id" "$zone_token" "AAAA" "$domain_name")
+    api_validation "$dns_record_info6" "$domain_name" "IPv6"
     is_proxied6=$(echo "${dns_record_info6}" | grep -o '"proxied":[^,]*' | grep -o '[^:]*$')
+    is_proxiable6=$(echo "${dns_record_info6}" | grep -o '"proxiable":[^,]*' | grep -o '[^:]*$')
     dns_record_ip6=$(echo "${dns_record_info6}" | grep -o '"content":"[^"]*' | cut -d'"' -f 4)
     dns_record_id_6=$(echo "${dns_record_info6}" | grep -o '"id":"[^"]*' | cut -d'"' -f4)
-    api_validation "$dns_record_info6" "$domain_name" "IPv6"
+    [[ "$is_proxiable6" == false ]] && domain_proxied=false
   fi
 }
 
@@ -405,7 +413,7 @@ printf "\n"
 
 #################################
 # Locate .yaml config file or set custom config file
-read -r config_file < <(settings_file_validation "$1")
+read -r config_file <<< "$(settings_file_validation "$1")"
 
 #################################
 # Create variables from .yaml config file
@@ -418,7 +426,7 @@ settings_domains_validation
 
 #################################
 # Cloudflare API
-read -r api_zone_id api_zone_token < <(get_api_settings)
+read -r api_zone_id api_zone_token <<< "$(get_api_settings)"
 
 #################################
 # Iterate over domains array
@@ -426,13 +434,13 @@ n_doms=${#domains__name[@]}
 for ((i = 0; i < n_doms; i++)); do
 
   ### Get ith-domain settings
-  read -r domain_name domain_ip_type enable_ipv4 enable_ipv6 domain_proxied domain_ttl < <(get_domain_settings "$i")
+  read -r domain_name domain_ip_type enable_ipv4 enable_ipv6 domain_proxied domain_ttl <<< "$(get_domain_settings "$i")"
   [[ "${domain_ttl}" == "auto" ]] && ttl=1 || ttl=${domain_ttl}
 
   ### Get Host IP (external or internal) [VARS: ip4 and ip6]
   get_ip "$domain_ip_type" "$enable_ipv4" "$enable_ipv6"
 
-  ### Get IP Domain from DNS (proxied=false) or from Cloudflare API (proxied=true)
+  ### Get IP Domain from Cloudflare API
   get_dns_record_ip "$domain_name" "$api_zone_id" "$api_zone_token"
   [ $error_dom == true ] && continue
 
@@ -467,8 +475,8 @@ for ((i = 0; i < n_doms; i++)); do
   green_msg "----------------------------------------"
   done_fb_msg "DOMAIN: $domain_name"
   green_msg "----------------------------------------"
-  green_msg "Current IPv4 Address: $ip4"
-  green_msg "Current IPv6 Address: $ip6"
+  [[ "$enable_ipv4" == true ]] && green_msg "Current IPv4 Address: $ip4"
+  [[ "$enable_ipv6" == true ]] && green_msg "Current IPv6 Address: $ip6"
   green_msg "Cloudflare proxy    : $domain_proxied"
   green_msg "TTL                 : $ttl_info"
   green_msg "----------------------------------------"
