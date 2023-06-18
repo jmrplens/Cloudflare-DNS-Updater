@@ -9,7 +9,6 @@ jobs:
         uses: docker/build-push-action@f2a1d5e99d037542a71f64918e516c093c6f3fc4
         with:
           context: .
-          file: ./Dockerfile
           platforms: ${{ matrix.platforms }}
           push: true
           outputs: type=image,name=target,annotation-index.org.opencontainers.image.description=Bash script to update IPv4 and IPv6 records in Cloudflare. Update with WAN or LAN IP.
