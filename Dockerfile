@@ -13,4 +13,4 @@ COPY ./update-cloudflare-records.yaml /usr/local/bin
 
 RUN chmod +x /usr/local/bin/update-cloudflare-records
 
-CMD ["update-cloudflare-dns"]
+CMD ["update-cloudflare-records"]
