@@ -217,62 +217,23 @@ get_ip() {
 
 get_dns_record_ip() {
   local domain_name=$1
-  local proxied=$2
-  local zone_id=$3
-  local zone_token=$4
+  local zone_id=$2
+  local zone_token=$3
 
-  ### Get IP address of DNS record from 1.1.1.1 DNS server when proxied is "false"
-  if [ "${proxied}" == "false" ]; then
-    ### Check if "nslookup" command is present
-    if which nslookup >/dev/null; then
-      if [ "${domain_ipv4}" == true ]; then
-        dns_record_ip4=$(nslookup -query=A "${domain_name}" 1.1.1.1 | awk '/Address/ { print $2 }' | sed -n '2p')
-      fi
-      if [ "${domain_ipv6}" == true ]; then
-        dns_record_ip6=$(nslookup -query=AAAA "${domain_name}" 1.1.1.1 | awk '/Address/ { print $2 }' | sed -n '2p')
-      fi
-    else
-      ### if no "nslookup" command use "host" command
-      if [ "${domain_ipv4}" == true ]; then
-        dns_record_ip4=$(host -t A "${domain_name}" 1.1.1.1 | awk '/has address/ { print $4 }' | sed -n '1p')
-      fi
-      if [ "${domain_ipv6}" == true ]; then
-        dns_record_ip6=$(host -t AAAA "${domain_name}" 1.1.1.1 | awk '/has address/ { print $4 }' | sed -n '1p')
-      fi
-    fi
-
-    if [ "${domain_ipv4}" == true ]; then
-      if [ -z "${dns_record_ip4}" ]; then
-        echo "Error! Can't resolve the ${domain_name} IPv4 via 1.1.1.1 DNS server"
-        error_dom=true
-      fi
-    fi
-    if [ "${domain_ipv6}" == true ]; then
-      if [ -z "${dns_record_ip6}" ]; then
-        echo "Error! Can't resolve the ${domain_name} IPv6 via 1.1.1.1 DNS server"
-        error_dom=true
-      fi
-    fi
-    is_proxied4="${proxied}"
-    is_proxied6="${proxied}"
+  ### Get the dns record id and current proxy status from cloudflare's api
+  if [ "${domain_ipv4}" == true ]; then
+    dns_record_info4=$(read_record "$zone_id" "$zone_token" "A" "$domain_name")
+    api_validation "$dns_record_info4" "$domain_name" "IPv4"
+    is_proxied4=$(echo "${dns_record_info4}" | grep -o '"proxied":[^,]*' | grep -o '[^:]*$')
+    dns_record_ip4=$(echo "${dns_record_info4}" | grep -o '"content":"[^"]*' | cut -d'"' -f 4)
+    dns_record_id_4=$(echo "${dns_record_info4}" | grep -o '"id":"[^"]*' | cut -d'"' -f4)
   fi
-
-  ### Get the dns record id and current proxy status from cloudflare's api when proxied is "true"
-  if [ "${proxied}" == "true" ]; then
-    if [ "${domain_ipv4}" == true ]; then
-      dns_record_info4=$(read_record "$zone_id" "$zone_token" "A" "$domain_name")
-      api_validation "$dns_record_info4" "$domain_name" "IPv4"
-      is_proxied4=$(echo "${dns_record_info4}" | grep -o '"proxied":[^,]*' | grep -o '[^:]*$')
-      dns_record_ip4=$(echo "${dns_record_info4}" | grep -o '"content":"[^"]*' | cut -d'"' -f 4)
-      dns_record_id_4=$(echo "${dns_record_info4}" | grep -o '"id":"[^"]*' | cut -d'"' -f4)
-    fi
-    if [ "${domain_ipv6}" == true ]; then
-      dns_record_info6=$(read_record "$zone_id" "$zone_token" "AAAA" "$domain_name")
-      is_proxied6=$(echo "${dns_record_info6}" | grep -o '"proxied":[^,]*' | grep -o '[^:]*$')
-      dns_record_ip6=$(echo "${dns_record_info6}" | grep -o '"content":"[^"]*' | cut -d'"' -f 4)
-      dns_record_id_6=$(echo "${dns_record_info6}" | grep -o '"id":"[^"]*' | cut -d'"' -f4)
-      api_validation "$dns_record_info6" "$domain_name" "IPv6"
-    fi
+  if [ "${domain_ipv6}" == true ]; then
+    dns_record_info6=$(read_record "$zone_id" "$zone_token" "AAAA" "$domain_name")
+    is_proxied6=$(echo "${dns_record_info6}" | grep -o '"proxied":[^,]*' | grep -o '[^:]*$')
+    dns_record_ip6=$(echo "${dns_record_info6}" | grep -o '"content":"[^"]*' | cut -d'"' -f 4)
+    dns_record_id_6=$(echo "${dns_record_info6}" | grep -o '"id":"[^"]*' | cut -d'"' -f4)
+    api_validation "$dns_record_info6" "$domain_name" "IPv6"
   fi
 }
 
@@ -468,7 +429,7 @@ for ((i = 0; i < n_doms; i++)); do
   get_ip "$domain_ip_type" "$domain_ipv4" "$domain_ipv6"
 
   ### Get IP Domain from DNS (proxied=false) or from Cloudflare API (proxied=true)
-  get_dns_record_ip "$domain_name" "$domain_proxied" "$api_zone_id" "$api_zone_token"
+  get_dns_record_ip "$domain_name" "$api_zone_id" "$api_zone_token"
   [ $error_dom == true ] && continue
 
   ### Check if IPv4 or proxy have changed and update if needed
