@@ -97,7 +97,7 @@ The automatic install examples below will place the script at _/usr/local/bin/_
 ```shell
 wget https://raw.githubusercontent.com/jmrplens/DyDNS_Cloudflare_IPv4-6/main/update-cloudflare-records.sh
 sudo chmod +x update-cloudflare-records.sh
-sudo mv update-cloudflare-dns.sh /usr/local/bin/update-cloudflare-records
+sudo mv update-cloudflare-records.sh /usr/local/bin/update-cloudflare-records
 ```
 
 ## Config file
@@ -111,7 +111,7 @@ wget https://raw.githubusercontent.com/jmrplens/DyDNS_Cloudflare_IPv4-6/main/upd
 Place the **config** file in the directory as the **update-cloudflare-dns** for above example at _/usr/local/bin/_
 
 ```shell
-sudo mv update-cloudflare-dns.yaml /usr/local/bin/update-cloudflare-records.yaml
+sudo mv update-cloudflare-records.yaml /usr/local/bin/update-cloudflare-records.yaml
 ```
 
 ## Config Parameters
