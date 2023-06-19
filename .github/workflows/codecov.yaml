@@ -1,0 +1,21 @@
+name: Test and coverage
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 2
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.0' # Not needed with a .ruby-version file
+          bundler-cache: true
+      - name: Install Ruby dependencies
+        run: bundle update --bundler && bundle install && gem install bashcov simplecov simplecov-cobertura
+      - name: Run script
+        run: bashcov update-cloudflare-records.sh
+      - name: Upload reports to Codecov
+        uses: codecov/codecov-action@v2
