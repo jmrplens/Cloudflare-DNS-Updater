@@ -26,4 +26,4 @@ jobs:
       - name: Run script
         run: bashcov update-cloudflare-records.sh
       - name: Upload reports to Codecov
-        uses: codecov/codecov-action@f32b3a3741e1053eb607407145bc9619351dc93b # v2.1.0
+        uses: codecov/codecov-action@eaaf4bedf32dbdc6b720b63067d99c4d77d6047d # v3.1.4
