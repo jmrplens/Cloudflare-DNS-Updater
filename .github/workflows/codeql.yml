@@ -51,7 +51,7 @@ jobs:
       #    project uses a compiled language
 
       - run: |
-           update-cloudflare-records.sh
+           bash update-cloudflare-records.sh
       #     make release
 
       - name: Perform CodeQL Analysis
