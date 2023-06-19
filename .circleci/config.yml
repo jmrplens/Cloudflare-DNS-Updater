@@ -6,10 +6,4 @@ orbs:
 workflows:
   check-build:
     jobs:
-      - shellcheck/check # job defined within the orb so no further config necessary
-      - build-job:
-          requires:
-            - shellcheck/check # only run build-job once shellcheck has run
-          filters:
-            branches:
-              only: main # only run build-job on main branch
+      - shellcheck/check # job defined within the orb so no further config 
