@@ -16,6 +16,6 @@ jobs:
       - name: Install Ruby dependencies
         run: bundle update --bundler && bundle install && gem install bashcov simplecov simplecov-cobertura
       - name: Run script
-        run: bashcov test/test.bats
+        run: bashcov update-cloudflare-records.sh
       - name: Upload reports to Codecov
         uses: codecov/codecov-action@v2
