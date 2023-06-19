@@ -2,14 +2,22 @@ name: Test and coverage
 
 on: [push, pull_request]
 
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - name: Harden Runner
+        uses: step-security/harden-runner@128a63446a954579617e875aaab7d2978154e969 # v2.4.0
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@ee0669bd1cc54295c223e0bb666b733df41de1c5 # v2.7.0
         with:
           fetch-depth: 2
-      - uses: ruby/setup-ruby@v1
+      - uses: ruby/setup-ruby@250fcd6a742febb1123a77a841497ccaa8b9e939 # v1.152.0
         with:
           ruby-version: '3.0' # Not needed with a .ruby-version file
           bundler-cache: true
@@ -18,4 +26,4 @@ jobs:
       - name: Run script
         run: bashcov update-cloudflare-records.sh
       - name: Upload reports to Codecov
-        uses: codecov/codecov-action@v2
+        uses: codecov/codecov-action@f32b3a3741e1053eb607407145bc9619351dc93b # v2.1.0
