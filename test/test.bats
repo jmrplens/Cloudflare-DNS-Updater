@@ -2,34 +2,43 @@ setup() {
     load 'test_helper/bats-support/load'
     load 'test_helper/bats-assert/load'
     load 'test_helper/bats-file/load'
-    load 'test_helper/bats-mock/load'
+    load 'test_helper/bats-mock/stub'
 
     # PATH to files to test
     DIR="$( cd "$( dirname "$BATS_TEST_FILENAME" )" >/dev/null 2>&1 && pwd )"
     PATH="$DIR/../:$PATH"
+
+    # STUBS
+
 }
 
+# bats test_tags=files
 @test 'assert_file_executable' {
   assert_file_executable update-cloudflare-records.sh
 }
 
+# bats test_tags=files
 @test "config file exists" {
     assert_file_exist update-cloudflare-records.yaml
 }
 
+# bats test_tags=run_script
 @test "script run without arguments" {
     run bash update-cloudflare-records.sh
 }
 
+# bats test_tags=run_script
 @test "script run with arguments" {
     run bash update-cloudflare-records.sh update-cloudflare-records.yaml
 }
 
+# bats test_tags=read_files
 @test "config file is loaded" {
     run bash update-cloudflare-records.sh
     assert [ -n '$config_file' ]
 }
 
+# bats test_tags=config_vars
 @test "settings are loaded" {
     run bash update-cloudflare-records.sh
     assert [ -n '$settings_cloudflare__zone_id' ]
@@ -37,6 +46,7 @@ setup() {
     assert [ -n '$settings_misc__create_if_no_exist' ]
 }
 
+# bats test_tags=config_vars
 @test "domains settings are loaded" {
     run bash update-cloudflare-records.sh
     assert [ -n '$domains__name' ]
