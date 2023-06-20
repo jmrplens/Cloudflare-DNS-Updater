@@ -1,4 +1,4 @@
-name: Unit and Coverage test with BATS
+name: Unit and Coverage test
 
 on: [push, pull_request]
 
