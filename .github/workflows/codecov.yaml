@@ -26,7 +26,7 @@ jobs:
         run: |
           bashcov unit-test.sh
       - name: Commit all changed files back to the repository
-      - uses: stefanzweifel/git-auto-commit-action@v4
+        uses: stefanzweifel/git-auto-commit-action@v4
         with:
           commit_message: Push coverage report
           branch: coverage-update
