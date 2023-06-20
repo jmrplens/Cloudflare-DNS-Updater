@@ -2,8 +2,6 @@ name: Unit and Coverage test
 
 on: [push, pull_request, workflow_dispatch]
 
-permissions: read-all
-
 jobs:
   build:
     runs-on: ubuntu-latest
