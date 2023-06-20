@@ -23,7 +23,7 @@ jobs:
           ruby-version: '3.0' # Not needed with a .ruby-version file
           bundler-cache: true
       - name: Install Ruby dependencies (bashcov, simplecov, simplecov-cobertura)
-        run: bundle update --bundler && bundle install && gem install bashcov simplecov simplecov-cobertura
+        run: bundle update --bundler && bundle install
       - name: Run unit test script
         run: bashcov unit-test.sh
       - name: Upload reports to Codecov
