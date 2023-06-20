@@ -1,9 +1,8 @@
 name: Unit and Coverage test
 
-on: [push, pull_request]
+on: [push, pull_request, workflow_dispatch]
 
-permissions:
-  contents: write
+permissions: read-all
 
 jobs:
   build:
