@@ -1,0 +1,6 @@
+
+DATE: 2023-06-20 22:25:42
+
+update-cloudflare-records.sh: line 416: $1: unbound variable
+update-cloudflare-records.sh: line 368: : No such file or directory
+update-cloudflare-records.sh: line 256: settings_cloudflare__zone_id: unbound variable

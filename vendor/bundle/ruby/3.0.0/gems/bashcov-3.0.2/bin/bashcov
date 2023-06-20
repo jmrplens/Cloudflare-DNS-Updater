@@ -1,0 +1,43 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+lib = File.expand_path("../lib", __dir__)
+$LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
+
+require "bashcov"
+
+Bashcov.parse_options! ARGV
+
+runner = Bashcov::Runner.new Bashcov.command
+status = runner.run
+coverage = runner.result
+
+require "simplecov"
+
+SimpleCov.start
+
+SimpleCov.command_name Bashcov.command_name
+SimpleCov.root Bashcov.root_directory
+
+result = SimpleCov::Result.new(coverage)
+if SimpleCov.use_merging
+  SimpleCov::ResultMerger.store_result(result)
+  result = SimpleCov::ResultMerger.merged_result
+end
+
+SimpleCov.at_exit do
+  puts "Run completed using #{Bashcov.fullname}" unless Bashcov.mute
+
+  begin
+    # XXX: suppress output from https://github.com/colszowka/simplecov-html/blob/9ec41504ab139fabfaddfc786dfdab5d6aca0bab/lib/simplecov-html.rb#L25
+    # See https://github.com/infertux/bashcov/issues/53
+    original_stdout = $stdout
+    $stdout = StringIO.new if Bashcov.mute
+
+    result.format!
+  ensure
+    $stdout = original_stdout
+  end
+end
+
+exit status.exitstatus
