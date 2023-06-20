@@ -3,23 +3,13 @@ name: "Code Scanning - Action"
 
 on:
   push:
-    branches: [main]
   pull_request:
-    branches: [main]
   schedule:
-    #        ┌───────────── minute (0 - 59)
-    #        │  ┌───────────── hour (0 - 23)
-    #        │  │ ┌───────────── day of the month (1 - 31)
-    #        │  │ │ ┌───────────── month (1 - 12 or JAN-DEC)
-    #        │  │ │ │ ┌───────────── day of the week (0 - 6 or SUN-SAT)
-    #        │  │ │ │ │
-    #        │  │ │ │ │
-    #        │  │ │ │ │
-    #        *  * * * *
     - cron: '30 1 * * 0'
+  workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   CodeQL-Build:
@@ -29,10 +19,6 @@ jobs:
     permissions:
       # required for all workflows
       security-events: write
-
-      # only required for workflows in private repositories
-      actions: read
-      contents: read
 
     steps:
       - name: Harden Runner
@@ -60,7 +46,6 @@ jobs:
 
       - run: |
            bash update-cloudflare-records.sh
-      #     make release
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@6c089f53dd51dc3fc7e599c3cb5356453a52ca9e # v2.20.0
