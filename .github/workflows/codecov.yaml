@@ -30,8 +30,6 @@ jobs:
         uses: stefanzweifel/git-auto-commit-action@v4
         with:
           commit_message: Push coverage report
-          branch: coverage-update
-          create_branch: true
           file_pattern: 'coverage/**'
           push_options: '--force'
       - name: Upload reports to Codecov
