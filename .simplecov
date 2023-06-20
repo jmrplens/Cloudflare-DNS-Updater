@@ -1,4 +1,4 @@
 SimpleCov.start do
   add_filter "/test/"
-  formatter SimpleCov::Formatter::CoberturaFormatter
+  add_filter "unit-test.sh"
 end
