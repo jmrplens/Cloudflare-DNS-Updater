@@ -26,9 +26,16 @@ jobs:
         run: bundle update --bundler && bundle install && gem install bashcov simplecov simplecov-cobertura
       - name: Run unit test script
         run: bashcov unit-test.sh
+      - name: Commit all changed files back to the repository
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: Push coverage report
+          file_pattern: 'coverage/**'
+          push_options: '--force'
       - name: Upload reports to Codecov
         uses: codecov/codecov-action@eaaf4bedf32dbdc6b720b63067d99c4d77d6047d # v3.1.4
-      - name: Upload reports to Codacy
-        env: 
-          CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
-        run: bash <(curl -Ls https://coverage.codacy.com/get.sh)
+      - name: Run codacy-coverage-reporter
+        uses: codacy/codacy-coverage-reporter-action@v1
+        with:
+          project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
+          coverage-reports: coverage/coverage.xml
