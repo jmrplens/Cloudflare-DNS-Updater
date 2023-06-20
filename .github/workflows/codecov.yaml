@@ -27,7 +27,13 @@ jobs:
           bashcov unit-test.sh
           rm -rf vendor
           rm -rf .bundle
-      
+      # Commit files
+      - name: commit files
+        run: |
+          git config --local user.email "jmrplens@gmail.com"
+          git config --local user.name "jmrplens"
+          git add -A
+          git diff-index --quiet HEAD || (git commit -a -m "updated logs" --allow-empty)
       # Push changes to repo
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v5
