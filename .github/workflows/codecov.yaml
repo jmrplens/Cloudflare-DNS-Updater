@@ -31,7 +31,7 @@ jobs:
           commit_message: Push coverage report
           branch: coverage-update
           create_branch: true
-          file_pattern: coverage/**
+          file_pattern: 'coverage/**'
       - name: Upload reports to Codecov
         uses: codecov/codecov-action@eaaf4bedf32dbdc6b720b63067d99c4d77d6047d # v3.1.4
       - name: Run codacy-coverage-reporter
