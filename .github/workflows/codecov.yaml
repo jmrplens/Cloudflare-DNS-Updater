@@ -25,20 +25,13 @@ jobs:
       - name: Run unit test script
         run: |
           bashcov unit-test.sh
-          rm -rf vendor
-          rm -rf .bundle
-      # Commit files
-      - name: commit files
-        run: |
-          git config --local user.email "jmrplens@gmail.com"
-          git config --local user.name "jmrplens"
-          git add -A
-          git diff-index --quiet HEAD || (git commit -a -m "updated logs" --allow-empty)
-      # Push changes to repo
-      - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v5
+      - name: Commit all changed files back to the repository
+      - uses: stefanzweifel/git-auto-commit-action@v4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          commit_message: Push coverage report
+          branch: coverage-update
+          create_branch: true
+          file_pattern: coverage/**
       - name: Upload reports to Codecov
         uses: codecov/codecov-action@eaaf4bedf32dbdc6b720b63067d99c4d77d6047d # v3.1.4
       - name: Run codacy-coverage-reporter
