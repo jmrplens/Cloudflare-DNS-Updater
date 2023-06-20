@@ -1,0 +1,18 @@
+
+DATE: 
+
+[34m[1mCurrent External IPv4 is: 86.127.254.205(B[m
+[34m[1mCurrent External IPv6 is: 2a0c:5a84:3203:cf00:3525:44a0:ff95:d12c(B[m
+
+[31mError! Can't get (B[m[33m[1msub.example.com(B[m[32m[1m IPv4 record information from Cloudflare API(B[m
+[31mError! Can't get (B[m[33m[1msub.example.com(B[m[32m[1m IPv6 record information from Cloudflare API(B[m
+[34m[1mCurrent External IPv4 is: 86.127.254.205(B[m
+[34m[1mCurrent External IPv6 is: 2a0c:5a84:3203:cf00:3525:44a0:ff95:d12c(B[m
+
+[31mError! Can't get (B[m[33m[1mexample.com(B[m[32m[1m IPv4 record information from Cloudflare API(B[m
+[31mError! Can't get (B[m[33m[1mexample.com(B[m[32m[1m IPv6 record information from Cloudflare API(B[m
+[34m[1mCurrent External IPv4 is: 86.127.254.205(B[m
+[34m[1mCurrent External IPv6 is: 2a0c:5a84:3203:cf00:3525:44a0:ff95:d12c(B[m
+
+[31mError! Can't get (B[m[33m[1mother.example.com(B[m[32m[1m IPv4 record information from Cloudflare API(B[m
+[31mError! Can't get (B[m[33m[1mother.example.com(B[m[32m[1m IPv6 record information from Cloudflare API(B[m
