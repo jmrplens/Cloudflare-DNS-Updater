@@ -28,3 +28,5 @@ jobs:
         run: bashcov unit-test.sh
       - name: Upload reports to Codecov
         uses: codecov/codecov-action@eaaf4bedf32dbdc6b720b63067d99c4d77d6047d # v3.1.4
+      - name: Upload reports to Codacy
+        run: bash <(curl -Ls https://coverage.codacy.com/get.sh)
