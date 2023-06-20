@@ -18,27 +18,27 @@ setup() {
 }
 
 @test "script run without arguments" {
-    update-cloudflare-records.sh
+    run bash update-cloudflare-records.sh
 }
 
 @test "script run with arguments" {
-    bash update-cloudflare-records.sh update-cloudflare-records.yaml
+    run bash update-cloudflare-records.sh update-cloudflare-records.yaml
 }
 
 @test "config file is loaded" {
-    update-cloudflare-records.sh
+    run bash update-cloudflare-records.sh
     assert [ -n '$config_file' ]
 }
 
 @test "settings are loaded" {
-    update-cloudflare-records.sh
+    run bash update-cloudflare-records.sh
     assert [ -n '$settings_cloudflare__zone_id' ]
     assert [ -n '$settings_cloudflare__zone_api_token' ]
     assert [ -n '$settings_misc__create_if_no_exist' ]
 }
 
 @test "domains settings are loaded" {
-    update-cloudflare-records.sh
+    run bash update-cloudflare-records.sh
     assert [ -n '$domains__name' ]
     assert [ -n '$domains__ttl' ]
     assert [ -n '$domains__proxied' ]
