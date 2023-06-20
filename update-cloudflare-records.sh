@@ -386,7 +386,7 @@ unset_variables() {
 
 create_variables() {
   local yaml_file="$1"
-  local prefix="$2"
+  local prefix=""
   local yaml_string
   yaml_string="$(parse_yaml "$yaml_file" "$prefix")"
   unset_variables "${yaml_string}"
