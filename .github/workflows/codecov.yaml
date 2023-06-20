@@ -23,15 +23,11 @@ jobs:
       - name: Install Ruby dependencies (bashcov, simplecov, simplecov-cobertura)
         run: bundle update --bundler && bundle install && gem install bashcov simplecov simplecov-cobertura
       - name: Run unit test script
-        run: bashcov unit-test.sh
-      # Commit files
-      - name: commit files
         run: |
-          git config --local user.email "jmrplens@gmail.com"
-          git config --local user.name "jmrplens"
-          git add -A
-          git diff-index --quiet HEAD || (git commit -a -m "updated logs" --allow-empty)
-
+          bashcov unit-test.sh
+          rm -rf vendor
+          rm -rf .bundle
+      
       # Push changes to repo
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v5
