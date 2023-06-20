@@ -1,11 +1,6 @@
 {
   "/bin/bash unit-test.sh": {
     "coverage": {
-      "/home/runner/work/DynDNS_Cloudflare_IPv4-6/DynDNS_Cloudflare_IPv4-6/unit-test.sh": [
-        null,
-        null,
-        1
-      ],
       "/home/runner/work/DynDNS_Cloudflare_IPv4-6/DynDNS_Cloudflare_IPv4-6/update-cloudflare-records.sh": [
         null,
         null,
@@ -37,7 +32,7 @@
         null,
         10,
         10,
-        9,
+        10,
         10,
         10,
         10,
@@ -502,6 +497,6 @@
         0
       ]
     },
-    "timestamp": 1687300912
+    "timestamp": 1687302748
   }
 }
