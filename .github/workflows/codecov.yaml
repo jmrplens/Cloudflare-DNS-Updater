@@ -1,9 +1,9 @@
-name: Test and coverage
+name: Unit and Coverage test
 
 on: [push, pull_request]
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
@@ -13,17 +13,19 @@ jobs:
         uses: step-security/harden-runner@55d479fb1c5bcad5a4f9099a5d9f37c8857b2845 # v2.4.1
         with:
           egress-policy: audit
-      - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+      - name: Checkout with all submodules
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
         with:
           fetch-depth: 2
           submodules: recursive
-      - uses: ruby/setup-ruby@250fcd6a742febb1123a77a841497ccaa8b9e939 # v1.152.0
+      - name: Get Ruby v3 with bundler cache
+        uses: ruby/setup-ruby@250fcd6a742febb1123a77a841497ccaa8b9e939 # v1.152.0
         with:
           ruby-version: '3.0' # Not needed with a .ruby-version file
           bundler-cache: true
-      - name: Install Ruby dependencies
+      - name: Install Ruby dependencies (bashcov, simplecov, simplecov-cobertura)
         run: bundle update --bundler && bundle install && gem install bashcov simplecov simplecov-cobertura
-      - name: Run script
+      - name: Run unit test script
         run: bashcov unit-test.sh
       - name: Upload reports to Codecov
         uses: codecov/codecov-action@eaaf4bedf32dbdc6b720b63067d99c4d77d6047d # v3.1.4

@@ -4,6 +4,8 @@
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/jmrplens/DynDNS_Cloudflare_IPv4-6/badge)](https://securityscorecards.dev/viewer/?platform=github.com&org=jmrplens&repo=DynDNS_Cloudflare_IPv4-6)
 [![OpenSSF Best Practices](https://bestpractices.coreinfrastructure.org/projects/7472/badge)](https://bestpractices.coreinfrastructure.org/projects/7472)
 [![CircleCI](https://dl.circleci.com/status-badge/img/gh/jmrplens/DynDNS_Cloudflare_IPv4-6/tree/main.svg?style=shield)](https://dl.circleci.com/status-badge/redirect/gh/jmrplens/DynDNS_Cloudflare_IPv4-6/tree/main) 
+
+[![Unit and Coverage test with BATS](https://github.com/jmrplens/DynDNS_Cloudflare_IPv4-6/actions/workflows/codecov.yaml/badge.svg)](https://github.com/jmrplens/DynDNS_Cloudflare_IPv4-6/actions/workflows/codecov.yaml)
 [![codecov](https://codecov.io/github/jmrplens/DynDNS_Cloudflare_IPv4-6/branch/main/graph/badge.svg?token=N7ZTDZSQXP)](https://codecov.io/github/jmrplens/DynDNS_Cloudflare_IPv4-6)
 
 # Dynamic DNS - Cloudflare
