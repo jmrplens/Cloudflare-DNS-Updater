@@ -12,5 +12,5 @@ workflows:
     jobs:
       - bats/run:
           formatter: junit
-          path: tests
+          path: ./test
           timing: true
