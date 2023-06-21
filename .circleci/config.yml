@@ -4,14 +4,7 @@ orbs:
   shellcheck: circleci/shellcheck@3.1.2
   bats: circleci/bats@1.1.0
   submodule: livup/submodule@1.0.0
-
-jobs:
-  load_modules:
-    docker:
-      # replace with your preferred image
-      - image: cimg/base:stable
-    steps:
-      - submodule/init
+  
   
 workflows:
   ShellCheck:
@@ -19,6 +12,11 @@ workflows:
       - shellcheck/check # job defined within the orb so no further config 
   BATS:
     jobs:
+      - load_modules:
+          docker:
+            - image: cimg/base:stable
+          steps:
+            - submodule/init
       - bats/run:
           formatter: junit
           path: ./test
