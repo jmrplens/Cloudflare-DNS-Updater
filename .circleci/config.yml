@@ -11,7 +11,13 @@ workflows:
       - shellcheck/check # job defined within the orb so no further config 
   BATS:
     jobs:
-      - monorepo-orb/setup-dynamic-config
+      - monorepo-orb/setup-dynamic-config:
+          modules: |
+            test/bats
+            test/test_helper/bats-support
+            test/test_helper/bats-assert
+            test/test_helper/bats-file
+            test/test_helper/bats-mock
       - bats/run:
           formatter: junit
           path: ./test
