@@ -9,6 +9,6 @@ SimpleCov.start do
     SimpleCov::Formatter::CSVFormatter,
     SimpleCov::Formatter::CoberturaFormatter,
   ])
-  add_filter "unit-test.sh"
-  add_filter "test"
+  add_filter "/unit-test.sh"
+  add_filter "test/"
 end
