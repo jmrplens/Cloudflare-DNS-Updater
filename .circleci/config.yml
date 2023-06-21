@@ -12,6 +12,7 @@ workflows:
   BATS:
     jobs:
       - monorepo-orb/setup-dynamic-config:
+          force-all: true
           modules: |
             test/bats
             test/test_helper/bats-support
