@@ -7,6 +7,8 @@
 
 [![Unit and Coverage test with BATS](https://github.com/jmrplens/DynDNS_Cloudflare_IPv4-6/actions/workflows/codecov.yaml/badge.svg)](https://github.com/jmrplens/DynDNS_Cloudflare_IPv4-6/actions/workflows/codecov.yaml)
 [![codecov](https://codecov.io/github/jmrplens/DynDNS_Cloudflare_IPv4-6/branch/main/graph/badge.svg?token=N7ZTDZSQXP)](https://codecov.io/github/jmrplens/DynDNS_Cloudflare_IPv4-6)
+[![Static Badge](https://img.shields.io/badge/Coverage_Report-View-blue?logo=gnubash)](https://dyn-dns-cov.jmrp.dev/)
+
 
 # Dynamic DNS - Cloudflare
 
