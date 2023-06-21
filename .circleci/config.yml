@@ -14,7 +14,7 @@ jobs:
       - submodule/init
   
 workflows:
-  Shellcheck:
+  ShellCheck:
     jobs:
       - shellcheck/check # job defined within the orb so no further config 
   BATS:
