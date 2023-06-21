@@ -17,4 +17,4 @@ SimpleCov.configure do
   add_filter %r{^/test/}
 end
 
-SimpleCov.start
+SimpleCov.start 'Unit Tests'
