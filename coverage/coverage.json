@@ -1,7 +1,10 @@
 {
-  "/bin/bash unit-test.sh": {
-    "coverage": {
-      "/home/runner/work/DynDNS_Cloudflare_IPv4-6/DynDNS_Cloudflare_IPv4-6/update-cloudflare-records.sh": [
+  "meta": {
+    "simplecov_version": "0.21.2"
+  },
+  "coverage": {
+    "/home/runner/work/DynDNS_Cloudflare_IPv4-6/DynDNS_Cloudflare_IPv4-6/update-cloudflare-records.sh": {
+      "lines": [
         null,
         null,
         null,
@@ -494,9 +497,14 @@
         0,
         0,
         0,
-        0
+        0,
+        null,
+        null,
+        null,
+        null
       ]
-    },
-    "timestamp": 1687312601
+    }
+  },
+  "groups": {
   }
 }
