@@ -4,7 +4,7 @@ require 'simplecov-cobertura'
 
 SimpleCov.add_filter "/unit-test.sh"
 SimpleCov.add_filter "/test/"
-SimpleCov.formatters = [
+SimpleCov.formatters = SimpleCov::Formatter::MultiFormatter.new[
   SimpleCov::Formatter::HTMLFormatter,
   SimpleCov::Formatter::CSVFormatter,
   SimpleCov::Formatter::CoberturaFormatter,
