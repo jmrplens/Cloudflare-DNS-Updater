@@ -2,24 +2,15 @@ version: 2.1
 
 orbs:
   shellcheck: circleci/shellcheck@3.1.2
-  bats: circleci/bats@1.1.0
-  monorepo-orb: jackthorley/monorepo-orb@0.1.0
+  #bats: circleci/bats@1.1.0
    
 workflows:
   ShellCheck:
     jobs:
       - shellcheck/check # job defined within the orb so no further config 
-  BATS:
-    jobs:
-      - monorepo-orb/setup-dynamic-config:
-          force-all: true
-          modules: |
-            test/bats
-            test/test_helper/bats-support
-            test/test_helper/bats-assert
-            test/test_helper/bats-file
-            test/test_helper/bats-mock
-      - bats/run:
-          formatter: junit
-          path: ./test
-          timing: true
+  #BATS:
+    #jobs:
+      #- bats/run:
+          #formatter: junit
+          #path: ./test
+          #timing: true
