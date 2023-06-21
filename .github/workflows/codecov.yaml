@@ -22,7 +22,7 @@ jobs:
           bundler-cache: true
           cache-version: 1
       - name: Instal gems
-        run: gem install bashcov simplecov simplecov-cobertura simplecov-csv simplecov_json_formatter simplecov-tailwindcss
+        run: gem install bashcov simplecov codecov simplecov-cobertura simplecov-csv simplecov_json_formatter simplecov-tailwindcss
       - name: Run unit test script
         run: |
           bashcov unit-test.sh
