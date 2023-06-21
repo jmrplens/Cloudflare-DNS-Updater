@@ -1,6 +1,7 @@
 require 'codecov'
 require 'simplecov'
 require 'simplecov-cobertura'
+require 'simplecov-csv'
 
 SimpleCov.add_filter "/unit-test.sh"
 SimpleCov.add_filter "/test/"
