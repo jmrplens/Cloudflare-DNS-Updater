@@ -7,7 +7,6 @@ require 'simplecov_json_formatter'
 
 SimpleCov.configure do
   SimpleCov.formatters = SimpleCov::Formatter::MultiFormatter.new([
-    SimpleCov::Formatter::HTMLFormatter,
     SimpleCov::Formatter::CSVFormatter,
     SimpleCov::Formatter::CoberturaFormatter,
     SimpleCov::Formatter::JSONFormatter,
