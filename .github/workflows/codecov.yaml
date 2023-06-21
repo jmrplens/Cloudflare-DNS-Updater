@@ -43,6 +43,7 @@ jobs:
           rm -rf vendor
           rm -rf Gemfile.lock
       - name: Copy files to Docs folder
+        run: |
           \cp coverage/dist docs/dist
           \cp coverage/index.html docs/index.html
       - name: Commit all changed files back to the repository
