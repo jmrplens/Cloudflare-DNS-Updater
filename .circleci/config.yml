@@ -10,6 +10,7 @@ workflows:
       - shellcheck/check # job defined within the orb so no further config 
   BATS:
     jobs:
+    steps:
       - run: git submodule sync --recursive && git submodule update --recursive --init
       - bats/run:
           formatter: junit
