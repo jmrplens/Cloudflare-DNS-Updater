@@ -26,11 +26,12 @@ jobs:
         run: |
           bashcov unit-test.sh
           rm -rf vendor
+          rm -rf Gemfile.lock
       - name: Commit all changed files back to the repository
         uses: stefanzweifel/git-auto-commit-action@v4
         with:
           commit_message: Push coverage report
-          file_pattern: 'coverage/** *.lock'
+          file_pattern: 'coverage/**'
           commit_user_name: jmrplens
           commit_user_email: jmrplens@gmail.com
       - name: Upload reports to Codecov
