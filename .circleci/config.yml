@@ -3,6 +3,7 @@ version: 2.1
 orbs:
   shellcheck: circleci/shellcheck@3.1.2
   bats: circleci/bats@1.1.0
+  submodule: livup/submodule@1.0.0
 
 jobs:
   load_modules:
