@@ -2,8 +2,13 @@ name: Unit and Coverage test
 
 on: [push, pull_request, workflow_dispatch]
 
+permissions:
+  contents: read
+
 jobs:
   build:
+    permissions:
+      contents: write  # for stefanzweifel/git-auto-commit-action to push code in repo
     runs-on: ubuntu-latest
     steps:
       - name: Harden Runner
@@ -29,7 +34,7 @@ jobs:
       - name: Upload reports to Codecov
         uses: codecov/codecov-action@eaaf4bedf32dbdc6b720b63067d99c4d77d6047d # v3.1.4
       - name: Run codacy-coverage-reporter
-        uses: codacy/codacy-coverage-reporter-action@v1
+        uses: codacy/codacy-coverage-reporter-action@89d6c85cfafaec52c72b6c5e8b2878d33104c699 # v1.3.0
         with:
           project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
           coverage-reports: coverage/coverage.xml
@@ -38,7 +43,7 @@ jobs:
           rm -rf vendor
           rm -rf Gemfile.lock
       - name: Commit all changed files back to the repository
-        uses: stefanzweifel/git-auto-commit-action@v4
+        uses: stefanzweifel/git-auto-commit-action@3ea6ae190baf489ba007f7c92608f33ce20ef04a # v4.16.0
         with:
           commit_message: Push coverage report
           file_pattern: 'coverage/**'
