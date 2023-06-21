@@ -11,7 +11,7 @@ workflows:
       - shellcheck/check # job defined within the orb so no further config 
   BATS:
     jobs:
-      - submodule/init
+      - submodule
       - bats/run:
           formatter: junit
           path: ./test
