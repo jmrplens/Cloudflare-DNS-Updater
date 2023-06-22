@@ -14,8 +14,6 @@
 
 Bash script to update IPv4 and IPv6 records in Cloudflare. Update with WAN or LAN IP.
 
-Based on this project: [DDNS-Cloudflare-Bash](https://github.com/fire1ce/DDNS-Cloudflare-Bash).
-
 ## Example
 
 <table>
