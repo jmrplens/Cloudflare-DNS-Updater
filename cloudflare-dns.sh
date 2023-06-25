@@ -308,11 +308,11 @@ settings_domains_validation() {
 
 settings_file_validation() {
   if [[ -z "$1" ]]; then # If not set explicit config file and no exist default config
-    if [ ! -f "${parent_path}"/update-cloudflare-records.yaml ]; then
-      error_msg "Error! Missing configuration file update-cloudflare-records.yaml or invalid syntax!"
+    if [ ! -f "${parent_path}"/cloudflare-dns.yaml ]; then
+      error_msg "Error! Missing configuration file cloudflare-dns.yaml or invalid syntax!"
       exit 0
     else
-      config_file=${parent_path}/update-cloudflare-records.yaml
+      config_file=${parent_path}/cloudflare-dns.yaml
     fi
   else
     if [ ! -f "${parent_path}"/"$1" ]; then
@@ -395,103 +395,106 @@ create_variables() {
 
 ##################################################################
 # SCRIPT
-
-###  Create update-cloudflare-records.log file of the last run for debug
-parent_path="$(dirname "${BASH_SOURCE[0]}")"
-FILE=${parent_path}/update-cloudflare-records.log
-if ! [ -x "$FILE" ]; then
-  touch "$FILE"
-fi
-
-LOG_FILE=${parent_path}'/update-cloudflare-records.log'
-
-### Write last run of STDOUT & STDERR as log file and prints to screen
-exec > >(tee "$LOG_FILE") 2>&1
-printf "\n"
-echo "DATE: $(date "+%Y-%m-%d %H:%M:%S")"
-printf "\n"
-
-#################################
-# Locate .yaml config file or set custom config file
-read -r config_file <<< "$(settings_file_validation "$1")"
-
-#################################
-# Create variables from .yaml config file
-create_variables "$config_file"
-
-#################################
-# VALIDATE CONFIG FILE SETTINGS (.yaml)
-settings_validation
-settings_domains_validation
-
-#################################
-# Cloudflare API
-read -r api_zone_id api_zone_token <<< "$(get_api_settings)"
-
-#################################
-# Iterate over domains array
-n_doms=${#domains__name[@]}
-for ((i = 0; i < n_doms; i++)); do
-
-  ### Get ith-domain settings
-  read -r domain_name domain_ip_type enable_ipv4 enable_ipv6 domain_proxied domain_ttl <<< "$(get_domain_settings "$i")"
-  [[ "${domain_ttl}" == "auto" ]] && ttl=1 || ttl=${domain_ttl}
-
-  ### Get Host IP (external or internal) [VARS: ip4 and ip6]
-  get_ip "$domain_ip_type" "$enable_ipv4" "$enable_ipv6"
-
-  ### Get IP Domain from Cloudflare API
-  get_dns_record_ip "$domain_name" "$api_zone_id" "$api_zone_token"
-  [ $error_dom == true ] && continue
-
-  ### Check if IPv4 or proxy have changed and update if needed
-  if [ "$enable_ipv4" == true ] && [ "${dns_record_ip4}" == "${ip4}" ] && [ "${is_proxied4}" == "${domain_proxied}" ]; then
-    up_to_date "IPv4" "$domain_name" "$dns_record_ip4" "$is_proxied4"
-  else
-    ### Push new dns record information to cloudflare's api
-    load_msg "New DNS record IPv4 of ${domain_name} is: ${dns_record_ip4}. Trying to update..."
-    update_dns_record_4=$(write_record "$api_zone_id" "$dns_record_id_4" "$api_zone_token" "A" "$domain_name" "$ip4" "$ttl" "$domain_proxied")
-    push_validation "$update_dns_record_4" "IPv4"
+dyndns-update() {
+  ###  Create cloudflare-dns.log file of the last run for debug
+  parent_path="$(dirname "${BASH_SOURCE[0]}")"
+  FILE=${parent_path}/cloudflare-dns.log
+  if ! [ -x "$FILE" ]; then
+    touch "$FILE"
   fi
 
-  ### Check if IPv6 or proxy have changed and update if needed
-  if [ "$enable_ipv6" == true ] && [ "${dns_record_ip6}" == "${ip6}" ] && [ "${is_proxied6}" == "${domain_proxied}" ]; then
-    up_to_date "IPv6" "$domain_name" "$dns_record_ip6" "$is_proxied6"
-  else
-    ### Push new dns record information to cloudflare's api
-    load_msg "New DNS record IPv6 of ${domain_name} is: ${dns_record_ip6}. Trying to update..."
-    update_dns_record_6=$(write_record "$api_zone_id" "$dns_record_id_6" "$api_zone_token" "AAAA" "$domain_name" "$ip6" "$ttl" "$domain_proxied")
-    push_validation "$update_dns_record_6" "IPv6"
-  fi
+  LOG_FILE=${parent_path}'/cloudflare-dns.log'
 
-  # Show results
-  if [ "$domain_ttl" == "auto" ]; then
-    ttl_info="Automatic"
-  else
-    ttl_info="$ttl secods"
-  fi
-
+  ### Write last run of STDOUT & STDERR as log file and prints to screen
+  exec > >(tee "$LOG_FILE") 2>&1
   printf "\n"
-  green_msg "----------------------------------------"
-  done_fb_msg "DOMAIN: $domain_name"
-  green_msg "----------------------------------------"
-  [[ "$enable_ipv4" == true ]] && green_msg "Current IPv4 Address: $ip4"
-  [[ "$enable_ipv6" == true ]] && green_msg "Current IPv6 Address: $ip6"
-  green_msg "Cloudflare proxy    : $domain_proxied"
-  green_msg "TTL                 : $ttl_info"
-  green_msg "----------------------------------------"
+  echo "DATE: $(date "+%Y-%m-%d %H:%M:%S")"
   printf "\n"
 
-  ### Telegram notification
-  # shellcheck disable=SC2154
-  if [ "${notifications_telegram_enabled}" == true ]; then
-    telegram_notification=$(
-      curl -s -X GET "https://api.telegram.org/bot${notifications_telegram_bot_token}/sendMessage?chat_id=${notifications_telegram_chat_id}" --data-urlencode "text=${domain_name} DNS record updated to: ${ip4} / ${ip6}"
-    )
-    if [[ ${telegram_notification} == *"\"ok\":false"* ]]; then
-      echo "${telegram_notification}"
-      echo "Error! Telegram notification failed"
+  #################################
+  # Locate .yaml config file or set custom config file
+  read -r config_file <<< "$(settings_file_validation "$1")"
+
+  #################################
+  # Create variables from .yaml config file
+  create_variables "$config_file"
+
+  #################################
+  # VALIDATE CONFIG FILE SETTINGS (.yaml)
+  settings_validation
+  settings_domains_validation
+
+  #################################
+  # Cloudflare API
+  read -r api_zone_id api_zone_token <<< "$(get_api_settings)"
+
+  #################################
+  # Iterate over domains array
+  n_doms=${#domains__name[@]}
+  for ((i = 0; i < n_doms; i++)); do
+
+    ### Get ith-domain settings
+    read -r domain_name domain_ip_type enable_ipv4 enable_ipv6 domain_proxied domain_ttl <<< "$(get_domain_settings "$i")"
+    [[ "${domain_ttl}" == "auto" ]] && ttl=1 || ttl=${domain_ttl}
+
+    ### Get Host IP (external or internal) [VARS: ip4 and ip6]
+    get_ip "$domain_ip_type" "$enable_ipv4" "$enable_ipv6"
+
+    ### Get IP Domain from Cloudflare API
+    get_dns_record_ip "$domain_name" "$api_zone_id" "$api_zone_token"
+    [ $error_dom == true ] && continue
+
+    ### Check if IPv4 or proxy have changed and update if needed
+    if [ "$enable_ipv4" == true ] && [ "${dns_record_ip4}" == "${ip4}" ] && [ "${is_proxied4}" == "${domain_proxied}" ]; then
+      up_to_date "IPv4" "$domain_name" "$dns_record_ip4" "$is_proxied4"
+    else
+      ### Push new dns record information to cloudflare's api
+      load_msg "New DNS record IPv4 of ${domain_name} is: ${dns_record_ip4}. Trying to update..."
+      update_dns_record_4=$(write_record "$api_zone_id" "$dns_record_id_4" "$api_zone_token" "A" "$domain_name" "$ip4" "$ttl" "$domain_proxied")
+      push_validation "$update_dns_record_4" "IPv4"
     fi
-  fi
 
-done
+    ### Check if IPv6 or proxy have changed and update if needed
+    if [ "$enable_ipv6" == true ] && [ "${dns_record_ip6}" == "${ip6}" ] && [ "${is_proxied6}" == "${domain_proxied}" ]; then
+      up_to_date "IPv6" "$domain_name" "$dns_record_ip6" "$is_proxied6"
+    else
+      ### Push new dns record information to cloudflare's api
+      load_msg "New DNS record IPv6 of ${domain_name} is: ${dns_record_ip6}. Trying to update..."
+      update_dns_record_6=$(write_record "$api_zone_id" "$dns_record_id_6" "$api_zone_token" "AAAA" "$domain_name" "$ip6" "$ttl" "$domain_proxied")
+      push_validation "$update_dns_record_6" "IPv6"
+    fi
+
+    # Show results
+    if [ "$domain_ttl" == "auto" ]; then
+      ttl_info="Automatic"
+    else
+      ttl_info="$ttl secods"
+    fi
+
+    printf "\n"
+    green_msg "----------------------------------------"
+    done_fb_msg "DOMAIN: $domain_name"
+    green_msg "----------------------------------------"
+    [[ "$enable_ipv4" == true ]] && green_msg "Current IPv4 Address: $ip4"
+    [[ "$enable_ipv6" == true ]] && green_msg "Current IPv6 Address: $ip6"
+    green_msg "Cloudflare proxy    : $domain_proxied"
+    green_msg "TTL                 : $ttl_info"
+    green_msg "----------------------------------------"
+    printf "\n"
+
+    ### Telegram notification
+    # shellcheck disable=SC2154
+    if [ "${notifications_telegram_enabled}" == true ]; then
+      telegram_notification=$(
+        curl -s -X GET "https://api.telegram.org/bot${notifications_telegram_bot_token}/sendMessage?chat_id=${notifications_telegram_chat_id}" --data-urlencode "text=${domain_name} DNS record updated to: ${ip4} / ${ip6}"
+      )
+      if [[ ${telegram_notification} == *"\"ok\":false"* ]]; then
+        echo "${telegram_notification}"
+        echo "Error! Telegram notification failed"
+      fi
+    fi
+
+  done
+}
+
+"$@"

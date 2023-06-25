@@ -3,7 +3,7 @@
 [![Shellcheck](https://github.com/jmrplens/DynDNS_Cloudflare_IPv4-6/actions/workflows/shellcheck.yaml/badge.svg?branch=main)](https://github.com/jmrplens/DynDNS_Cloudflare_IPv4-6/actions/workflows/shellcheck.yaml)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/jmrplens/DynDNS_Cloudflare_IPv4-6/badge)](https://securityscorecards.dev/viewer/?platform=github.com&org=jmrplens&repo=DynDNS_Cloudflare_IPv4-6)
 [![OpenSSF Best Practices](https://bestpractices.coreinfrastructure.org/projects/7472/badge)](https://bestpractices.coreinfrastructure.org/projects/7472)
-[![CircleCI](https://dl.circleci.com/status-badge/img/gh/jmrplens/DynDNS_Cloudflare_IPv4-6/tree/main.svg?style=shield)](https://dl.circleci.com/status-badge/redirect/gh/jmrplens/DynDNS_Cloudflare_IPv4-6/tree/main) 
+[![CircleCI](https://dl.circleci.com/status-badge/img/gh/jmrplens/DynDNS_Cloudflare_IPv4-6/tree/main.svg?style=shield)](https://dl.circleci.com/status-badge/redirect/gh/jmrplens/DynDNS_Cloudflare_IPv4-6/tree/main)
 
 [![Unit and Coverage test with BATS](https://github.com/jmrplens/DynDNS_Cloudflare_IPv4-6/actions/workflows/codecov.yaml/badge.svg)](https://github.com/jmrplens/DynDNS_Cloudflare_IPv4-6/actions/workflows/codecov.yaml)
 [![codecov](https://codecov.io/github/jmrplens/DynDNS_Cloudflare_IPv4-6/branch/main/graph/badge.svg?token=N7ZTDZSQXP)](https://codecov.io/github/jmrplens/DynDNS_Cloudflare_IPv4-6)
@@ -23,7 +23,7 @@ Bash script to update IPv4 and IPv6 records in Cloudflare. Update with WAN or LA
 <tr>
 <td> <img width="100%" alt="Screenshot of Termius (9-6-23, 01-13-49)" src="https://github.com/jmrplens/DynDNS_Cloudflare_IPv4-6/assets/28966312/3209e061-27ee-4644-9890-d509a8ca4a28"> </td>
 <td>
-    
+
 ```yaml
 domains:
     - name: jmrp.dev
@@ -53,7 +53,7 @@ settings:
         - create_if_no_exist: false
 
 notifications:
-    telegram: 
+    telegram:
         enabled: false
         bot_token: token
         chat_id: id
@@ -74,7 +74,7 @@ notifications:
 
 ## Requirements
 
-- [curl](https://everything.curl.dev/get) 
+- [curl](https://everything.curl.dev/get)
 - Cloudflare [api-token](https://dash.cloudflare.com/profile/api-tokens) with ZONE-DNS-EDIT Permissions
 - DNS Record must be pre created in web interface (WIP: Create record if no exist)
 
@@ -100,23 +100,23 @@ You can place the script at any location manually.
 The automatic install examples below will place the script at _/usr/local/bin/_
 
 ```shell
-wget https://raw.githubusercontent.com/jmrplens/DyDNS_Cloudflare_IPv4-6/main/update-cloudflare-records.sh
-sudo chmod +x update-cloudflare-records.sh
-sudo mv update-cloudflare-records.sh /usr/local/bin/update-cloudflare-records
+wget https://raw.githubusercontent.com/jmrplens/DyDNS_Cloudflare_IPv4-6/main/cloudflare-dns.sh
+sudo chmod +x cloudflare-dns.sh
+sudo mv cloudflare-dns.sh /usr/local/bin/cloudflare-dns
 ```
 
 ## Config file
 
-You can use default config file _update-cloudflare-records.yaml_ or pass your own config file as parameter to script.
+You can use default config file _cloudflare-dns.yaml_ or pass your own config file as parameter to script.
 
 ```shell
-wget https://raw.githubusercontent.com/jmrplens/DyDNS_Cloudflare_IPv4-6/main/update-cloudflare-records.yaml
+wget https://raw.githubusercontent.com/jmrplens/DyDNS_Cloudflare_IPv4-6/main/cloudflare-dns.yaml
 ```
 
 Place the **config** file in the directory as the **update-cloudflare-dns** for above example at _/usr/local/bin/_
 
 ```shell
-sudo mv update-cloudflare-records.yaml /usr/local/bin/update-cloudflare-records.yaml
+sudo mv cloudflare-dns.yaml /usr/local/bin/cloudflare-dns.yaml
 ```
 
 ## Config Parameters
@@ -129,7 +129,7 @@ domains:
     ipv6: true
     proxied: true
     ttl: auto
-    
+
 settings:
   cloudflare:
     - zone_id: #########
@@ -138,7 +138,7 @@ settings:
     - create_if_no_exist: false
 
 notifications:
-  telegram: 
+  telegram:
     enabled: false
     bot_token: token
     chat_id: id
@@ -203,13 +203,13 @@ domains:
 When placed in _/usr/local/bin/_
 
 ```shell
-update-cloudflare-records
+cloudflare-dns dyndns-update
 ```
 
 With your config file (need to be placed in same folder)
 
 ```shell
-update-cloudflare-records yoru_config.conf
+cloudflare-dns dyndns-update your_config.yaml
 ```
 
 ## Automation With Crontab
@@ -229,9 +229,9 @@ crontab -e
 <tr>
   <td> Run <a href="https://crontab.guru/every-1-minute">every minute</a> </td>
 <td>
-    
+
 ```shell
-* * * * * /usr/local/bin/update-cloudflare-records
+* * * * * /usr/local/bin/cloudflare-dns dyndns-update
 ```
 
 </td>
@@ -239,9 +239,9 @@ crontab -e
 <tr>
   <td> Run every minute with your specific config file </td>
 <td>
-    
+
 ```shell
-* * * * * /usr/local/bin/update-cloudflare-records myconfig.yaml
+* * * * * /usr/local/bin/cloudflare-dns dyndns-update myconfig.yaml
 ```
 
 </td>
@@ -249,9 +249,9 @@ crontab -e
 <tr>
   <td> Run every <a href="https://crontab.guru/#*/2_*_*_*_*">every 2 minutes</a> </td>
 <td>
-    
+
 ```shell
-*/2 * * * * /usr/local/bin/update-cloudflare-records
+*/2 * * * * /usr/local/bin/cloudflare-dns dyndns-update
 ```
 
 </td>
@@ -259,9 +259,9 @@ crontab -e
 <tr>
   <td> Run at <a href="https://crontab.guru/#@reboot">boot</a> </td>
 <td>
-    
+
 ```shell
-@reboot /usr/local/bin/update-cloudflare-records
+@reboot /usr/local/bin/cloudflare-dns dyndns-update
 ```
 
 </td>
@@ -269,9 +269,9 @@ crontab -e
 <tr>
   <td> Run 1 minute after boot </td>
 <td>
-    
+
 ```shell
-@reboot sleep 60 && /usr/local/bin/update-cloudflare-records
+@reboot sleep 60 && /usr/local/bin/cloudflare-dns dyndns-update
 ```
 
 </td>
@@ -286,5 +286,5 @@ Log file will be located at the script's location.
 Example:
 
 ```bash
-/usr/local/bin/update-cloudflare-records.log
+/usr/local/bin/cloudflare-dns.log
 ```
