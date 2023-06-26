@@ -14,7 +14,3 @@
 	path = test/test_helper/bats-file
 	url = https://github.com/bats-core/bats-file.git
 	ignore = dirty
-[submodule "test/test_helper/bats-mock"]
-	path = test/test_helper/bats-mock
-	url = https://github.com/jasonkarns/bats-mock.git
-	ignore = dirty
