@@ -7,11 +7,11 @@ RUN apk update && \
     apk add curl=8.1.2-r0
     
 
-COPY ./update-cloudflare-records.sh /usr/local/bin
-COPY ./update-cloudflare-records.yaml /usr/local/bin
+COPY ./cloudflare-dns.sh /usr/local/bin
+COPY ./cloudflare-dns.yaml /usr/local/bin
 
-RUN cp -a /usr/local/bin/update-cloudflare-records.sh /usr/local/bin/update-cloudflare-records
-RUN rm -rf /usr/local/bin/update-cloudflare-records.sh
-RUN chmod +x /usr/local/bin/update-cloudflare-records
+RUN cp -a /usr/local/bin/cloudflare-dns.sh /usr/local/bin/cloudflare-dns
+RUN rm -rf /usr/local/bin/cloudflare-dns.sh
+RUN chmod +x /usr/local/bin/cloudflare-dns
 
-CMD ["update-cloudflare-records"]
+CMD ["cloudflare-dns dydns-update"]
