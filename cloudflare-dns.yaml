@@ -10,10 +10,10 @@ domains:
     ipv4: true
     ipv6: true
     proxied: true
-    ttl: auto
+    ttl: 3600
   - name: other.example.com
-    ip_type: external
-    ipv4: true
+    ip_type: internal
+    ipv4: false
     ipv6: true
     proxied: false
     ttl: auto
@@ -26,7 +26,7 @@ settings:
     - create_if_no_exist: false
 
 notifications:
-  telegram: 
+  telegram:
     enabled: false
     bot_token: token
     chat_id: id

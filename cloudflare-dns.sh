@@ -125,7 +125,6 @@ external_validation() {
     exit 0
   else
     blue_bold_msg "Current External $2 is: $1"
-    return 1
   fi
 }
 internal_validation() {
@@ -133,8 +132,7 @@ internal_validation() {
     error_msg "Error! Can't read $2 from $3"
     exit 0
   else
-    done_msg "Internal $3 $2 is: $1"
-    return 1
+    done_msg "Internal$3 $2 is: $1"
   fi
 }
 read_record() {
@@ -496,5 +494,3 @@ dyndns-update() {
 
   done
 }
-
-"$@"
