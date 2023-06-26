@@ -52,7 +52,8 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@2eb1c1961a95fc15694676618e422e8ba1d63825
         with:
-          context: .github
+          context: .
+          file: .github/Dockerfile
           push: true
           build-args: bashver=5.1.4
           tags: ${{ steps.meta.outputs.tags }}
