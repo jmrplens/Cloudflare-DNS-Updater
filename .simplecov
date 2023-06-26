@@ -1,4 +1,5 @@
 require 'codecov'
+require 'bashcov'
 require 'simplecov'
 require 'simplecov-cobertura'
 require 'simplecov-csv'
@@ -16,4 +17,9 @@ SimpleCov.configure do
   add_filter %r{^/test/}
 end
 
-SimpleCov.start 'Unit Tests'
+SimpleCov.command_name 'bats'
+SimpleCov.start 'shell'
+
+SimpleCov.at_exit do
+  SimpleCov.result.format!
+end

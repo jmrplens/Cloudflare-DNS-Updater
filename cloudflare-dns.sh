@@ -63,29 +63,29 @@ green_msg() {
 }
 # shellcheck disable=SC2154
 get_domain_settings() {
-  domain_name=${domains__name[$i]}
+  domain_name=${domains__name[$1]}
   if [ $def_ip_type_enabled == false ]; then
-    domain_ip_type=${domains__ip_type[$i]}
+    domain_ip_type=${domains__ip_type[$1]}
   else
     domain_ip_type=${def_ip_type}
   fi
   if [ $def_ipv4_enabled == false ]; then
-    enable_ipv4=${domains__ipv4[$i]}
+    enable_ipv4=${domains__ipv4[$1]}
   else
     enable_ipv4=${def_ipv4}
   fi
   if [ $def_ipv6_enabled == false ]; then
-    enable_ipv6=${domains__ipv6[$i]}
+    enable_ipv6=${domains__ipv6[$1]}
   else
     enable_ipv6=${def_ipv6}
   fi
   if [ $def_proxied_enabled == false ]; then
-    domain_proxied=${domains__proxied[$i]}
+    domain_proxied=${domains__proxied[$1]}
   else
     domain_proxied=${def_proxied}
   fi
   if [ $def_ttl_enabled == false ]; then
-    domain_ttl=${domains__ttl[$i]}
+    domain_ttl=${domains__ttl[$1]}
   else
     domain_ttl=${def_ttl}
   fi
@@ -119,22 +119,6 @@ push_validation() {
     error_dom=false
   fi
 }
-external_validation() {
-  if [ -z "$1" ]; then
-    error_msg "Error! Can't get external $2 from $get_ip_from"
-    exit 0
-  else
-    blue_bold_msg "Current External $2 is: $1"
-  fi
-}
-internal_validation() {
-  if [ -z "$1" ]; then
-    error_msg "Error! Can't read $2 from $3"
-    exit 0
-  else
-    done_msg "Internal$3 $2 is: $1"
-  fi
-}
 read_record() {
   curl -s -X GET "https://api.cloudflare.com/client/v4/zones/$1/dns_records?type=$3&name=$4" \
     -H "Authorization: Bearer $2" \
@@ -152,20 +136,35 @@ up_to_date () {
 
 ##################################################################
 # NETWORK FUNCTIONS
+external_validation() {
+  if [ -z "$1" ]; then
+    error_msg "Error! Can't get external $2 from $get_ip_from"
+    exit 0
+  else
+    blue_bold_msg "Current External $2 is: $1"
+  fi
+}
+internal_validation() {
+  if [ -z "$1" ]; then
+    error_msg "Error! Can't read $2 from $3"
+    exit 0
+  else
+    done_msg "Internal$3 $2 is: $1"
+  fi
+}
 get_ip_external() {
   if [ "$1" == true ]; then
     ip4=$(curl -4 -s -X GET $get_ip_from --max-time 20)
   else
-    ip4=""
+    ip4=NULL
   fi
   if [ "$2" == true ]; then
     ip6=$(curl -6 -s -X GET $get_ip_from --max-time 20)
   else
-    ip6=""
+    ip6=NULL
   fi
   echo "$ip4" "$ip6"
 }
-
 get_ip_internal() {
   ### Check if "IP" command is present, get the ip from interface
   if which ip >/dev/null; then
@@ -174,12 +173,12 @@ get_ip_internal() {
     if [ "${1}" == true ]; then
       ip4=$(ip -o -4 addr show "${interface}" scope global | awk '{print $4;}' | cut -d/ -f 1)
     else
-      ip4=""
+      ip4=NULL
     fi
     if [ "${2}" == true ]; then
       ip6=$(ip -o -6 addr show "${interface}" scope global | awk '{print $4;}' | cut -d/ -f 1)
     else
-      ip6=""
+      ip6=NULL
     fi
   ### if no "IP" command use "ifconfig", get the ip from interface
   else
@@ -188,12 +187,12 @@ get_ip_internal() {
     if [ "${1}" == true ]; then
       ip4=$(ifconfig "${interface}" | grep 'inet ' | awk '{print $2}')
     else
-      ip4=""
+      ip4=NULL
     fi
     if [ "${2}" == true ]; then
       ip6=$(ifconfig "${interface}" | grep 'inet6 ' | awk -F '[ \t]+|/' '{print $3}' | grep -v ^::1 | grep -v ^fe80)
     else
-      ip6=""
+      ip6=NULL
     fi
   fi
   echo "$ip4" "$ip6" "$interface"
@@ -494,3 +493,4 @@ dyndns-update() {
 
   done
 }
+"$@"
