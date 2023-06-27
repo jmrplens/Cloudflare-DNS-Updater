@@ -26,6 +26,7 @@ is_proxiable4=""
 is_proxiable6=""
 
 # Colors
+export TERM=xterm-256color
 end_color=$(tput sgr0)
 done_fb=$(tput setab 2 && tput setaf 0 && tput bold)
 done_c=$(tput setaf 2 && tput bold)
