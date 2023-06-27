@@ -4,6 +4,10 @@ on: [push, pull_request, workflow_dispatch]
 
 permissions:
   contents: read
+  
+defaults:
+  run:
+    shell: 'script -q -e -c "bash {0}"'
 
 jobs:
   build:
@@ -29,11 +33,10 @@ jobs:
       - name: Instal gems
         run: gem install bashcov simplecov codecov simplecov-cobertura simplecov-csv simplecov_json_formatter simplecov-tailwindcss
       - name: Run unit test script
-        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
-        with:
-          shell: 'script -q -e -c "bash {0}"'
-          run: |
-            bashcov unit-test.sh
+        run: |
+          chmod +x cloudflare-dns.sh
+          bashcov unit-test.sh
+        shell: bash
       - name: Upload reports to Codecov
         uses: codecov/codecov-action@eaaf4bedf32dbdc6b720b63067d99c4d77d6047d # v3.1.4
       - name: Run codacy-coverage-reporter
