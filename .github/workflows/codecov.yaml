@@ -29,7 +29,7 @@ jobs:
       - name: Instal gems
         run: gem install bashcov simplecov codecov simplecov-cobertura simplecov-csv simplecov_json_formatter simplecov-tailwindcss
       - name: Run unit test script
-        uses: workflow/nix-shell-action@v3.2.1
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
         with:
           shell: 'script -q -e -c "bash {0}"'
           run: |
