@@ -29,8 +29,11 @@ jobs:
       - name: Instal gems
         run: gem install bashcov simplecov codecov simplecov-cobertura simplecov-csv simplecov_json_formatter simplecov-tailwindcss
       - name: Run unit test script
-        run: |
-          bashcov unit-test.sh
+        uses: workflow/nix-shell-action@v3.2.1
+        with:
+          shell: 'script -q -e -c "bash {0}"'
+          run: |
+            bashcov unit-test.sh
       - name: Upload reports to Codecov
         uses: codecov/codecov-action@eaaf4bedf32dbdc6b720b63067d99c4d77d6047d # v3.1.4
       - name: Run codacy-coverage-reporter
