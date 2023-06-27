@@ -34,7 +34,9 @@ jobs:
         run: gem install bashcov simplecov codecov simplecov-cobertura simplecov-csv simplecov_json_formatter simplecov-tailwindcss
       - name: Run unit test script
         run: |
+          chmod +x cloudflare-dns.sh
           bashcov unit-test.sh
+        shell: bash
       - name: Upload reports to Codecov
         uses: codecov/codecov-action@eaaf4bedf32dbdc6b720b63067d99c4d77d6047d # v3.1.4
       - name: Run codacy-coverage-reporter
