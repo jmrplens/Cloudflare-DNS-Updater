@@ -41,25 +41,25 @@ get_ip_from="https://icanhazip.com"
 ##################################################################
 # GENERIC FUNCTIONS
 done_fb_msg() {
-  echo "${done_fb}${1}${end_color}"
+  echo "${done_fb}${1}${end_color}"; return 0;
 }
 done_msg() {
-  echo "${done_c}${1}${end_color}"
+  echo "${done_c}${1}${end_color}"; return 0;
 }
 error_msg() {
-  echo "${err_c}${1}${end_color}"
+  echo "${err_c}${1}${end_color}"; return 0;
 }
 warn_msg() {
-  echo "${warn_c}${1}${end_color}"
+  echo "${warn_c}${1}${end_color}"; return 0;
 }
 load_msg() {
-  echo "${load_c}${1}${end_color}"
+  echo "${load_c}${1}${end_color}"; return 0;
 }
 blue_bold_msg() {
-  echo "${blue_b_c}${1}${end_color}"
+  echo "${blue_b_c}${1}${end_color}"; return 0;
 }
 green_msg() {
-  echo "${green_c}${1}${end_color}"
+  echo "${green_c}${1}${end_color}"; return 0;
 }
 # shellcheck disable=SC2154
 get_domain_settings() {
@@ -90,12 +90,14 @@ get_domain_settings() {
     domain_ttl=${def_ttl}
   fi
   echo "$domain_name $domain_ip_type $enable_ipv4 $enable_ipv6 $domain_proxied $domain_ttl"
+  return 0;
 }
 # shellcheck disable=SC2154
 get_api_settings() {
   api_zone_id=$settings_cloudflare__zone_id
   api_zone_token=$settings_cloudflare__zone_api_token
   echo "$api_zone_id $api_zone_token"
+  return 0;
 }
 ##################################################################
 # CLOUDFLARE API FUNCTIONS
@@ -108,6 +110,7 @@ api_validation() {
     done_msg "Loaded ${end_color}${load_c}$2${end_color}${done_c} $3 record information from Cloudflare API"
     error_dom=false
   fi
+  return 0;
 }
 push_validation() {
   success_api=$(echo "${1}" | grep -o '"success":[^,]*' | grep -o '[^:]*$')
@@ -118,20 +121,24 @@ push_validation() {
     done_msg "Pushed new $2"
     error_dom=false
   fi
+  return 0;
 }
 read_record() {
   curl -s -X GET "https://api.cloudflare.com/client/v4/zones/$1/dns_records?type=$3&name=$4" \
     -H "Authorization: Bearer $2" \
     -H "Content-Type: application/json"
+  return 0;
 }
 write_record() {
   curl -s -X PUT "https://api.cloudflare.com/client/v4/zones/$1/dns_records/$2" \
     -H "Authorization: Bearer $3" \
     -H "Content-Type: application/json" \
     --data "{\"type\":\"$4\",\"name\":\"$5\",\"content\":\"$6\",\"ttl\":$7,\"proxied\":$8}"
+  return 0;
 }
 up_to_date () {
   done_msg "Current DNS record ${1} of ${end_color}${load_c}${2}${end_color}${done_c} is ${3} and proxy status is ${4}, no changes needed."
+  return 0;
 }
 
 ##################################################################
@@ -143,6 +150,7 @@ external_validation() {
   else
     blue_bold_msg "Current External $2 is: $1"
   fi
+  return 0;
 }
 internal_validation() {
   if [ -z "$1" ]; then
@@ -151,6 +159,7 @@ internal_validation() {
   else
     done_msg "Internal$3 $2 is: $1"
   fi
+  return 0;
 }
 get_ip_external() {
   if [ "$1" == true ]; then
@@ -164,6 +173,7 @@ get_ip_external() {
     ip6=NULL
   fi
   echo "$ip4" "$ip6"
+  return 0;
 }
 get_ip_internal() {
   ### Check if "IP" command is present, get the ip from interface
@@ -196,6 +206,7 @@ get_ip_internal() {
     fi
   fi
   echo "$ip4" "$ip6" "$interface"
+  return 0;
 }
 
 get_ip() {
@@ -218,6 +229,7 @@ get_ip() {
     [[ "$enable_ipv6" == true ]] && (internal_validation "$ip6" "IPv6" "$interface")
     printf "\n"
   fi
+  return 0;
 }
 
 get_dns_record_ip() {
@@ -244,6 +256,7 @@ get_dns_record_ip() {
     dns_record_id_6=$(echo "${dns_record_info6}" | grep -o '"id":"[^"]*' | cut -d'"' -f4)
     [[ "$is_proxiable6" == false ]] && domain_proxied=false
   fi
+  return 0;
 }
 
 ##################################################################
@@ -259,6 +272,7 @@ settings_validation() {
     error_msg "Error! Cloudflare API Token not set"
     exit 0
   fi
+  return 0;
 }
 
 settings_domains_validation() {
@@ -301,6 +315,7 @@ settings_domains_validation() {
       exit 0
     fi
   done
+  return 0;
 }
 
 settings_file_validation() {
@@ -320,6 +335,7 @@ settings_file_validation() {
     fi
   fi
   echo "$config_file"
+  return 0;
 }
 
 ##################################################################
@@ -363,6 +379,7 @@ parse_yaml() {
             }
             { print }'
   ) <"$yaml_file"
+  return 0;
 }
 
 unset_variables() {
@@ -379,6 +396,7 @@ unset_variables() {
       unset "$variable"
     fi
   done
+  return 0;
 }
 
 create_variables() {
@@ -388,6 +406,7 @@ create_variables() {
   yaml_string="$(parse_yaml "$yaml_file" "$prefix")"
   unset_variables "${yaml_string}"
   eval "${yaml_string}"
+  return 0;
 }
 
 ##################################################################
@@ -492,5 +511,6 @@ dyndns-update() {
     fi
 
   done
+  return 0;
 }
 "$@"

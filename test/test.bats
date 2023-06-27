@@ -16,6 +16,82 @@ setup() {
 
     api_bad_response='{"result":null,"success":false,"errors":[{}],"messages":[]}'
     api_got_response='{"result":null,"success":true,"errors":[{}],"messages":[]}'
+
+    api_read_response_ip4='
+    {
+        "result":[
+            {
+            "id":"a5d2j439be8b8a926a1a8544d0f33005",
+            "zone_id":"6db5464bff8cf4bd6279331dcf13626d",
+            "zone_name":"example.com",
+            "name":"sub.example.com",
+            "type":"A",
+            "content":"1.2.3.4",
+            "proxiable":true,
+            "proxied":true,
+            "ttl":1,
+            "locked":false,
+            "meta":{
+                "auto_added":false,
+                "managed_by_apps":false,
+                "managed_by_argo_tunnel":false,
+                "source":"primary"
+                },
+            "comment":null,
+            "tags":[],
+            "created_on":"2023-02-14T00:14:09.091759Z",
+            "modified_on":"2023-02-14T00:14:09.091759Z"
+            }
+        ],
+        "success":true,
+        "errors":[],
+        "messages":[],
+        "result_info":{
+            "page":1,
+            "per_page":100,
+            "count":1,
+            "total_count":1,
+            "total_pages":1
+            }
+    }'
+
+    api_read_response_ip6='
+    {
+        "result":[
+            {
+            "id":"a5d2j439be8b8a926a1a8544d0f33005",
+            "zone_id":"6db5464bff8cf4bd6279331dcf13626d",
+            "zone_name":"example.com",
+            "name":"sub.example.com",
+            "type":"AAAA",
+            "content":"2001:0db8:85a3:0000:1319:8a2e:0370:7344",
+            "proxiable":true,
+            "proxied":true,
+            "ttl":1,
+            "locked":false,
+            "meta":{
+                "auto_added":false,
+                "managed_by_apps":false,
+                "managed_by_argo_tunnel":false,
+                "source":"primary"
+                },
+            "comment":null,
+            "tags":[],
+            "created_on":"2023-02-14T00:14:09.091759Z",
+            "modified_on":"2023-02-14T00:14:09.091759Z"
+            }
+        ],
+        "success":true,
+        "errors":[],
+        "messages":[],
+        "result_info":{
+            "page":1,
+            "per_page":100,
+            "count":1,
+            "total_count":1,
+            "total_pages":1
+            }
+    }'
 }
 
 
@@ -199,7 +275,7 @@ setup() {
 
 }
 ####################################################################################################
-# GET IP
+# NETWORK
 ####################################################################################################
 
 # bats test_tags=get_ip
@@ -302,6 +378,60 @@ setup() {
     # Assert
     assert_equal $ip4 "NULL"
     assert_equal $ip6 "NULL"
+}
+
+@test "get DNS record IPv4" {
+
+    # Arrange
+    source cloudflare-dns.sh
+    domain_name="test.me"
+    zone_id="zone_id"
+    zone_token="zone_token"
+    enable_ipv4=true
+    enable_ipv6=false
+
+    # Stub functions
+    function read_record() { echo "${api_read_response_ip4}"; }
+    function api_validation() { return 0;}
+    export -f read_record
+    export -f api_validation
+
+    # Act
+    get_dns_record_ip $domain_name $zone_id $zone_token
+
+    # Assert
+    assert_equal $is_proxied4 "true"
+    assert_equal $is_proxiable4 "true"
+    assert_equal $dns_record_ip4 "1.2.3.4"
+    assert_equal $dns_record_id_4 "a5d2j439be8b8a926a1a8544d0f33005"
+
+}
+
+@test "get DNS record IPv6" {
+
+    # Arrange
+    source cloudflare-dns.sh
+    domain_name="test.me"
+    zone_id="zone_id"
+    zone_token="zone_token"
+    enable_ipv4=false
+    enable_ipv6=true
+
+    # Stub functions
+    function read_record() { echo "${api_read_response_ip6}"; }
+    function api_validation() { return 0;}
+    export -f read_record
+    export -f api_validation
+
+    # Act
+    get_dns_record_ip $domain_name $zone_id $zone_token
+
+    # Assert
+    assert_equal $is_proxied6 "true"
+    assert_equal $is_proxiable6 "true"
+    assert_equal $dns_record_ip6 "2001:0db8:85a3:0000:1319:8a2e:0370:7344"
+    assert_equal $dns_record_id_6 "a5d2j439be8b8a926a1a8544d0f33005"
+
 }
 
 ####################################################################################################
