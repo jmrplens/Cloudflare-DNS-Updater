@@ -2,10 +2,8 @@ FROM alpine:3.18@sha256:82d1e9d7ed48a7523bdebc18cf6290bdb97b82302a8a9c27d4fe8859
 
 LABEL maintainer="Jose Manuel Requena Plens <jmrplens@protonmail.com>"
 
-RUN apk update && \
-    apk upgrade && \
-    apk add curl=8.1.2-r0
-    
+RUN apk --no-cache add curl=8.1.2-r0
+
 
 COPY ./cloudflare-dns.sh /usr/local/bin
 COPY ./cloudflare-dns.yaml /usr/local/bin

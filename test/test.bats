@@ -64,7 +64,7 @@ setup() {
             "zone_name":"example.com",
             "name":"sub.example.com",
             "type":"AAAA",
-            "content":"2001:0db8:85a3:0000:1319:8a2e:0370:7344",
+            "content":"1111:2222:3333:4444:5555:6666:7777:8888",
             "proxiable":true,
             "proxied":true,
             "ttl":1,
@@ -92,6 +92,10 @@ setup() {
             "total_pages":1
             }
     }'
+}
+
+function teardown() {
+    rm -f cloudflare-dns.log
 }
 
 
@@ -159,6 +163,21 @@ setup() {
     assert_equal $settings_cloudflare__zone_id '<your_id>'
     assert_equal $settings_cloudflare__zone_api_token '<your_token>'
     assert_equal $settings_misc__create_if_no_exist 'false'
+}
+
+# bats test_tags=parser
+@test "API settings are parsed" {
+
+    # Arrange
+    source cloudflare-dns.sh
+
+    # Act
+    create_variables cloudflare-dns.yaml
+    get_api_settings
+
+    # Assert
+    assert_equal $api_zone_id '<your_id>'
+    assert_equal $api_zone_token '<your_token>'
 }
 
 # bats test_tags=parser
@@ -429,6 +448,10 @@ setup() {
     assert_equal $dns_record_ip4 "1.2.3.4"
     assert_equal $dns_record_id_4 "a5d2j439be8b8a926a1a8544d0f33005"
 
+    # Clean up
+    unset -f read_record
+    unset -f api_validation
+
 }
 
 @test "get DNS record IPv6" {
@@ -453,8 +476,12 @@ setup() {
     # Assert
     assert_equal $is_proxied6 "true"
     assert_equal $is_proxiable6 "true"
-    assert_equal $dns_record_ip6 "2001:0db8:85a3:0000:1319:8a2e:0370:7344"
+    assert_equal $dns_record_ip6 "1111:2222:3333:4444:5555:6666:7777:8888"
     assert_equal $dns_record_id_6 "a5d2j439be8b8a926a1a8544d0f33005"
+
+    # Clean up
+    unset -f read_record
+    unset -f api_validation
 
 }
 

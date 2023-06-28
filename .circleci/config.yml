@@ -3,11 +3,11 @@ version: 2.1
 orbs:
   shellcheck: circleci/shellcheck@3.1.2
   #bats: circleci/bats@1.1.0
-   
+
 workflows:
   ShellCheck:
     jobs:
-      - shellcheck/check # job defined within the orb so no further config 
+      - shellcheck/check # job defined within the orb so no further config
   #BATS:
     #jobs:
       #- bats/run:
