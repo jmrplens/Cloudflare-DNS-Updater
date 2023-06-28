@@ -32,17 +32,18 @@ jobs:
       - name: Get Ruby v3 with bundler cache
         uses: ruby/setup-ruby@250fcd6a742febb1123a77a841497ccaa8b9e939 # v1.152.0
         with:
-          ruby-version: '3.2.1' # Not needed with a .ruby-version file
+          ruby-version: '3.0'
           bundler-cache: true
           cache-version: 1
 
       - name: Instal gems
-        run: gem install bashcov simplecov codecov simplecov-cobertura simplecov-csv simplecov_json_formatter simplecov-tailwindcss
+        run: gem install docile json rexml simplecov bashcov codecov simplecov-cobertura simplecov-csv simplecov_json_formatter simplecov-tailwindcss
 
       - name: Run unit test script
         run: |
           chmod +x cloudflare-dns.sh
-          bashcov unit-test.sh
+          chmod +x unit-test.sh
+          ./unit-test.sh
         shell: bash
 
       - name: Upload reports to Codecov

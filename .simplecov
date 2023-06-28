@@ -1,6 +1,8 @@
+#!/usr/bin/env ruby
+
+require 'simplecov'
 require 'codecov'
 require 'bashcov'
-require 'simplecov'
 require 'simplecov-cobertura'
 require 'simplecov-csv'
 require 'simplecov-tailwindcss'
@@ -18,7 +20,7 @@ SimpleCov.configure do
 end
 
 SimpleCov.command_name 'bats'
-SimpleCov.start 'shell'
+
 
 SimpleCov.at_exit do
   SimpleCov.result.format!
