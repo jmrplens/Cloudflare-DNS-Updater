@@ -158,7 +158,7 @@ internal_validation() {
     error_msg "Error! Can't read $2 from $3"
     exit 0
   else
-    done_msg "Internal$3 $2 is: $1"
+    done_msg "Internal $2 is: $1"
   fi
   return 0;
 }
@@ -226,8 +226,8 @@ get_ip() {
   ### Get Internal IP from primary interface
   if [ "$ip_type" == "internal" ]; then
     read -r ip4 ip6 interface <<< "$(get_ip_internal "$2" "$3")"
-    [[ "$enable_ipv4" == true ]] && (internal_validation "$ip4" "IPv4" "$interface")
-    [[ "$enable_ipv6" == true ]] && (internal_validation "$ip6" "IPv6" "$interface")
+    [[ "$enable_ipv4" == true ]] && (internal_validation "$ip4" "IPv4")
+    [[ "$enable_ipv6" == true ]] && (internal_validation "$ip6" "IPv6")
     printf "\n"
   fi
   return 0;
