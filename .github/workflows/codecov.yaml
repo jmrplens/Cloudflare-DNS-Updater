@@ -30,8 +30,11 @@ jobs:
         uses: ruby/setup-ruby@250fcd6a742febb1123a77a841497ccaa8b9e939 # v1.152.0
         with:
           ruby-version: ${{ matrix.ruby }}
-      - run: bundle install
-      
+      - run: | 
+          gem install bundler
+          bundle install --jobs 4 --retry 3
+        shell: bash
+        
       - name: Run unit test script
         run: |
           chmod +x cloudflare-dns.sh
