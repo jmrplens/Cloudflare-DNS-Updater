@@ -34,7 +34,7 @@ jobs:
           gem install bundler
           bundle install --jobs 4 --retry 3
         shell: bash
-        
+      
       - name: Run unit test script
         run: |
           chmod +x cloudflare-dns.sh
@@ -47,7 +47,7 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./coverage/coverage.xml
-          flags: UnitTest_OS_${{ matrix.os }}_RUBY_${{ matrix.ruby }}
+          flags: ${{ matrix.os }},RUBY_${{ matrix.ruby }}
           full_report: ./coverage/
           env_vars: OS,BASH,RUBY
           functionalities: gcov
@@ -61,19 +61,4 @@ jobs:
         with:
           project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
           coverage-reports: coverage/coverage.xml
-      
-      #- name: Clean files
-       # run: |
-        #  rm -rf vendor
-        #  rm -rf Gemfile.lock
-        #shell: bash
-      - run: mkdir coverage/${{ matrix.os }}_Ruby_${{ matrix.ruby }}/
-      - name: Commit all changed files back to the repository
-        uses: stefanzweifel/git-auto-commit-action@3ea6ae190baf489ba007f7c92608f33ce20ef04a # v4.16.0
-        with:
-          commit_message: Push coverage report
-          file_pattern: 'coverage/${{ matrix.os }}_Ruby_${{ matrix.ruby }}/**'
-          commit_user_name: jmrplens
-          commit_user_email: jmrplens@gmail.com
-          commit_author: José M. Requena Plens <jmrplens@gmail.com>
 
