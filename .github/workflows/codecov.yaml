@@ -48,7 +48,18 @@ jobs:
 
       - name: Upload reports to Codecov
         uses: codecov/codecov-action@eaaf4bedf32dbdc6b720b63067d99c4d77d6047d # v3.1.4
-
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage/coverage.xml
+          flags: unittests
+          full_report: ./coverage/
+          env_vars: OS,BASH
+          functionalities: gcov
+          os: linux
+          directory: ./coverage/
+          name: DynDNS Cloudflare
+          verbose: true
+          
       - name: Run codacy-coverage-reporter
         uses: codacy/codacy-coverage-reporter-action@89d6c85cfafaec52c72b6c5e8b2878d33104c699 # v1.3.0
         with:
