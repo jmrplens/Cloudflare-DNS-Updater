@@ -6,15 +6,15 @@ permissions:
   contents: write
 
 jobs:
-  run:
+  run_test:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: [macos-latest,ubuntu-latest]
         ruby: ['3.0', '3.1', '3.2']
     env:
       OS: ${{ matrix.os }}
-      BASH: '5.0'
+      BASH: '5.1'
       RUBY: ${{ matrix.ruby }}
       BUNDLE_GEMFILE: test/Gemfile
 
@@ -31,18 +31,17 @@ jobs:
           fetch-depth: 3
           submodules: recursive
 
-      - name: Get Ruby v3 with bundler cache
+      - name: Get Ruby and install gems
         uses: ruby/setup-ruby@250fcd6a742febb1123a77a841497ccaa8b9e939 # v1.152.0
         with:
           ruby-version: ${{ matrix.ruby }}
+      - run: bundle install
       
       - name: Run unit test script
         run: |
           chmod +x cloudflare-dns.sh
           chmod +x unit-test.sh
-          bundle install
           bashcov ./unit-test.sh
-          echo "${BASH_VERSION}"
         shell: bash
 
       - name: Upload reports to Codecov
@@ -70,7 +69,10 @@ jobs:
         #  rm -rf vendor
         #  rm -rf Gemfile.lock
         #shell: bash
-
+  commit_files:
+    needs: run_test
+    runs-on: ubuntu-latest
+    steps:
       - name: Commit all changed files back to the repository
         uses: stefanzweifel/git-auto-commit-action@3ea6ae190baf489ba007f7c92608f33ce20ef04a # v4.16.0
         with:
