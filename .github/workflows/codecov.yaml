@@ -41,7 +41,7 @@ jobs:
         run: |
           chmod +x cloudflare-dns.sh
           chmod +x unit-test.sh
-          bashcov ./unit-test.sh
+          ruby bashcov ./unit-test.sh
           echo "${BASH_VERSION}"
         shell: bash
 
