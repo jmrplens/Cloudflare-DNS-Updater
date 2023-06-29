@@ -16,7 +16,7 @@ jobs:
       OS: ${{ matrix.os }}
       BASH: '5.0'
       RUBY: ${{ matrix.ruby }}
-      BUNDLE_GEMFILE: ${{ github.workspace }}/test/Gemfile
+      BUNDLE_GEMFILE: test/Gemfile
 
     steps:
 
