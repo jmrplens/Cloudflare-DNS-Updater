@@ -39,7 +39,7 @@ jobs:
         run: |
           chmod +x cloudflare-dns.sh
           chmod +x unit-test.sh
-          bashcov ./unit-test.sh
+          bashcov -s -m ./unit-test.sh
         shell: bash
 
       - name: Upload reports to Codecov
