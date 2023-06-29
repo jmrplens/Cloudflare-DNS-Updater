@@ -3,7 +3,7 @@ name: Unit Test on Linux and MacOS
 on: [push, pull_request, workflow_dispatch]
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   run_test:
