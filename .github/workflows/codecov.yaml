@@ -26,11 +26,12 @@ jobs:
           fetch-depth: 3
           submodules: recursive
 
-      - name: Get Ruby and install gems
+      - name: Get Ruby
         uses: ruby/setup-ruby@250fcd6a742febb1123a77a841497ccaa8b9e939 # v1.152.0
         with:
           ruby-version: ${{ matrix.ruby }}
-      - run: | 
+      - name: Install Gems
+        run: | 
           gem install bundler
           bundle install --jobs 4 --retry 3
         shell: bash
@@ -39,7 +40,7 @@ jobs:
         run: |
           chmod +x cloudflare-dns.sh
           chmod +x unit-test.sh
-          bashcov -s -m ./unit-test.sh
+          bashcov -s ./unit-test.sh
         shell: bash
 
       - name: Upload reports to Codecov
