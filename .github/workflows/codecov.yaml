@@ -16,6 +16,9 @@ jobs:
       contents: write  # for stefanzweifel/git-auto-commit-action to push code in repo
 
     runs-on: ubuntu-latest
+    env:
+      OS: ubuntu-latest
+      BASH: Bash >= 5
     steps:
 
       - name: Harden Runner
