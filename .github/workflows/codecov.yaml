@@ -20,11 +20,6 @@ jobs:
 
     steps:
 
-      - name: Harden Runner
-        uses: step-security/harden-runner@55d479fb1c5bcad5a4f9099a5d9f37c8857b2845 # v2.4.1
-        with:
-          egress-policy: audit
-
       - name: Checkout with all submodules
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
         with:
@@ -49,13 +44,13 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./coverage/coverage.xml
-          flags: unittests
+          flags: UnitTest_OS_${{ matrix.os }}_RUBY_${{ matrix.ruby }}
           full_report: ./coverage/
           env_vars: OS,BASH,RUBY
           functionalities: gcov
           os: linux
           directory: ./coverage/
-          name: DynDNS Cloudflare
+          name: "DynDNS Cloudflare - OS: ${{ matrix.os } ; RUBY: ${{ matrix.ruby }}"
           verbose: true
 
       - name: Run codacy-coverage-reporter
@@ -63,21 +58,18 @@ jobs:
         with:
           project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
           coverage-reports: coverage/coverage.xml
-
+      
       #- name: Clean files
        # run: |
         #  rm -rf vendor
         #  rm -rf Gemfile.lock
         #shell: bash
-  commit_files:
-    needs: run_test
-    runs-on: ubuntu-latest
-    steps:
+      - run: mkdir coverage/${{ matrix.os }}_Ruby_${{ matrix.ruby }}/
       - name: Commit all changed files back to the repository
         uses: stefanzweifel/git-auto-commit-action@3ea6ae190baf489ba007f7c92608f33ce20ef04a # v4.16.0
         with:
           commit_message: Push coverage report
-          file_pattern: 'coverage/**'
+          file_pattern: 'coverage/${{ matrix.os }}_Ruby_${{ matrix.ruby }}/**'
           commit_user_name: jmrplens
           commit_user_email: jmrplens@gmail.com
           commit_author: José M. Requena Plens <jmrplens@gmail.com>
