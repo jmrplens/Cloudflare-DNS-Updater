@@ -57,6 +57,10 @@ jobs:
           name: "DynDNS Cloudflare - OS: ${{ matrix.os }} ; RUBY: ${{ matrix.ruby }}"
           verbose: true
 
+      - uses: actions/upload-artifact@v3
+        with:
+          name: my-artifact ${{ matrix.os }} Ruby ${{ matrix.ruby }}
+          path: ${{ github.workspace }}
       - name: Run codacy-coverage-reporter
         uses: codacy/codacy-coverage-reporter-action@89d6c85cfafaec52c72b6c5e8b2878d33104c699 # v1.3.0
         with:
