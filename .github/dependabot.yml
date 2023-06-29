@@ -14,3 +14,13 @@ updates:
     directory: /
     schedule:
       interval: daily
+
+  - package-ecosystem: docker
+    directory: /.github
+    schedule:
+      interval: daily
+
+  - package-ecosystem: bundler
+    directory: /test
+    schedule:
+      interval: daily
