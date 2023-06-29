@@ -50,7 +50,7 @@ jobs:
           functionalities: gcov
           os: linux
           directory: ./coverage/
-          name: "DynDNS Cloudflare - OS: ${{ matrix.os } ; RUBY: ${{ matrix.ruby }}"
+          name: "DynDNS Cloudflare - OS: ${{ matrix.os }} ; RUBY: ${{ matrix.ruby }}"
           verbose: true
 
       - name: Run codacy-coverage-reporter
