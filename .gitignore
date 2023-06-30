@@ -2,5 +2,5 @@
 ._*
 .vscode/
 coverage/
-
 test/Gemfile.lock
+test/test-output/

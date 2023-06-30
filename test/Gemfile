@@ -8,6 +8,6 @@ gem 'bashcov'
 gem 'codecov'
 gem 'simplecov-cobertura'
 gem 'simplecov-csv'
+gem 'simplecov-json'
 gem 'simplecov_json_formatter'
 gem 'simplecov-tailwindcss'
-

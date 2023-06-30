@@ -6,7 +6,9 @@ require 'bashcov'
 require 'simplecov-cobertura'
 require 'simplecov-csv'
 require 'simplecov-tailwindcss'
+require 'simplecov-json'
 require 'simplecov_json_formatter'
+
 
 SimpleCov.configure do
   SimpleCov.formatters = SimpleCov::Formatter::MultiFormatter.new([
