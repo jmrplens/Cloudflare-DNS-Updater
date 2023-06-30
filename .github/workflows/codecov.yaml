@@ -44,7 +44,6 @@ jobs:
         uses: codecov/codecov-action@eaaf4bedf32dbdc6b720b63067d99c4d77d6047d # v3.1.4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          files: ./coverage/coverage.xml
           flags: OS_${{ matrix.os }},Ruby_${{ matrix.ruby }}
           full_report: ./coverage/
           env_vars: OS,BASH,RUBY
