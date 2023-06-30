@@ -45,7 +45,7 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./coverage/coverage.xml
-          flags: OS ${{ matrix.os }},Ruby ${{ matrix.ruby }}
+          flags: OS_${{ matrix.os }},Ruby_${{ matrix.ruby }}
           full_report: ./coverage/
           env_vars: OS,BASH,RUBY
           functionalities: gcov
