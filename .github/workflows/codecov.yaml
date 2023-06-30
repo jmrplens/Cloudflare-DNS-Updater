@@ -48,7 +48,7 @@ jobs:
           #full_report: ./coverage/
           env_vars: OS,BASH,RUBY
           functionalities: gcov
-          os: linux
+          os: ${{ matrix.os }}
           #directory: ./coverage/
           name: "DynDNS Cloudflare - OS: ${{ matrix.os }} ; RUBY: ${{ matrix.ruby }}"
           verbose: true
