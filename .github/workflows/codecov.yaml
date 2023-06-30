@@ -2,6 +2,9 @@ name: Unit Test on Linux and MacOS
 
 on: [push, pull_request, workflow_dispatch]
 
+permissions:
+  contents: read
+
 jobs:
   run_test:
     runs-on: ${{ matrix.os }}
