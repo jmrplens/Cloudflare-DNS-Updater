@@ -11,7 +11,7 @@ jobs:
         ruby: ['3.0', '3.1', '3.2', '3.3']
     env:
       OS: ${{ matrix.os }}
-      BASH: '5.1'
+      BASH: 5.1
       RUBY: ${{ matrix.ruby }}
       BUNDLE_GEMFILE: test/Gemfile
 
@@ -45,11 +45,11 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           flags: OS_${{ matrix.os }},Ruby_${{ matrix.ruby }}
-          full_report: ./coverage/
+          #full_report: ./coverage/
           env_vars: OS,BASH,RUBY
           functionalities: gcov
           os: linux
-          directory: ./coverage/
+          #directory: ./coverage/
           name: "DynDNS Cloudflare - OS: ${{ matrix.os }} ; RUBY: ${{ matrix.ruby }}"
           verbose: true
 
