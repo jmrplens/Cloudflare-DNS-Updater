@@ -2,9 +2,6 @@ name: Unit Test on Linux and MacOS
 
 on: [push, pull_request, workflow_dispatch]
 
-permissions:
-  contents: read
-
 jobs:
   run_test:
     runs-on: ${{ matrix.os }}
@@ -19,11 +16,6 @@ jobs:
       BUNDLE_GEMFILE: test/Gemfile
 
     steps:
-
-      - name: Harden Runner
-        uses: step-security/harden-runner@55d479fb1c5bcad5a4f9099a5d9f37c8857b2845 # v2.4.1
-        with:
-          egress-policy: audit
 
       - name: Checkout with all submodules
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
