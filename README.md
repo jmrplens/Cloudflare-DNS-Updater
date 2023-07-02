@@ -342,6 +342,7 @@ To run them locally:
 Here we describe how the Github CI workflows for unit testing and code coverage work.
 
 <br>
+
 ### 2.2.1. Workflow
 
 <br>
