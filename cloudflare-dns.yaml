@@ -1,0 +1,32 @@
+domains:
+  - name: sub.example.com
+    ip_type: external
+    ipv4: true
+    ipv6: true
+    proxied: true
+    ttl: auto
+  - name: example.com
+    ip_type: external
+    ipv4: true
+    ipv6: true
+    proxied: true
+    ttl: 3600
+  - name: other.example.com
+    ip_type: internal
+    ipv4: false
+    ipv6: true
+    proxied: false
+    ttl: auto
+
+settings:
+  cloudflare:
+    - zone_id: <your_id>
+    - zone_api_token: <your_token>
+  misc:
+    - create_if_no_exist: false
+
+notifications:
+  telegram:
+    enabled: false
+    bot_token: token
+    chat_id: id
