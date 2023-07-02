@@ -1,0 +1,6 @@
+.DS_store
+._*
+.vscode/
+coverage/
+test/Gemfile.lock
+test/test-output/
