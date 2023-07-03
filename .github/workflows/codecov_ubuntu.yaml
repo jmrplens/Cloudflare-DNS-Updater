@@ -29,6 +29,12 @@ jobs:
       OS: ${{ matrix.os }}
       RUBY: ${{ matrix.ruby }}
     steps:
+      - name: Checkout with all submodules
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+        with:
+          fetch-depth: 3
+          submodules: recursive
+
       - name: Unit Test on Ubuntu
         uses: ./.github/workflows/codecov_ubuntu.yaml
 
