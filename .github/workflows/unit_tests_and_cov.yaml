@@ -2,40 +2,21 @@ name: Unit Test Workflow
 
 on: [push, pull_request, workflow_dispatch]
 
-env:
-  CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-  CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
-  BUNDLE_GEMFILE: test/Gemfile
-  BASH_V: 5.1
-
 permissions:
   contents: read
 
 jobs:
-  run_in_ubuntu:
+  run_tests_and_cov:
     name: "OS: ${{ matrix.os }} - RUBY: ${{ matrix.ruby }}"
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-22.04]
+        os: [ubuntu-22.04,macOS-13,centos-9]
         ruby: ['3.0','3.1','3.2','3.3']
 
-    uses: jmrplens/DynDNS_Cloudflare_IPv4-6/.github/workflows/codecov_ubuntu.yaml@main
+    uses: ./.github/workflows/unit_tests_and_cov_worker.yaml
     with:
       OS: ${{ matrix.os }}
       RUBY: ${{ matrix.ruby }}
       BUNDLE_GEMFILE: test/Gemfile
-    secrets: inherit
-
-  run_in_debian:
-    name: Unit Test on Debian
-    uses: ./.github/workflows/codecov_debian.yaml
-    secrets: inherit
-  run_in_macos:
-    name: Unit Test on Mac OS
-    uses: ./.github/workflows/codecov_macos.yaml
-    secrets: inherit
-  run_in_centos:
-    name: Unit Test on CentOS
-    uses: ./.github/workflows/codecov_centos.yaml
     secrets: inherit
