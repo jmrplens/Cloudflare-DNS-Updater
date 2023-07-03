@@ -1,0 +1,25 @@
+name: Buld Ruby and install Gems
+description: "testing"
+
+inputs:
+    RUBY:
+        required: true
+        type: string
+    BUNDLE_GEMFILE:
+        required: true
+        type: string
+
+runs:
+  using: "composite"
+  env:
+    BUNDLE_GEMFILE: ${{ inputs.BUNDLE_GEMFILE }}
+  steps:
+      - name: Get Ruby
+        uses: ruby/setup-ruby@250fcd6a742febb1123a77a841497ccaa8b9e939 # v1.152.0
+        with:
+          ruby-version: ${{ inputs.RUBY }}
+      - name: Install Gems
+        run: |
+          gem install bundler
+          bundle install --jobs 4 --retry 3
+        shell: bash
