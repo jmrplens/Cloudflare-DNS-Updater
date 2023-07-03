@@ -26,6 +26,11 @@ jobs:
         with:
           fetch-depth: 3
           submodules: recursive
+      - name: Create artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: workflow_${{ inputs.OS }}_${{ inputs.RUBY }}
+          path: ./
 
   ruby_build:
     runs-on: ${{ inputs.OS }}
@@ -34,6 +39,10 @@ jobs:
       BUNDLE_GEMFILE: ${{ inputs.BUNDLE_GEMFILE }}
     name: Build Ruby
     steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: workflow_${{ inputs.OS }}_${{ inputs.RUBY }}
       - name: Get Ruby
         uses: ruby/setup-ruby@250fcd6a742febb1123a77a841497ccaa8b9e939 # v1.152.0
         with:
@@ -43,6 +52,11 @@ jobs:
           gem install bundler
           bundle install --jobs 4 --retry 3
         shell: bash
+      - name: Update artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: workflow_${{ inputs.OS }}_${{ inputs.RUBY }}
+          path: ./
 
   run_tests:
     runs-on: ${{ inputs.OS }}
