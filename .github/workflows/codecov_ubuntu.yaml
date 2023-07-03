@@ -9,12 +9,6 @@ on:
       RUBY:
         required: true
         type: string
-      CODECOV_TOKEN:
-        required: true
-        type: string
-      CODACY_PROJECT_TOKEN:
-        required: true
-        type: string
       BUNDLE_GEMFILE:
         required: true
         type: string
@@ -60,7 +54,7 @@ jobs:
       - name: Upload reports to Codecov
         uses: codecov/codecov-action@eaaf4bedf32dbdc6b720b63067d99c4d77d6047d # v3.1.4
         with:
-          token: ${{ inputs.CODECOV_TOKEN }}
+          token: ${{ secrets.CODECOV_TOKEN }}
           flags: OS_${{ inputs.OS }}__Ruby_${{ inputs.RUBY }}
           functionalities: gcov
           os: ${{ inputs.OS }}
@@ -70,6 +64,6 @@ jobs:
       - name: Run codacy-coverage-reporter
         uses: codacy/codacy-coverage-reporter-action@89d6c85cfafaec52c72b6c5e8b2878d33104c699 # v1.3.0
         with:
-          project-token: ${{ inputs.CODACY_PROJECT_TOKEN }}
+          project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
           coverage-reports: coverage/coverage.xml
           language: Shell
