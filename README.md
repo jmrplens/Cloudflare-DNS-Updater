@@ -1,6 +1,6 @@
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fjmrplens%2FDynDNS_Cloudflare_IPv4-6.svg?type=small)](https://app.fossa.com/projects/git%2Bgithub.com%2Fjmrplens%2FDynDNS_Cloudflare_IPv4-6?ref=badge_small)
 [![codecov](https://img.shields.io/codecov/c/github/jmrplens/DynDNS_Cloudflare_IPv4-6?token=N7ZTDZSQXP&style=flat-square&logo=codecov)](https://codecov.io/github/jmrplens/DynDNS_Cloudflare_IPv4-6)
-[![Unit and Coverage test](https://img.shields.io/github/actions/workflow/status/jmrplens/DynDNS_Cloudflare_IPv4-6/.github%2Fworkflows%2Funit_tests_and_cov.yaml?style=flat-square&logo=github&label=Ubuntu%2022.04;%20Debian%2011;%20macOS%2013;%20CentOS%209)](https://github.com/jmrplens/DynDNS_Cloudflare_IPv4-6/actions/workflows/unit_tests_and_cov.yaml)
+[![Unit and Coverage test](https://img.shields.io/github/actions/workflow/status/jmrplens/DynDNS_Cloudflare_IPv4-6/.github%2Fworkflows%2Ftest_cov_main.yaml?style=flat-square&logo=github&label=Ubuntu%2022.04;%20Debian%2011;%20macOS%2013;%20CentOS%209)](https://github.com/jmrplens/DynDNS_Cloudflare_IPv4-6/actions/workflows/test_cov_main.yaml)
 
 
 # 1. Dynamic DNS - Cloudflare
