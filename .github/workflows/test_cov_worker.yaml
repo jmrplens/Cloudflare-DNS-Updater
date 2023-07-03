@@ -30,7 +30,7 @@ jobs:
           fetch-depth: 3
           submodules: recursive
 
-      - uses: ./.github/workflows/test_cov_ruby.yaml@main
+      - uses: jmrplens/ruby_action@main
         with:
           RUBY: ${{ inputs.RUBY }}
           BUNDLE_GEMFILE: ${{ inputs.BUNDLE_GEMFILE }}
