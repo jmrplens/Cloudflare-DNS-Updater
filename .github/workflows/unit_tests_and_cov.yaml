@@ -24,6 +24,8 @@ jobs:
       OS: ${{ matrix.os }}
       RUBY: ${{ matrix.ruby }}
     steps:
+      - name: Checkout
+        uses: actions/checkout@v2
       - name: Unit Test on Ubuntu
         uses: ./.github/workflows/codecov_ubuntu.yaml
         with:
