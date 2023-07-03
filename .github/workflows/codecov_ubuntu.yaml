@@ -30,6 +30,12 @@ jobs:
 
     steps:
 
+      - name: Checkout with all submodules
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+        with:
+          fetch-depth: 3
+          submodules: recursive
+
       - name: Get Ruby
         uses: ruby/setup-ruby@250fcd6a742febb1123a77a841497ccaa8b9e939 # v1.152.0
         with:
