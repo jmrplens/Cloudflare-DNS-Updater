@@ -13,9 +13,25 @@ permissions:
 
 jobs:
   run_in_ubuntu:
-    name: Unit Test on Ubuntu
-    uses: ./.github/workflows/codecov_ubuntu.yaml
-    secrets: inherit
+    runs-on: ${{ matrix.os }}
+    name: "OS: ${{ matrix.os }} - RUBY: ${{ matrix.ruby }}"
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04]
+        ruby: ['3.0','3.1','3.2','3.3']
+    env:
+      OS: ${{ matrix.os }}
+      RUBY: ${{ matrix.ruby }}
+    steps:
+      - name: Unit Test on Ubuntu
+        uses: ./.github/workflows/codecov_ubuntu.yaml
+        with:
+          OS: ${{ matrix.os }}
+          RUBY: ${{ matrix.ruby }}
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+          CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
+
   run_in_debian:
     name: Unit Test on Debian
     uses: ./.github/workflows/codecov_debian.yaml
