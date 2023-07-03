@@ -29,7 +29,7 @@ jobs:
           fetch-depth: 3
           submodules: recursive
       - name: Unit Test on Ubuntu
-        uses: ./.github/workflows/codecov_ubuntu.yaml
+        uses: jmrplens/DynDNS_Cloudflare_IPv4-6/.github/workflows/codecov_ubuntu.yaml@main
         with:
           OS: ${{ matrix.os }}
           RUBY: ${{ matrix.ruby }}
