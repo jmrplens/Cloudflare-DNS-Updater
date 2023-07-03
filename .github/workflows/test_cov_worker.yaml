@@ -39,6 +39,7 @@ jobs:
     secrets: inherit
 
   run_tests:
+    needs: get_ruby
     runs-on: ${{ inputs.OS }}
     steps:
       - name: Prepare scripts
