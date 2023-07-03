@@ -24,3 +24,7 @@ jobs:
     name: Unit Test on Mac OS
     uses: ./.github/workflows/codecov_macos.yaml
     secrets: inherit
+  run_in_centos:
+    name: Unit Test on CentOS
+    uses: ./.github/workflows/codecov_centos.yaml
+    secrets: inherit
