@@ -19,6 +19,7 @@ permissions:
 jobs:
 
   checkout:
+    name: Checkout repository and submodules for ${{ inputs.OS }}
     runs-on: ${{ inputs.OS }}
     env:
       BUNDLE_GEMFILE: ${{ inputs.BUNDLE_GEMFILE }}
@@ -28,17 +29,18 @@ jobs:
         with:
           fetch-depth: 3
           submodules: recursive
+  get_ruby:
+    needs: checkout
+    name: Get Ruby and Gems for ${{ inputs.RUBY }}
+    uses: ./.github/workflows/test_cov_ruby.yaml
+    with:
+      RUBY: ${{ inputs.RUBY }}
+      BUNDLE_GEMFILE: test/Gemfile
+    secrets: inherit
 
-      - name: Get Ruby
-        uses: ruby/setup-ruby@250fcd6a742febb1123a77a841497ccaa8b9e939 # v1.152.0
-        with:
-          ruby-version: ${{ inputs.RUBY }}
-      - name: Install Gems
-        run: |
-          gem install bundler
-          bundle install --jobs 4 --retry 3
-        shell: bash
-
+  run_tests:
+    runs-on: ${{ inputs.OS }}
+    steps:
       - name: Prepare scripts
         run: |
           chmod +x cloudflare-dns.sh
