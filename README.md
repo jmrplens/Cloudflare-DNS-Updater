@@ -355,55 +355,45 @@ Here we describe how the Github CI workflows for unit testing and code coverage 
 %%{
   init: {
     "fontFamily": "monospace",
-    "flowchart": {},
+    "flowchart": {
+      "htmlLabels": true
+    },
     "sequence": {}
   }
 }%%
 
 flowchart TD
-subgraph WC[Workflow Caller]
-    A(<b>Unit Test and Coverage</b>\n <i><small><a href='https://github.com/jmrplens/DynDNS_Cloudflare_IPv4-6/blob/main/.github/workflows/unit_tests_and_cov.yaml'>unit_tests_and_cov.yaml</a></small></i>)
+subgraph WC[Main Workflow]
+    A(<b>Unit Test and Coverage</b>\n <i><small><a href='https://github.com/jmrplens/DynDNS_Cloudflare_IPv4-6/blob/main/.github/workflows/test_cov_main.yaml'>test_cov_main.yaml</a></small></i>)
+    A --> B[Matrix strategy\n\n<table><tr><td align='left'><b>OS&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspRUBY</b></td><td>&nbsp3.0&nbsp</td><td style='background-color:'>&nbsp3.1&nbsp</td><td>&nbsp3.2&nbsp</td><td>&nbsp3.3&nbsp</td></tr><tr style='color:brown'><td>Ubuntu 22.04&nbsp&nbsp&nbsp&nbsp&nbsp</td><td>&#x2022</td><td>&#x2022</td><td>&#x2022</td><td>&#x2022</td></tr><tr style='color:darkviolet'><td align='left'>Debian 11&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp</td><td>&#x2022</td><td>&#x2022</td><td>&#x2022</td><td>&#x2022</td></tr><tr style='color:forestgreen'><td align='left'>CentOS 9&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp</td><td>&#x2022</td><td>&#x2022</td><td>&#x2022</td><td>&#x2022</td></tr><tr style='color:darkorange'><td align='left'>Mac OS 13&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp</td><td>&#x2022</td><td>&#x2022</td><td>&#x2022</td><td>&#x2022</td></tr></table>\n]
+    B ==>C[Call a worker for each combination]
+    linkStyle 1 stroke-width:2px,stroke:red;
+
 end
+
+C -->WU
+C -->WU
+C -->WU
+C -->WU
+C -->WU
+C -->WU
+C -->WU
+C -->WU
+C -->WU
+C -->WU
+C -->WU
+C -->WU
+C -->WU
+C -->WU
+C -->WU
+C -->WU
 
 subgraph WU[Reusable Workflow]
-
-    E[<b>Ubuntu 22.04</b>\n<i><small><a href='https://github.com/jmrplens/DynDNS_Cloudflare_IPv4-6/blob/main/.github/workflows/codecov_ubuntu.yaml'>codecov_ubuntu.yaml</a></small></i>]
-
-end
-
-subgraph WD[Reusable Workflow]
-    F[<b>Debian 11</b>\n<i><small><a href='https://github.com/jmrplens/DynDNS_Cloudflare_IPv4-6/blob/main/.github/workflows/codecov_debian.yaml'>codecov_debian.yaml</a></small></i>]
-end
-
-subgraph WM[Reusable Workflow]
-    G[<b>macOS 13</b>\n<i><small><a href='https://github.com/jmrplens/DynDNS_Cloudflare_IPv4-6/blob/main/.github/workflows/codecov_macos.yaml'>codecov_macos.yaml</a></small></i>]
-end
-
-subgraph WRC[Reusable Workflow]
-    H[<b>CentOS 9</b>\n<i><small><a href='https://github.com/jmrplens/DynDNS_Cloudflare_IPv4-6/blob/main/.github/workflows/codecov_centos.yaml'>codecov_centos.yaml</a></small></i>]
-end
-
-Co -.-> Ur[Upload report to:\n<small>- <a href='https://app.codecov.io/github/jmrplens/DynDNS_Cloudflare_IPv4-6/flags'>Codecov</a>\n- <a href='https://app.codacy.com/gh/jmrplens/DynDNS_Cloudflare_IPv4-6/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_coverage'>Codacy</a></small> ]
-WC --> WU
-WC --> WD
-WC --> WM
-WC --> WRC
-
-subgraph Rb[Install Ruby Version]
-    Rbb{{<code>ruby-build X.Y.Z</code>}}
-end
-WU --> Rb
-WD --> Rb
-WM --> Rb
-WRC --> Rb
-
-Rb --> Sh
-Rb --> Sh
-Rb --> Sh
-Rb --> Sh
-
-subgraph Sh[Shell]
-    Co[<code>bashcov ./unit-test.sh</code>]
+    D[<b>Worker to run the tests and coverage</b>\n<i><small><a href='https://github.com/jmrplens/DynDNS_Cloudflare_IPv4-6/blob/main/.github/workflows/test_cov_worker.yaml'>test_cov_worker.yaml</a></small></i>]
+    D --> E[Checkout repository with submodules]
+    E --> F[Build/Install Ruby and the needed Gems\n<i><small><a href='https://github.com/jmrplens/DynDNS_Cloudflare_IPv4-6/blob/main/test/Gemfile'>test/Gemfile</a></small></i>]
+    F --> G[Run unit test with coverage\n<small><code>bashcov ./unit-test.sh</code></small>]
+    G --> H[Upload coverage reports to:\n<a href='https://app.codecov.io/github/jmrplens/DynDNS_Cloudflare_IPv4-6'>Codecov</a> and <a href='https://app.codacy.com/gh/jmrplens/DynDNS_Cloudflare_IPv4-6/dashboard'>Codacy</a>]
 end
 ```
 
