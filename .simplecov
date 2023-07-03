@@ -15,7 +15,7 @@ SimpleCov.configure do
     SimpleCov::Formatter::CSVFormatter,
     SimpleCov::Formatter::CoberturaFormatter,
     SimpleCov::Formatter::JSONFormatter,
-    SimpleCov::Formatter::HTMLFormatter,
+    SimpleCov::Formatter::TailwindFormatter,
   ])
   add_filter "unit-test.sh"
   add_filter %r{^/test/}
