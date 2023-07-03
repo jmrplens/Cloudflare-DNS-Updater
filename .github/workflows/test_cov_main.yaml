@@ -10,7 +10,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-22.04,macOS-13,centos-9]
+        os: [ubuntu-22.04,macOS-13,Debian-11,centos-9]
         ruby: ['3.0','3.1','3.2','3.3']
 
     name: "OS: ${{ matrix.os }} - RUBY: ${{ matrix.ruby }}"
