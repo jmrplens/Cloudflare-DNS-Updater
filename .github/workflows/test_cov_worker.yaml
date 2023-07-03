@@ -33,6 +33,7 @@ jobs:
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ inputs.RUBY }}
+          BUNDLE_GEMFILE: ${{ inputs.BUNDLE_GEMFILE }}
           bundler-cache: true
 
       - name: Prepare scripts
