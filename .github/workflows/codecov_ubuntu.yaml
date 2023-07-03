@@ -15,6 +15,9 @@ on:
       CODACY_PROJECT_TOKEN:
         required: true
         type: string
+      BUNDLE_GEMFILE:
+        required: true
+        type: string
 
 permissions:
   contents: read
