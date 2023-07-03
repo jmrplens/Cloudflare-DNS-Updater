@@ -24,9 +24,9 @@ jobs:
     with:
       OS: ${{ matrix.os }}
       RUBY: ${{ matrix.ruby }}
-      CODECOV_TOKEN: $CODECOV_TOKEN
-      CODACY_PROJECT_TOKEN: $CODACY_PROJECT_TOKEN
-      BUNDLE_GEMFILE: $BUNDLE_GEMFILE
+      CODECOV_TOKEN: ${{ github.secret_source.CODECOV_TOKEN }}
+      CODACY_PROJECT_TOKEN: ${{ github.secret_source.CODACY_PROJECT_TOKEN }}
+      BUNDLE_GEMFILE: test/Gemfile
 
   run_in_debian:
     name: Unit Test on Debian
