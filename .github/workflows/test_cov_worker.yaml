@@ -30,10 +30,10 @@ jobs:
           fetch-depth: 3
           submodules: recursive
 
-      - uses: jmrplens/ruby_action@main
+      - uses: ruby/setup-ruby@v1
         with:
-          RUBY: ${{ inputs.RUBY }}
-          BUNDLE_GEMFILE: ${{ inputs.BUNDLE_GEMFILE }}
+          ruby-version: ${{ inputs.RUBY }}
+          bundler-cache: true
 
       - name: Prepare scripts
         run: |
