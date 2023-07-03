@@ -129,6 +129,8 @@ Place the **config** file in the directory as the **update-cloudflare-dns** for 
 sudo mv cloudflare-dns.yaml /usr/local/bin/cloudflare-dns.yaml
 ```
 
+Edit it with your favorite editor and set the necessary parameters.
+
 ## 1.6. Configuration Parameters
 
 ```yaml
@@ -164,11 +166,12 @@ domains:
     ipv6: true
     proxied: true
     ttl: auto
-  - name: example2.com
+  - name: example2.com # Only name = using default settings
+  - name: example3.com
     ip_type: external
     ipv4: true
     ipv6: true
-    proxied: true
+    proxied: false
     ttl: auto
   - name: ..........
 .........
@@ -347,8 +350,16 @@ Here we describe how the Github CI workflows for unit testing and code coverage 
 
 <br>
 
+
 ```mermaid
-%%{init: {"flowchart" : { "curve" : "linear" }} }%%
+%%{
+  init: {
+    "fontFamily": "monospace",
+    "flowchart": {},
+    "sequence": {}
+  }
+}%%
+
 flowchart TD
 subgraph WC[Workflow Caller]
     A(<b>Unit Test and Coverage</b>\n <i><small><a href='https://github.com/jmrplens/DynDNS_Cloudflare_IPv4-6/blob/main/.github/workflows/unit_tests_and_cov.yaml'>unit_tests_and_cov.yaml</a></small></i>)
@@ -367,10 +378,16 @@ end
 subgraph WM[Reusable Workflow]
     G[<b>macOS 13</b>\n<i><small><a href='https://github.com/jmrplens/DynDNS_Cloudflare_IPv4-6/blob/main/.github/workflows/codecov_macos.yaml'>codecov_macos.yaml</a></small></i>]
 end
+
+subgraph WRC[Reusable Workflow]
+    H[<b>CentOS 9</b>\n<i><small><a href='https://github.com/jmrplens/DynDNS_Cloudflare_IPv4-6/blob/main/.github/workflows/codecov_centos.yaml'>codecov_centos.yaml</a></small></i>]
+end
+
 Co -.-> Ur[Upload report to:\n<small>- <a href='https://app.codecov.io/github/jmrplens/DynDNS_Cloudflare_IPv4-6/flags'>Codecov</a>\n- <a href='https://app.codacy.com/gh/jmrplens/DynDNS_Cloudflare_IPv4-6/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_coverage'>Codacy</a></small> ]
 WC --> WU
 WC --> WD
 WC --> WM
+WC --> WRC
 
 subgraph Rb[Install Ruby Version]
     Rbb{{<code>ruby-build X.Y.Z</code>}}
@@ -378,20 +395,31 @@ end
 WU --> Rb
 WD --> Rb
 WM --> Rb
+WRC --> Rb
 
-Rb --> R0[3.0.6]
-Rb --> R1[3.1.4]
-Rb --> R2[3.2.2]
-Rb --> R3[3.3.0-preview1]
+Rb --> Sh
+Rb --> Sh
+Rb --> Sh
+Rb --> Sh
 
 subgraph Sh[Shell]
     Co[<code>bashcov ./unit-test.sh</code>]
 end
-R0 --> Sh
-R1 --> Sh
-R2 --> Sh
-R3 --> Sh
 ```
+
+### 2.2.2. Self-hosted runners
+
+To run the Github CI on MacOS, Debian and CentOS, [**self-hosted runners**](https://docs.github.com/en/actions/hosting-your-own-runners) are used.
+
+For Debian and CentOS operating systems it is necessary to manually install the Ruby versions that will run the tests. This is required:
+
+1. Install [**self-hosted runner**](https://docs.github.com/en/actions/hosting-your-own-runners/managing-self-hosted-runners/adding-self-hosted-runners).
+2. Install [**ruby-build**](https://github.com/rbenv/ruby-build). Follow the instructions in [_Install manually as a standalone program_](https://github.com/rbenv/ruby-build#install-manually-as-a-standalone-program).
+3. Assuming you have used the default work folder name `_work` , you must install the Ruby versions to be run in the runner into that folder:
+    ```bash
+    ruby-build X.Y.Z ACTION_RUNNER_PATH/_work/_tool/Ruby/X.Y.Z/x64
+    ```
+    Where X.Y.Z is the Ruby version you want to install (3.0.6, 3.1.4, ...).
 
 
 # 3. More info
