@@ -28,8 +28,7 @@ jobs:
     env:
       OS: ${{ matrix.os }}
       RUBY: ${{ matrix.ruby }}
-
-      name: Unit Test on Ubuntu
-      uses: ./.github/workflows/codecov_ubuntu.yaml
-      secrets: inherit
+    steps:
+      - name: Unit Test on Ubuntu
+        uses: ./.github/workflows/codecov_ubuntu.yaml
 
