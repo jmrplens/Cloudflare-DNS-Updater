@@ -30,7 +30,8 @@ jobs:
   run_test_ubuntu:
     runs-on: ${{ inputs.OS }}
     name: "OS: ${{ inputs.OS }} - RUBY: ${{ inputs.RUBY }}"
-
+    env:
+      BUNDLE_GEMFILE: ${{ inputs.BUNDLE_GEMFILE }}
     steps:
 
       - name: Checkout with all submodules
