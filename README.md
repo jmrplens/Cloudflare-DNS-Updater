@@ -362,7 +362,7 @@ Here we describe how the Github CI workflows for unit testing and code coverage 
   }
 }%%
 
-flowchart TD
+flowchart LR
 subgraph WC[Main Workflow]
     A(<b>Unit Test and Coverage</b>\n <i><small><a href='https://github.com/jmrplens/DynDNS_Cloudflare_IPv4-6/blob/main/.github/workflows/test_cov_main.yaml'>test_cov_main.yaml</a></small></i>)
     A --> B[Matrix strategy\n\n<table><tr><td align='left'><b>OS&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspRUBY</b></td><td>&nbsp3.0&nbsp</td><td style='background-color:'>&nbsp3.1&nbsp</td><td>&nbsp3.2&nbsp</td><td>&nbsp3.3&nbsp</td></tr><tr style='color:brown'><td>Ubuntu 22.04&nbsp&nbsp&nbsp&nbsp&nbsp</td><td>&#x2022</td><td>&#x2022</td><td>&#x2022</td><td>&#x2022</td></tr><tr style='color:darkviolet'><td align='left'>Debian 11&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp</td><td>&#x2022</td><td>&#x2022</td><td>&#x2022</td><td>&#x2022</td></tr><tr style='color:forestgreen'><td align='left'>CentOS 9&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp</td><td>&#x2022</td><td>&#x2022</td><td>&#x2022</td><td>&#x2022</td></tr><tr style='color:darkorange'><td align='left'>Mac OS 13&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp</td><td>&#x2022</td><td>&#x2022</td><td>&#x2022</td><td>&#x2022</td></tr></table>\n]
