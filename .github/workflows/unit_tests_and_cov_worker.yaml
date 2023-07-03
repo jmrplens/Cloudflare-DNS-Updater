@@ -20,29 +20,15 @@ jobs:
 
   checkout:
     runs-on: ${{ inputs.OS }}
+    env:
+      BUNDLE_GEMFILE: ${{ inputs.BUNDLE_GEMFILE }}
     steps:
       - name: Checkout repository with all submodules
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
         with:
           fetch-depth: 3
           submodules: recursive
-      - name: Create artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: workflow_${{ inputs.OS }}_${{ inputs.RUBY }}
-          path: ./
 
-  ruby_build:
-    runs-on: ${{ inputs.OS }}
-    needs: checkout
-    env:
-      BUNDLE_GEMFILE: ${{ inputs.BUNDLE_GEMFILE }}
-    name: Build Ruby
-    steps:
-      - name: Download artifacts
-        uses: actions/download-artifact@v3
-        with:
-          name: workflow_${{ inputs.OS }}_${{ inputs.RUBY }}
       - name: Get Ruby
         uses: ruby/setup-ruby@250fcd6a742febb1123a77a841497ccaa8b9e939 # v1.152.0
         with:
@@ -52,17 +38,7 @@ jobs:
           gem install bundler
           bundle install --jobs 4 --retry 3
         shell: bash
-      - name: Update artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: workflow_${{ inputs.OS }}_${{ inputs.RUBY }}
-          path: ./
 
-  run_tests:
-    runs-on: ${{ inputs.OS }}
-    needs: ruby_build
-    name: Run Unit Tests
-    steps:
       - name: Prepare scripts
         run: |
           chmod +x cloudflare-dns.sh
@@ -73,24 +49,19 @@ jobs:
           bashcov -s ./unit-test.sh
         shell: bash
 
-  coverage_report:
-      runs-on: ${{ inputs.OS }}
-      needs: run_tests
-      name: Coverage Report
-      steps:
-        - name: Upload reports to Codecov
-          uses: codecov/codecov-action@eaaf4bedf32dbdc6b720b63067d99c4d77d6047d # v3.1.4
-          with:
-            token: ${{ secrets.CODECOV_TOKEN }}
-            flags: OS_${{ inputs.OS }}__Ruby_${{ inputs.RUBY }}
-            functionalities: gcov
-            os: ${{ inputs.OS }}
-            name: "DynDNS Cloudflare - OS: ${{ inputs.OS }} ; RUBY: ${{ inputs.RUBY }}"
-            verbose: true
+      - name: Upload reports to Codecov
+        uses: codecov/codecov-action@eaaf4bedf32dbdc6b720b63067d99c4d77d6047d # v3.1.4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: OS_${{ inputs.OS }}__Ruby_${{ inputs.RUBY }}
+          functionalities: gcov
+          os: ${{ inputs.OS }}
+          name: "DynDNS Cloudflare - OS: ${{ inputs.OS }} ; RUBY: ${{ inputs.RUBY }}"
+          verbose: true
 
-        - name: Run codacy-coverage-reporter
-          uses: codacy/codacy-coverage-reporter-action@89d6c85cfafaec52c72b6c5e8b2878d33104c699 # v1.3.0
-          with:
-            project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
-            coverage-reports: coverage/coverage.xml
-            language: Shell
+      - name: Run codacy-coverage-reporter
+        uses: codacy/codacy-coverage-reporter-action@89d6c85cfafaec52c72b6c5e8b2878d33104c699 # v1.3.0
+        with:
+          project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
+          coverage-reports: coverage/coverage.xml
+          language: Shell
