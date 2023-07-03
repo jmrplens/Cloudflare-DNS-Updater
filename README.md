@@ -421,6 +421,12 @@ For Debian and CentOS operating systems it is necessary to manually install the 
     ```
     Where X.Y.Z is the Ruby version you want to install (3.0.6, 3.1.4, ...).
 
+    And mark it as completed with:
+    ```bash
+    touch /root/actions-runner/_work/_tool/Ruby/X.Y.Z/x64.complete
+    ```
+    Where X.Y.Z is the Ruby version you have installed (3.0.6, 3.1.4, ...).
+
 
 # 3. More info
 
