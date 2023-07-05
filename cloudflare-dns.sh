@@ -321,6 +321,24 @@ settings_domains_validation() {
       error_msg "Error! Internal IP cannot be Proxied"
       domains__proxied[i]="false"
     fi
+
+    # Check value of ipv4 option
+    if [ "${domains__ipv4[i]}" != "true" ] && 
+      [ "${domains__ipv4[i]}" != "false" ]; then
+      error_msg "Wrong value for ipv4. Force set to $def_ipv4"
+      def_ipv4_enabled[i]=true
+    else
+      def_ipv4_enabled[i]=false
+    fi
+    
+    # Check value of ipv6 option
+    if [ "${domains__ipv6[i]}" != "true" ] && 
+      [ "${domains__ipv6[i]}" != "false" ]; then
+      error_msg "Wrong value for ipv4. Force set to $def_ipv6"
+      def_ipv6_enabled[i]=true
+    else
+      def_ipv6_enabled[i]=false
+    fi
   done
   return 0;
 }
