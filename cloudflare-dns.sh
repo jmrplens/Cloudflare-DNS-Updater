@@ -288,13 +288,14 @@ settings_domains_validation() {
     fi
 
     # Check validity of "ttl" parameter
-    if [ "${domains__ttl[i]}" -lt 120 ] 2>/dev/null ||
-      [ "${domains__ttl[i]}" -gt 7200 ] 2>/dev/null ||
-      [ "${domains__ttl[i]}" != "auto" ]; then
+    if [ "${domains__ttl[i]}" == "auto" ]; then
+      def_ttl_enabled[i]=false
+    elif [ "${domains__ttl[i]}" -gt 120 ] 2>/dev/null ||
+     [ "${domains_ttl[i]}" -lt 7200 ] 2>/dev/null; then
+      def_ttl_enabled[i]=false
+    else
       warn_msg "Error! 'ttl' out of range (120-7200) or not set to 'auto'. Force set to '$def_ttl'"
       def_ttl_enabled[i]=true
-    else
-      def_ttl_enabled[i]=false
     fi
 
     # Check validity of "proxied" parameter
