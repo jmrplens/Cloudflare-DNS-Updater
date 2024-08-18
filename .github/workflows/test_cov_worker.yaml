@@ -25,7 +25,7 @@ jobs:
       BUNDLE_GEMFILE: ${{ inputs.BUNDLE_GEMFILE }}
     steps:
       - name: Checkout repository with all submodules
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        uses: actions/checkout@v4.1.7
         with:
           fetch-depth: 3
           submodules: recursive
@@ -55,7 +55,7 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           flags: OS_${{ inputs.OS }}__Ruby_${{ inputs.RUBY }}
-          functionalities: gcov
+          #functionalities: gcov
           os: ${{ inputs.OS }}
           name: "DynDNS Cloudflare - OS: ${{ inputs.OS }} ; RUBY: ${{ inputs.RUBY }}"
           verbose: true
