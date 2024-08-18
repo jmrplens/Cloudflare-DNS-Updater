@@ -31,7 +31,7 @@ jobs:
           submodules: recursive
 
       - name: Get Ruby
-        uses: ruby/setup-ruby@latest # v1.152.0
+        uses: ruby/setup-ruby@3783f195e29b74ae398d7caca108814bbafde90e # v1.180.1
         with:
           ruby-version: ${{ inputs.RUBY }}
       - name: Install Gems
