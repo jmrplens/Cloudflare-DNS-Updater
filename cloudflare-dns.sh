@@ -1,12 +1,33 @@
 #!/bin/bash
 
 # Cloudflare DNS Management Script (cloudflareDNS.sh)
-# Copyright (c) 2023 Your Name/Organization
-# License: MIT
+# Copyright (c) 2024 Jose Manuel Requena Plens
+# License: GNU General Public License v3.0
 
+# This script allows you to manage your Cloudflare DNS records using the Cloudflare API.
+# It can be used to update your DNS records with your current IP address, and it supports
+# both IPv4 and IPv6 addresses. You can also enable or disable proxied mode for your records.
+# The script can be run manually or scheduled to run periodically using cron or systemd timers.
+#
+# For more information, please visit:
+#
+
+# Pipefail is required to catch errors in jq commands. If any command in a pipeline fails, the
+# pipeline will return a non-zero status code, which will be caught by the script.
 set -euo pipefail
 
-VERSION="1.7.0"
+VERSION="1.0.0"
+
+#==============================================================================
+# SCRIPT SETTINGS
+#==============================================================================
+SCRIPT_NAME="Cloudflare DNS Management Script"
+SCRIPT_VERSION="$VERSION"
+SCRIPT_DESCRIPTION="Manage your Cloudflare DNS records with ease"
+SCRIPT_URL=""
+SCRIPT_AUTHOR="Jose Manuel Requena Plens"
+SCRIPT_AUTHOR_URL=""
+SCRIPT_LICENSE="GNU General Public License v3.0"
 
 #==============================================================================
 # CONFIGURATION
@@ -40,6 +61,8 @@ declare -A NOTIFICATION_PLUGINS
 
 # Colors for terminal output
 declare -A COLORS=(
+    # From \033[0;30m to \033[0;37m
+    [BLACK]='\033[0;30m'
     [RED]='\033[0;31m'
     [GREEN]='\033[0;32m'
     [YELLOW]='\033[0;33m'
@@ -47,13 +70,45 @@ declare -A COLORS=(
     [MAGENTA]='\033[0;35m'
     [CYAN]='\033[0;36m'
     [GRAY]='\033[0;37m'
-    [RESET]='\033[0m'
+    # From \033[1;30m to \033[1;37m
+    [DARK_GRAY]='\033[1;30m'
+    [LIGHT_RED]='\033[1;31m'
+    [LIGHT_GREEN]='\033[1;32m'
+    [LIGHT_YELLOW]='\033[1;33m'
+    [LIGHT_BLUE]='\033[1;34m'
+    [LIGHT_MAGENTA]='\033[1;35m'
+    [LIGHT_CYAN]='\033[1;36m'
+    [WHITE]='\033[1;37m'
+    # Special formatting
     [BOLD]='\033[1m'
+    [UNDERLINE]='\033[4m'
+    [INVERT]='\033[7m'
+    [NO_BOLD]='\033[22m'
+    [NO_UNDERLINE]='\033[24m'
+    [NO_INVERT]='\033[27m'
+    # Reset all attributes
+    [RESET]='\033[0m'
 )
 
 #==============================================================================
 # UTILITY FUNCTIONS
 #==============================================================================
+
+# Date function. If host is macOS, use gdate instead of date, if gdate are not installed, prompt user to install it.
+date_compat() {
+    # Host is macOS
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        if command -v gdate &>/dev/null; then
+            gdate "$@"
+        else
+            log_error "GNU date (gdate) is required on macOS. Please install it using Homebrew:"
+            log_error "brew install coreutils"
+            exit 1
+        fi
+    else
+        date "$@"
+    fi
+}
 
 # Enhanced logging function with support for different verbosity levels
 log() {
@@ -62,7 +117,7 @@ log() {
     local timestamp
     local color="${COLORS[RESET]}"
     local caller_func="${FUNCNAME[2]:-${FUNCNAME[1]:-main}}"
-    timestamp=$(gdate +"%Y-%m-%d %H:%M:%S")
+    timestamp=$(date_compat +"%Y-%m-%d %H:%M:%S")
 
     case "$level" in
         error) color="${COLORS[RED]}" ;;
@@ -96,6 +151,33 @@ log_error() { log "$1" "error"; }
 log_warning() { log "$1" "warning"; }
 log_info() { log "$1" "info"; }
 log_debug() { log "$1" "debug"; }
+
+# Format terminal titles
+print_centered_title() {
+    local title="$1"
+    local total_len="$2"
+    local fill_char="${3:-=}"
+    local format="${4}"
+
+    # Title length
+    local title_len=${#title}
+    # Remaining space to fill
+    local total_fill=$((total_len - title_len))
+    # Half of the remaining space
+    local half_fill=$((total_fill / 2))
+
+    # Padding on the left and right
+    local left_padding
+    left_padding=$(printf '%*s' "$half_fill" | tr ' ' "$fill_char")
+    local right_padding
+    right_padding=$(printf '%*s' "$((total_fill - half_fill))" | tr ' ' "$fill_char")
+
+    local title="${left_padding} ${title} ${right_padding}"
+
+    # If format is not empty, apply it
+    [[ -n "$format" ]] && title="${format}${title}${COLORS[RESET]}"
+    echo -e "$title"
+}
 
 # Ensure the log file exists and is writable
 ensure_log_file() {
@@ -145,19 +227,19 @@ check_api_connectivity() {
     local duration
     local response
 
-    start_time=$(gdate +%s%N)
+    start_time=$(date_compat +%s%N)
     response=$(curl -s -o /dev/null -w "%{http_code}" -X GET "https://api.cloudflare.com/client/v4/user/tokens/verify" \
         -H "Authorization: Bearer ${ZONE_API_TOKEN}" \
         -H "Content-Type: application/json")
-    end_time=$(gdate +%s%N)
+    end_time=$(date_compat +%s%N)
     duration=$(( (end_time - start_time) / 1000000 ))
 
     if [[ "$response" == "200" ]]; then
-        echo "${COLORS[GREEN]}${COLORS[BOLD]}OK${COLORS[RESET]} (ping ${duration} ms)"
-        log_debug
+        echo -e "${COLORS[GREEN]}${COLORS[INVERT]} OK ${COLORS[NO_INVERT]} (ping ${duration} ms)${COLORS[RESET]}"
+        log_debug "API connectivity check successful. Ping time: ${duration} ms"
     else
-        echo "Failed"
-        log_error
+        echo -e "${COLORS[RED]}${COLORS[INVERT]}  Failed  ${COLORS[NO_INVERT]} (HTTP $response)${COLORS[RESET]}"
+        log_error "API connectivity check failed. HTTP response code: $response"
     fi
 }
 
@@ -167,8 +249,9 @@ get_current_ips() {
     local ipv6
     ipv4=$(curl -s https://ipv4.icanhazip.com)
     ipv6=$(curl -s https://ipv6.icanhazip.com)
-    echo "Current IPv4: ${ipv4:-Not available}"
-    echo "Current IPv6: ${ipv6:-Not available}"
+    # Print with pretty formatting
+    echo -e "IPv4: ${COLORS[CYAN]}${COLORS[BOLD]}$ipv4${COLORS[RESET]}"
+    echo -e "IPv6: ${COLORS[CYAN]}${COLORS[BOLD]}$ipv6${COLORS[RESET]}"
 }
 
 #==============================================================================
@@ -385,23 +468,30 @@ update_dns_record() {
         current_ttl="auto"  # Cloudflare uses 1 to represent "auto"
     fi
 
-    local changes=""
-    [[ "$ip" != "$current_ip" ]] && changes+="IP:[$current_ip->$ip] "
-    [[ "$proxied" != "$current_proxied" ]] && changes+="Proxied:[$current_proxied->$proxied] "
-    [[ "$ttl" != "$current_ttl" ]] && changes+="TTL:[$current_ttl->$ttl] "
+    log_debug "Current record info parsed: ID=$record_id, IP=$current_ip, Proxied=$current_proxied, TTL=$current_ttl"
 
+    # Each change will be appended to this string with the format: "old_value -> new_value"
+    local changes=""
+    [[ "$ip" != "$current_ip" ]] && changes+="$current_ip -> $ip "
+    [[ "$proxied" != "$current_proxied" ]] && changes+="$current_proxied -> $proxied "
+    [[ "$ttl" != "$current_ttl" ]] && changes+="$current_ttl -> $ttl "
+
+    # If no changes are needed, return early
     if [[ -z "$changes" ]]; then
         log_info "No changes needed for $record_name ($record_type)"
         echo "no_change"
         return 0
     fi
 
+    # Update the DNS record
     log_info "Updating $record_name ($record_type): $changes"
 
-    if [[ "$ttl" == "auto" || "$ttl" == "1" ]]; then
+    # Validate TTL value. Cloudflare requires TTL to be between 120 and 7200 or "auto"=1, otherwise it will be set to 1
+    if [[ "$ttl" == "auto" || "$ttl" == "1" || ${ttl} -lt 120 || ${ttl} -gt 7200 ]]; then
         ttl=1  # Cloudflare uses 1 to represent "auto"
     fi
 
+    # Prepare the JSON payload for the API request
     local payload
     payload=$(jq -n \
         --arg type "$record_type" \
@@ -422,6 +512,7 @@ update_dns_record() {
     local url="https://api.cloudflare.com/client/v4/zones/$zone_id/dns_records/$record_id"
     log_debug "API URL: $url"
 
+    # Make the API request and call the retry_command function to handle retries
     local response
     response=$(retry_command curl -s -X PUT "$url" \
         -H "Authorization: Bearer $ZONE_API_TOKEN" \
@@ -430,6 +521,7 @@ update_dns_record() {
 
     log_debug "API Response: $response"
 
+    # Check if the API request was successful
     if [[ "$(echo "$response" | jq -r '.success')" != "true" ]]; then
         local error_message
         error_message=$(jq -r '.errors[0].message // "Unknown error"' <<<"$response")
@@ -440,6 +532,7 @@ update_dns_record() {
 
     log_info "DNS record for ${record_name} updated successfully with changes: ${changes}"
 
+    # Return the changes made
     echo "${changes%,}"
     return 0
 }
@@ -647,7 +740,7 @@ process_domain() {
     local ttl="$6"
 
     local start_time
-    start_time=$(gdate +%s%N)
+    start_time=$(date_compat +%s%N)
     local ipv4_changes=""
     local ipv6_changes=""
     local proxied_changes=""
@@ -682,11 +775,11 @@ process_domain() {
     log_debug "TTL changes: $ttl_changes"
 
     local end_time=
-    end_time=$(gdate +%s%N)
+    end_time=$(date_compat +%s%N)
     local duration=$(( (end_time - start_time) / 1000000 ))
 
-    # Registrar los cambios en el archivo temporal
-    echo "$domain_name:$ipv4_changes:$ipv6_changes:$proxied_changes:$ttl_changes:$ipv4_enabled:$ipv6_enabled:$duration" >> "$TEMP_CHANGES_FILE"
+    # Save changes to a temporal file. NOTE: Changes separated by "|"
+    echo "$domain_name|$ipv4_changes|$ipv6_changes|$proxied_changes|$ttl_changes|$ipv4_enabled|$ipv6_enabled|$duration" >> "$TEMP_CHANGES_FILE"
 
     log_debug "Current content of changes temporal file:
     $(awk '{print "\t\t" $0}' "$TEMP_CHANGES_FILE")"
@@ -708,13 +801,13 @@ process_domains_sequential() {
         ipv4_enabled=$(echo "$domain_config" | yq ".ipv4 // \"$GLOBAL_IPV4\"")
         ipv6_enabled=$(echo "$domain_config" | yq ".ipv6 // \"$GLOBAL_IPV6\"")
         proxied=$(echo "$domain_config" | yq ".proxied // \"$GLOBAL_PROXIED\"")
-        ttl=$(echo "$domain_config" | yq ".ttl // \"$GLOBAL_TTL\"")
+        ttl=$(echo "$domain_config" | yq ".ttl // \"${GLOBAL_TTL}\"")
 
         # Convert empty strings and "null" to global values
         [[ -z "$ipv4_enabled" || "$ipv4_enabled" == "null" ]] && ipv4_enabled="$GLOBAL_IPV4"
         [[ -z "$ipv6_enabled" || "$ipv6_enabled" == "null" ]] && ipv6_enabled="$GLOBAL_IPV6"
         [[ -z "$proxied" || "$proxied" == "null" ]] && proxied="$GLOBAL_PROXIED"
-        [[ -z "$ttl" || "$ttl" == "null" ]] && ttl="$GLOBAL_TTL"
+        [[ -z "$ttl" || "$ttl" == "null" ]] && ttl="${GLOBAL_TTL}"
 
         # Remove quotes if present
         ipv4_enabled=$(echo "$ipv4_enabled" | tr -d '"')
@@ -760,13 +853,13 @@ print_domain_status() {
     }
 
     local formatted_output
-    formatted_output=$(printf "%-30s %sIPv4%s %sIPv6%s %sProxied%s %sTTL%s | Time elapsed: %d ms\n" \
+    formatted_output=$(printf "%-30s %sIPv4%s %sIPv6%s %sProxied%s %sTTL%s | %s %d %s\n" \
         "$domain:" \
         "$(get_color "$ipv4_status")$ipv4_status" "${COLORS[RESET]}" \
         "$(get_color "$ipv6_status")$ipv6_status" "${COLORS[RESET]}" \
         "$(get_color "$proxied_status")$proxied_status" "${COLORS[RESET]}" \
         "$(get_color "$ttl_status")$ttl_status" "${COLORS[RESET]}" \
-        "$duration")
+        "${COLORS[UNDERLINE]}Time elapsed:" "$duration" "ms${COLORS[RESET]}")
 
     echo -e "$formatted_output"
 }
@@ -789,13 +882,13 @@ process_domains_parallel() {
         ipv4_enabled=$(echo "$domain_config" | yq ".ipv4 // \"$GLOBAL_IPV4\"")
         ipv6_enabled=$(echo "$domain_config" | yq ".ipv6 // \"$GLOBAL_IPV6\"")
         proxied=$(echo "$domain_config" | yq ".proxied // \"$GLOBAL_PROXIED\"")
-        ttl=$(echo "$domain_config" | yq ".ttl // \"$GLOBAL_TTL\"")
+        ttl=$(echo "$domain_config" | yq ".ttl // \"${GLOBAL_TTL}\"")
 
         # Convert empty strings and "null" to global values
         [[ -z "$ipv4_enabled" || "$ipv4_enabled" == "null" ]] && ipv4_enabled="$GLOBAL_IPV4"
         [[ -z "$ipv6_enabled" || "$ipv6_enabled" == "null" ]] && ipv6_enabled="$GLOBAL_IPV6"
         [[ -z "$proxied" || "$proxied" == "null" ]] && proxied="$GLOBAL_PROXIED"
-        [[ -z "$ttl" || "$ttl" == "null" ]] && ttl="$GLOBAL_TTL"
+        [[ -z "$ttl" || "$ttl" == "null" ]] && ttl="${GLOBAL_TTL}"
 
         # Remove quotes if present
         ipv4_enabled=$(echo "$ipv4_enabled" | tr -d '"')
@@ -1039,7 +1132,7 @@ main() {
     UPDATE_IPV4="$DEFAULT_GLOBAL_IPV4"
     UPDATE_IPV6="$DEFAULT_GLOBAL_IPV6"
     GLOBAL_PROXIED="$DEFAULT_GLOBAL_PROXIED"
-    TTL="$DEFAULT_GLOBAL_TTL"
+    TTL="${DEFAULT_GLOBAL_TTL}"
     ENABLE_CREATE_RECORD="$DEFAULT_ENABLE_CREATE_RECORD"
     DOMAINS=""
     
@@ -1157,20 +1250,30 @@ main() {
     # Execute the appropriate command
     case "$command" in
         update)
-            # Display status
-            echo "=== Status ==="
+            log_info "Starting DNS update process"
+
+            # Get max length of domain name to format output
+            IFS=',' read -ra DOMAIN_ARRAY <<< "$DOMAINS"
+            local max_length=0
+            for domain in "${DOMAIN_ARRAY[@]}"; do
+                if [[ ${#domain} -gt $max_length ]]; then
+                    max_length=${#domain}
+                fi
+            done
+            # Display status.
+            print_centered_title "STATUS" $((max_length + 60)) "=" "${COLORS[BLUE]}${COLORS[BOLD]}"
             get_current_ips
             echo -n "Connection with API: "
             check_api_connectivity
             echo
 
             # Display domains to be processed
-            echo "=== Domains to be processed ==="
-            display_domains_to_process
+            print_centered_title "DOMAINS TO BE PROCESSED" $((max_length + 60)) "=" "${COLORS[BLUE]}${COLORS[BOLD]}"
+            display_domains_to_process "$max_length"
 
             # Process domains
-            echo "=== Running ==="
-            echo -e "Legend: ${COLORS[GREEN]}${COLORS[BOLD]}[+]${COLORS[RESET]} Updated | ${COLORS[GRAY]}${COLORS[BOLD]}[·]${COLORS[RESET]} No changes needed | ${COLORS[RED]}${COLORS[BOLD]}[-]${COLORS[RESET]} Disabled"
+            print_centered_title "Running" $((max_length + 60)) "=" "${COLORS[BLUE]}${COLORS[BOLD]}"
+            echo -e "Legend: ${COLORS[GREEN]}${COLORS[BOLD]}[+]${COLORS[RESET]} Updated/Created | ${COLORS[GRAY]}${COLORS[BOLD]}[·]${COLORS[RESET]} No changes needed | ${COLORS[RED]}${COLORS[BOLD]}[-]${COLORS[RESET]} Disabled/Deleted"
             echo
 
             # Process one by one. Parallel generate problems to log.
@@ -1180,11 +1283,10 @@ main() {
             log_info "DNS update process completed successfully"
 
             # Display detailed summary
-            display_summary
+            display_summary "$max_length"
 
             # Clean up temporary file
-            #rm -f "$TEMP_CHANGES_FILE"
-            echo "$TEMP_CHANGES_FILE"
+            rm -f "$TEMP_CHANGES_FILE"
             ;;
         test)
             test_mode
@@ -1204,6 +1306,7 @@ main() {
 
 # Display domains to be processed
 display_domains_to_process() {
+    local max_length="${1:-0}"
     local domain_config
     local ipv4_enabled
     local ipv6_enabled
@@ -1212,12 +1315,13 @@ display_domains_to_process() {
 
     local index=1
     IFS=',' read -ra DOMAIN_ARRAY <<< "$DOMAINS"
+    # Display domains
     for domain in "${DOMAIN_ARRAY[@]}"; do
         domain_config=$(yq ".domains[] | select(.name == \"$domain\")" "$CONFIG_FILE")
         ipv4_enabled=$(echo "$domain_config" | yq ".ipv4 // \"$GLOBAL_IPV4\"")
         ipv6_enabled=$(echo "$domain_config" | yq ".ipv6 // \"$GLOBAL_IPV6\"")
         proxied=$(echo "$domain_config" | yq ".proxied // \"$GLOBAL_PROXIED\"")
-        ttl=$(echo "$domain_config" | yq ".ttl // \"$GLOBAL_TTL\"")
+        ttl=$(echo "$domain_config" | yq ".ttl // \"${GLOBAL_TTL}\"")
 
         # Remove quotes if present
         ipv4_enabled=$(echo "$ipv4_enabled" | tr -d '"')
@@ -1241,32 +1345,35 @@ display_domains_to_process() {
             global_indicator=" (using global settings)"
         fi
 
-        printf "%d. %-30s -> %s%s\n" \
+        printf "${COLORS[BOLD]}%d${COLORS[NO_BOLD]}. %-$((max_length + 2))s -> %s%s\n" \
             "$index" "$domain" \
             "$settings" \
             "$global_indicator"
         ((index++))
     done
+    echo # New line
 }
 
 # Display detailed summary of changes
 display_summary() {
-    echo -e "\n${COLORS[CYAN]}==== Summary ====${COLORS[RESET]}"
+    local max_length="${1:-0}"
+
+    echo -e "\n${COLORS[CYAN]}==== SUMMARY ====${COLORS[RESET]}"
     echo "Total domains processed: ${#DOMAIN_ARRAY[@]}"
     echo "Create missing records: $ENABLE_CREATE_RECORD"
     echo "Details:"
 
     if [[ ! -f "$TEMP_CHANGES_FILE" ]]; then
-        echo "Error: Temporary changes file not found."
+        log_error "Temporary changes file not found. Expected at: $TEMP_CHANGES_FILE"
         return 1
     fi
 
     if [[ ! -s "$TEMP_CHANGES_FILE" ]]; then
-        echo "No changes were recorded."
+        log_warning "No changes were recorded. No summary to display. (Empty changes file)"
         return 0
     fi
 
-    while IFS=: read -r domain ipv4_changes ipv6_changes proxied_changes ttl_changes ipv4_enabled ipv6_enabled duration || [[ -n "$domain" ]]; do
+    while IFS='|' read -r domain ipv4_changes ipv6_changes proxied_changes ttl_changes ipv4_enabled ipv6_enabled duration || [[ -n "$domain" ]]; do
         log_debug "Processing domain: $domain"
 
         if [[ -z "$domain" ]]; then
