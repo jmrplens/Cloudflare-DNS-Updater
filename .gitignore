@@ -4,3 +4,5 @@
 coverage/
 test/Gemfile.lock
 test/test-output/
+
+.idea/

@@ -1,0 +1,726 @@
+2024-09-11 21:09:56 - DEBUG: [load_yaml] Global settings: IPv4=true, IPv6=true, Proxied=true, TTL=auto
+2024-09-11 21:09:56 - DEBUG: [load_yaml] Configuration loaded from cloudflare-dns.yaml
+2024-09-11 21:09:56 - DEBUG: [load_yaml] ENABLE_CREATE_RECORD set to: false
+2024-09-11 21:09:56 - DEBUG: [main] Final ENABLE_CREATE_RECORD value: false
+2024-09-11 21:09:56 - DEBUG: [validate_config] Configuration validated successfully
+2024-09-11 21:09:57 - DEBUG: [check_api_connectivity] API connectivity check successful. Ping time: 831 ms
+2024-09-11 21:10:32 - DEBUG: [load_yaml] Global settings: IPv4=true, IPv6=true, Proxied=true, TTL=auto
+2024-09-11 21:10:32 - DEBUG: [load_yaml] Configuration loaded from cloudflare-dns.yaml
+2024-09-11 21:10:32 - DEBUG: [load_yaml] ENABLE_CREATE_RECORD set to: false
+2024-09-11 21:10:32 - DEBUG: [main] Final ENABLE_CREATE_RECORD value: false
+2024-09-11 21:10:32 - DEBUG: [validate_config] Configuration validated successfully
+2024-09-11 21:10:33 - DEBUG: [check_api_connectivity] API connectivity check successful. Ping time: 854 ms
+2024-09-11 21:10:54 - DEBUG: [load_yaml] Global settings: IPv4=true, IPv6=true, Proxied=true, TTL=auto
+2024-09-11 21:10:54 - DEBUG: [load_yaml] Configuration loaded from cloudflare-dns.yaml
+2024-09-11 21:10:54 - DEBUG: [load_yaml] ENABLE_CREATE_RECORD set to: false
+2024-09-11 21:10:54 - DEBUG: [main] Final ENABLE_CREATE_RECORD value: false
+2024-09-11 21:10:54 - DEBUG: [validate_config] Configuration validated successfully
+2024-09-11 21:10:55 - DEBUG: [check_api_connectivity] API connectivity check successful. Ping time: 810 ms
+2024-09-11 21:11:40 - DEBUG: [load_yaml] Global settings: IPv4=true, IPv6=true, Proxied=true, TTL=auto
+2024-09-11 21:11:40 - DEBUG: [load_yaml] Configuration loaded from cloudflare-dns.yaml
+2024-09-11 21:11:40 - DEBUG: [load_yaml] ENABLE_CREATE_RECORD set to: false
+2024-09-11 21:11:40 - DEBUG: [main] Final ENABLE_CREATE_RECORD value: false
+2024-09-11 21:11:40 - DEBUG: [validate_config] Configuration validated successfully
+2024-09-11 21:11:41 - DEBUG: [check_api_connectivity] API connectivity check successful. Ping time: 838 ms
+2024-09-11 21:12:24 - DEBUG: [load_yaml] Global settings: IPv4=true, IPv6=true, Proxied=true, TTL=auto
+2024-09-11 21:12:24 - DEBUG: [load_yaml] Configuration loaded from cloudflare-dns.yaml
+2024-09-11 21:12:24 - DEBUG: [load_yaml] ENABLE_CREATE_RECORD set to: false
+2024-09-11 21:12:24 - DEBUG: [main] Final ENABLE_CREATE_RECORD value: false
+2024-09-11 21:12:24 - DEBUG: [validate_config] Configuration validated successfully
+2024-09-11 21:12:25 - DEBUG: [check_api_connectivity] API connectivity check successful. Ping time: 938 ms
+2024-09-11 21:12:49 - DEBUG: [load_yaml] Global settings: IPv4=true, IPv6=true, Proxied=true, TTL=auto
+2024-09-11 21:12:49 - DEBUG: [load_yaml] Configuration loaded from cloudflare-dns.yaml
+2024-09-11 21:12:49 - DEBUG: [load_yaml] ENABLE_CREATE_RECORD set to: false
+2024-09-11 21:12:49 - DEBUG: [main] Final ENABLE_CREATE_RECORD value: false
+2024-09-11 21:12:49 - DEBUG: [validate_config] Configuration validated successfully
+2024-09-11 21:12:51 - DEBUG: [check_api_connectivity] API connectivity check successful. Ping time: 797 ms
+2024-09-11 21:13:06 - DEBUG: [load_yaml] Global settings: IPv4=true, IPv6=true, Proxied=true, TTL=auto
+2024-09-11 21:13:06 - DEBUG: [load_yaml] Configuration loaded from cloudflare-dns.yaml
+2024-09-11 21:13:06 - DEBUG: [load_yaml] ENABLE_CREATE_RECORD set to: false
+2024-09-11 21:13:06 - DEBUG: [main] Final ENABLE_CREATE_RECORD value: false
+2024-09-11 21:13:06 - DEBUG: [validate_config] Configuration validated successfully
+2024-09-11 21:13:07 - DEBUG: [check_api_connectivity] API connectivity check successful. Ping time: 811 ms
+2024-09-11 21:13:19 - DEBUG: [load_yaml] Global settings: IPv4=true, IPv6=true, Proxied=true, TTL=auto
+2024-09-11 21:13:19 - DEBUG: [load_yaml] Configuration loaded from cloudflare-dns.yaml
+2024-09-11 21:13:19 - DEBUG: [load_yaml] ENABLE_CREATE_RECORD set to: false
+2024-09-11 21:13:19 - DEBUG: [main] Final ENABLE_CREATE_RECORD value: false
+2024-09-11 21:13:19 - DEBUG: [validate_config] Configuration validated successfully
+2024-09-11 21:13:21 - DEBUG: [check_api_connectivity] API connectivity check successful. Ping time: 1003 ms
+2024-09-11 21:13:22 - DEBUG: [process_domains_sequential] Processing jmrp.io: IPv4=true, IPv6=true, Proxied=true, TTL=auto
+2024-09-11 21:13:22 - DEBUG: [update_dns_record] Input parameters: zone_id=44d43a33307a232a60a5af4fc1504613, record_name=jmrp.io, ip=79.117.113.191, record_type=A, proxied=true, ttl=auto
+2024-09-11 21:13:22 - DEBUG: [update_dns_record] ENABLE_CREATE_RECORD: false
+2024-09-11 21:13:23 - DEBUG: [get_record_info] API URL for get_record_info: https://api.cloudflare.com/client/v4/zones/44d43a33307a232a60a5af4fc1504613/dns_records?name=jmrp.io&type=A
+2024-09-11 21:13:24 - DEBUG: [update_dns_record] Current record info: {
+  "id": "2bbb70f0608d75df58690b58a1c0a9f7",
+  "zone_id": "44d43a33307a232a60a5af4fc1504613",
+  "zone_name": "jmrp.io",
+  "name": "jmrp.io",
+  "type": "A",
+  "content": "79.117.113.191",
+  "proxiable": true,
+  "proxied": true,
+  "ttl": 1,
+  "settings": {},
+  "meta": {
+    "auto_added": false,
+    "fallback_origin": true,
+    "managed_by_apps": false,
+    "managed_by_argo_tunnel": false
+  },
+  "comment": null,
+  "tags": [],
+  "created_on": "2023-08-05T11:10:39.673184Z",
+  "modified_on": "2024-09-11T17:50:07.01281Z"
+}
+2024-09-11 21:13:24 - DEBUG: [update_dns_record] Current record info parsed: ID=2bbb70f0608d75df58690b58a1c0a9f7, IP=79.117.113.191, Proxied=true, TTL=auto
+2024-09-11 21:13:24 - INFO: [update_dns_record] No changes needed for jmrp.io (A)
+2024-09-11 21:13:24 - DEBUG: [process_domain] IPv4 changes: no_change
+2024-09-11 21:13:24 - DEBUG: [update_dns_record] Input parameters: zone_id=44d43a33307a232a60a5af4fc1504613, record_name=jmrp.io, ip=2a0c:5a84:b10b:2600::1, record_type=AAAA, proxied=true, ttl=auto
+2024-09-11 21:13:24 - DEBUG: [update_dns_record] ENABLE_CREATE_RECORD: false
+2024-09-11 21:13:24 - DEBUG: [get_record_info] API URL for get_record_info: https://api.cloudflare.com/client/v4/zones/44d43a33307a232a60a5af4fc1504613/dns_records?name=jmrp.io&type=AAAA
+2024-09-11 21:13:25 - DEBUG: [update_dns_record] Current record info: {
+  "id": "cdcbe94893e448fbcc5cb67d21bb374c",
+  "zone_id": "44d43a33307a232a60a5af4fc1504613",
+  "zone_name": "jmrp.io",
+  "name": "jmrp.io",
+  "type": "AAAA",
+  "content": "2a0c:5a84:b10b:2600:8647:9ff:fe23:d6c7",
+  "proxiable": true,
+  "proxied": true,
+  "ttl": 1,
+  "settings": {},
+  "meta": {
+    "auto_added": false,
+    "fallback_origin": true,
+    "managed_by_apps": false,
+    "managed_by_argo_tunnel": false
+  },
+  "comment": null,
+  "tags": [],
+  "created_on": "2024-05-05T23:00:41.07741Z",
+  "modified_on": "2024-09-11T19:05:06.208426Z"
+}
+2024-09-11 21:13:25 - DEBUG: [update_dns_record] Current record info parsed: ID=cdcbe94893e448fbcc5cb67d21bb374c, IP=2a0c:5a84:b10b:2600:8647:9ff:fe23:d6c7, Proxied=true, TTL=auto
+2024-09-11 21:13:25 - INFO: [update_dns_record] Updating jmrp.io (AAAA): 2a0c:5a84:b10b:2600:8647:9ff:fe23:d6c7 -> 2a0c:5a84:b10b:2600::1 
+2024-09-11 21:13:25 - DEBUG: [update_dns_record] Payload for update_dns_record: {
+  "type": "AAAA",
+  "name": "jmrp.io",
+  "content": "2a0c:5a84:b10b:2600::1",
+  "ttl": 1,
+  "proxied": true
+}
+2024-09-11 21:13:25 - DEBUG: [update_dns_record] API URL: https://api.cloudflare.com/client/v4/zones/44d43a33307a232a60a5af4fc1504613/dns_records/cdcbe94893e448fbcc5cb67d21bb374c
+2024-09-11 21:13:25 - DEBUG: [retry_command] Executing command: curl -s -X PUT https://api.cloudflare.com/client/v4/zones/44d43a33307a232a60a5af4fc1504613/dns_records/cdcbe94893e448fbcc5cb67d21bb374c -H Authorization: Bearer rY7s0ciXH9ARs3FkxChCdBIti_X15oT_bSUN7xQP -H Content-Type: application/json --data {
+  "type": "AAAA",
+  "name": "jmrp.io",
+  "content": "2a0c:5a84:b10b:2600::1",
+  "ttl": 1,
+  "proxied": true
+}
+2024-09-11 21:13:26 - DEBUG: [retry_command] Command succeeded
+2024-09-11 21:13:26 - DEBUG: [update_dns_record] API Response: {"result":{"id":"cdcbe94893e448fbcc5cb67d21bb374c","zone_id":"44d43a33307a232a60a5af4fc1504613","zone_name":"jmrp.io","name":"jmrp.io","type":"AAAA","content":"2a0c:5a84:b10b:2600::1","proxiable":true,"proxied":true,"ttl":1,"settings":{},"meta":{"auto_added":false,"fallback_origin":true,"managed_by_apps":false,"managed_by_argo_tunnel":false},"comment":null,"tags":[],"created_on":"2024-05-05T23:00:41.07741Z","modified_on":"2024-09-11T19:13:26.504319Z"},"success":true,"errors":[],"messages":[]}
+2024-09-11 21:13:26 - INFO: [update_dns_record] DNS record for jmrp.io updated successfully with changes: 2a0c:5a84:b10b:2600:8647:9ff:fe23:d6c7 -> 2a0c:5a84:b10b:2600::1 
+2024-09-11 21:13:26 - DEBUG: [process_domain] IPv6 changes: 2a0c:5a84:b10b:2600:8647:9ff:fe23:d6c7 -> 2a0c:5a84:b10b:2600::1 
+2024-09-11 21:13:26 - DEBUG: [process_domain] Proxied changes: 
+2024-09-11 21:13:26 - DEBUG: [process_domain] TTL changes: 
+2024-09-11 21:13:26 - DEBUG: [process_domain] Current content of changes temporal file:
+    		jmrp.io|no_change|2a0c:5a84:b10b:2600:8647:9ff:fe23:d6c7 -> 2a0c:5a84:b10b:2600::1 |||true|true|4408
+2024-09-11 21:13:26 - DEBUG: [process_domains_sequential] Processing auth.jmrp.io: IPv4=true, IPv6=true, Proxied=true, TTL=auto
+2024-09-11 21:13:26 - DEBUG: [update_dns_record] Input parameters: zone_id=44d43a33307a232a60a5af4fc1504613, record_name=auth.jmrp.io, ip=79.117.113.191, record_type=A, proxied=true, ttl=auto
+2024-09-11 21:13:27 - DEBUG: [update_dns_record] ENABLE_CREATE_RECORD: false
+2024-09-11 21:13:27 - DEBUG: [get_record_info] API URL for get_record_info: https://api.cloudflare.com/client/v4/zones/44d43a33307a232a60a5af4fc1504613/dns_records?name=auth.jmrp.io&type=A
+2024-09-11 21:13:28 - DEBUG: [update_dns_record] Current record info: {
+  "id": "cdaa533e4a15527c7f38d28680f99ce7",
+  "zone_id": "44d43a33307a232a60a5af4fc1504613",
+  "zone_name": "jmrp.io",
+  "name": "auth.jmrp.io",
+  "type": "A",
+  "content": "79.117.113.191",
+  "proxiable": true,
+  "proxied": true,
+  "ttl": 1,
+  "settings": {},
+  "meta": {
+    "auto_added": false,
+    "managed_by_apps": false,
+    "managed_by_argo_tunnel": false
+  },
+  "comment": null,
+  "tags": [],
+  "created_on": "2024-07-25T09:35:34.532918Z",
+  "modified_on": "2024-09-11T17:50:09.996529Z"
+}
+2024-09-11 21:13:28 - DEBUG: [update_dns_record] Current record info parsed: ID=cdaa533e4a15527c7f38d28680f99ce7, IP=79.117.113.191, Proxied=true, TTL=auto
+2024-09-11 21:13:28 - INFO: [update_dns_record] No changes needed for auth.jmrp.io (A)
+2024-09-11 21:13:28 - DEBUG: [process_domain] IPv4 changes: no_change
+2024-09-11 21:13:28 - DEBUG: [update_dns_record] Input parameters: zone_id=44d43a33307a232a60a5af4fc1504613, record_name=auth.jmrp.io, ip=2a0c:5a84:b10b:2600::1, record_type=AAAA, proxied=true, ttl=auto
+2024-09-11 21:13:28 - DEBUG: [update_dns_record] ENABLE_CREATE_RECORD: false
+2024-09-11 21:13:29 - DEBUG: [get_record_info] API URL for get_record_info: https://api.cloudflare.com/client/v4/zones/44d43a33307a232a60a5af4fc1504613/dns_records?name=auth.jmrp.io&type=AAAA
+2024-09-11 21:13:30 - DEBUG: [update_dns_record] Current record info: {
+  "id": "4aac8a1fe22c1414042ba5e87e929e0d",
+  "zone_id": "44d43a33307a232a60a5af4fc1504613",
+  "zone_name": "jmrp.io",
+  "name": "auth.jmrp.io",
+  "type": "AAAA",
+  "content": "2a0c:5a84:b10b:2600:8647:9ff:fe23:d6c7",
+  "proxiable": true,
+  "proxied": true,
+  "ttl": 1,
+  "settings": {},
+  "meta": {
+    "auto_added": false,
+    "managed_by_apps": false,
+    "managed_by_argo_tunnel": false
+  },
+  "comment": null,
+  "tags": [],
+  "created_on": "2024-07-25T09:35:55.777494Z",
+  "modified_on": "2024-09-11T19:05:10.546751Z"
+}
+2024-09-11 21:13:30 - DEBUG: [update_dns_record] Current record info parsed: ID=4aac8a1fe22c1414042ba5e87e929e0d, IP=2a0c:5a84:b10b:2600:8647:9ff:fe23:d6c7, Proxied=true, TTL=auto
+2024-09-11 21:13:30 - INFO: [update_dns_record] Updating auth.jmrp.io (AAAA): 2a0c:5a84:b10b:2600:8647:9ff:fe23:d6c7 -> 2a0c:5a84:b10b:2600::1 
+2024-09-11 21:13:30 - DEBUG: [update_dns_record] Payload for update_dns_record: {
+  "type": "AAAA",
+  "name": "auth.jmrp.io",
+  "content": "2a0c:5a84:b10b:2600::1",
+  "ttl": 1,
+  "proxied": true
+}
+2024-09-11 21:13:30 - DEBUG: [update_dns_record] API URL: https://api.cloudflare.com/client/v4/zones/44d43a33307a232a60a5af4fc1504613/dns_records/4aac8a1fe22c1414042ba5e87e929e0d
+2024-09-11 21:13:30 - DEBUG: [retry_command] Executing command: curl -s -X PUT https://api.cloudflare.com/client/v4/zones/44d43a33307a232a60a5af4fc1504613/dns_records/4aac8a1fe22c1414042ba5e87e929e0d -H Authorization: Bearer rY7s0ciXH9ARs3FkxChCdBIti_X15oT_bSUN7xQP -H Content-Type: application/json --data {
+  "type": "AAAA",
+  "name": "auth.jmrp.io",
+  "content": "2a0c:5a84:b10b:2600::1",
+  "ttl": 1,
+  "proxied": true
+}
+2024-09-11 21:13:30 - DEBUG: [retry_command] Command succeeded
+2024-09-11 21:13:30 - DEBUG: [update_dns_record] API Response: {"result":{"id":"4aac8a1fe22c1414042ba5e87e929e0d","zone_id":"44d43a33307a232a60a5af4fc1504613","zone_name":"jmrp.io","name":"auth.jmrp.io","type":"AAAA","content":"2a0c:5a84:b10b:2600::1","proxiable":true,"proxied":true,"ttl":1,"settings":{},"meta":{"auto_added":false,"managed_by_apps":false,"managed_by_argo_tunnel":false},"comment":null,"tags":[],"created_on":"2024-07-25T09:35:55.777494Z","modified_on":"2024-09-11T19:13:30.850575Z"},"success":true,"errors":[],"messages":[]}
+2024-09-11 21:13:30 - INFO: [update_dns_record] DNS record for auth.jmrp.io updated successfully with changes: 2a0c:5a84:b10b:2600:8647:9ff:fe23:d6c7 -> 2a0c:5a84:b10b:2600::1 
+2024-09-11 21:13:30 - DEBUG: [process_domain] IPv6 changes: 2a0c:5a84:b10b:2600:8647:9ff:fe23:d6c7 -> 2a0c:5a84:b10b:2600::1 
+2024-09-11 21:13:30 - DEBUG: [process_domain] Proxied changes: 
+2024-09-11 21:13:30 - DEBUG: [process_domain] TTL changes: 
+2024-09-11 21:13:30 - DEBUG: [process_domain] Current content of changes temporal file:
+    		jmrp.io|no_change|2a0c:5a84:b10b:2600:8647:9ff:fe23:d6c7 -> 2a0c:5a84:b10b:2600::1 |||true|true|4408
+		auth.jmrp.io|no_change|2a0c:5a84:b10b:2600:8647:9ff:fe23:d6c7 -> 2a0c:5a84:b10b:2600::1 |||true|true|4165
+2024-09-11 21:13:30 - DEBUG: [process_domains_sequential] Processing plensdeselva.jmrp.io: IPv4=true, IPv6=true, Proxied=true, TTL=auto
+2024-09-11 21:13:31 - DEBUG: [update_dns_record] Input parameters: zone_id=44d43a33307a232a60a5af4fc1504613, record_name=plensdeselva.jmrp.io, ip=79.117.113.191, record_type=A, proxied=true, ttl=auto
+2024-09-11 21:13:31 - DEBUG: [update_dns_record] ENABLE_CREATE_RECORD: false
+2024-09-11 21:13:32 - DEBUG: [get_record_info] API URL for get_record_info: https://api.cloudflare.com/client/v4/zones/44d43a33307a232a60a5af4fc1504613/dns_records?name=plensdeselva.jmrp.io&type=A
+2024-09-11 21:13:32 - DEBUG: [update_dns_record] Current record info: {
+  "id": "9a3b4d55fb12c56a74910845b9c1a94f",
+  "zone_id": "44d43a33307a232a60a5af4fc1504613",
+  "zone_name": "jmrp.io",
+  "name": "plensdeselva.jmrp.io",
+  "type": "A",
+  "content": "79.117.113.191",
+  "proxiable": true,
+  "proxied": true,
+  "ttl": 1,
+  "settings": {},
+  "meta": {
+    "auto_added": false,
+    "managed_by_apps": false,
+    "managed_by_argo_tunnel": false
+  },
+  "comment": null,
+  "tags": [],
+  "created_on": "2024-09-10T07:21:35.076882Z",
+  "modified_on": "2024-09-11T17:50:16.133612Z"
+}
+2024-09-11 21:13:32 - DEBUG: [update_dns_record] Current record info parsed: ID=9a3b4d55fb12c56a74910845b9c1a94f, IP=79.117.113.191, Proxied=true, TTL=auto
+2024-09-11 21:13:32 - INFO: [update_dns_record] No changes needed for plensdeselva.jmrp.io (A)
+2024-09-11 21:13:32 - DEBUG: [process_domain] IPv4 changes: no_change
+2024-09-11 21:13:33 - DEBUG: [update_dns_record] Input parameters: zone_id=44d43a33307a232a60a5af4fc1504613, record_name=plensdeselva.jmrp.io, ip=2a0c:5a84:b10b:2600::1, record_type=AAAA, proxied=true, ttl=auto
+2024-09-11 21:13:33 - DEBUG: [update_dns_record] ENABLE_CREATE_RECORD: false
+2024-09-11 21:13:33 - DEBUG: [get_record_info] API URL for get_record_info: https://api.cloudflare.com/client/v4/zones/44d43a33307a232a60a5af4fc1504613/dns_records?name=plensdeselva.jmrp.io&type=AAAA
+2024-09-11 21:13:34 - DEBUG: [update_dns_record] Current record info: {
+  "id": "c734472a623794c52a194ac34fef8d1d",
+  "zone_id": "44d43a33307a232a60a5af4fc1504613",
+  "zone_name": "jmrp.io",
+  "name": "plensdeselva.jmrp.io",
+  "type": "AAAA",
+  "content": "2a0c:5a84:b10b:2600:8647:9ff:fe23:d6c7",
+  "proxiable": true,
+  "proxied": true,
+  "ttl": 1,
+  "settings": {},
+  "meta": {
+    "auto_added": false,
+    "managed_by_apps": false,
+    "managed_by_argo_tunnel": false
+  },
+  "comment": null,
+  "tags": [],
+  "created_on": "2024-09-10T07:21:36.884096Z",
+  "modified_on": "2024-09-11T19:05:14.330449Z"
+}
+2024-09-11 21:13:35 - DEBUG: [update_dns_record] Current record info parsed: ID=c734472a623794c52a194ac34fef8d1d, IP=2a0c:5a84:b10b:2600:8647:9ff:fe23:d6c7, Proxied=true, TTL=auto
+2024-09-11 21:13:35 - INFO: [update_dns_record] Updating plensdeselva.jmrp.io (AAAA): 2a0c:5a84:b10b:2600:8647:9ff:fe23:d6c7 -> 2a0c:5a84:b10b:2600::1 
+2024-09-11 21:13:35 - DEBUG: [update_dns_record] Payload for update_dns_record: {
+  "type": "AAAA",
+  "name": "plensdeselva.jmrp.io",
+  "content": "2a0c:5a84:b10b:2600::1",
+  "ttl": 1,
+  "proxied": true
+}
+2024-09-11 21:13:35 - DEBUG: [update_dns_record] API URL: https://api.cloudflare.com/client/v4/zones/44d43a33307a232a60a5af4fc1504613/dns_records/c734472a623794c52a194ac34fef8d1d
+2024-09-11 21:13:35 - DEBUG: [retry_command] Executing command: curl -s -X PUT https://api.cloudflare.com/client/v4/zones/44d43a33307a232a60a5af4fc1504613/dns_records/c734472a623794c52a194ac34fef8d1d -H Authorization: Bearer rY7s0ciXH9ARs3FkxChCdBIti_X15oT_bSUN7xQP -H Content-Type: application/json --data {
+  "type": "AAAA",
+  "name": "plensdeselva.jmrp.io",
+  "content": "2a0c:5a84:b10b:2600::1",
+  "ttl": 1,
+  "proxied": true
+}
+2024-09-11 21:13:35 - DEBUG: [retry_command] Command succeeded
+2024-09-11 21:13:35 - DEBUG: [update_dns_record] API Response: {"result":{"id":"c734472a623794c52a194ac34fef8d1d","zone_id":"44d43a33307a232a60a5af4fc1504613","zone_name":"jmrp.io","name":"plensdeselva.jmrp.io","type":"AAAA","content":"2a0c:5a84:b10b:2600::1","proxiable":true,"proxied":true,"ttl":1,"settings":{},"meta":{"auto_added":false,"managed_by_apps":false,"managed_by_argo_tunnel":false},"comment":null,"tags":[],"created_on":"2024-09-10T07:21:36.884096Z","modified_on":"2024-09-11T19:13:35.788395Z"},"success":true,"errors":[],"messages":[]}
+2024-09-11 21:13:35 - INFO: [update_dns_record] DNS record for plensdeselva.jmrp.io updated successfully with changes: 2a0c:5a84:b10b:2600:8647:9ff:fe23:d6c7 -> 2a0c:5a84:b10b:2600::1 
+2024-09-11 21:13:35 - DEBUG: [process_domain] IPv6 changes: 2a0c:5a84:b10b:2600:8647:9ff:fe23:d6c7 -> 2a0c:5a84:b10b:2600::1 
+2024-09-11 21:13:36 - DEBUG: [process_domain] Proxied changes: 
+2024-09-11 21:13:36 - DEBUG: [process_domain] TTL changes: 
+2024-09-11 21:13:36 - DEBUG: [process_domain] Current content of changes temporal file:
+    		jmrp.io|no_change|2a0c:5a84:b10b:2600:8647:9ff:fe23:d6c7 -> 2a0c:5a84:b10b:2600::1 |||true|true|4408
+		auth.jmrp.io|no_change|2a0c:5a84:b10b:2600:8647:9ff:fe23:d6c7 -> 2a0c:5a84:b10b:2600::1 |||true|true|4165
+		plensdeselva.jmrp.io|no_change|2a0c:5a84:b10b:2600:8647:9ff:fe23:d6c7 -> 2a0c:5a84:b10b:2600::1 |||true|true|5029
+2024-09-11 21:13:36 - INFO: [main] DNS update process completed successfully
+2024-09-11 21:13:36 - DEBUG: [display_summary] Processing domain: jmrp.io
+2024-09-11 21:13:36 - DEBUG: [display_summary] Processing domain: auth.jmrp.io
+2024-09-11 21:13:36 - DEBUG: [display_summary] Processing domain: plensdeselva.jmrp.io
+2024-09-11 21:14:44 - DEBUG: [load_yaml] Global settings: IPv4=true, IPv6=true, Proxied=true, TTL=auto
+2024-09-11 21:14:44 - DEBUG: [load_yaml] Configuration loaded from cloudflare-dns.yaml
+2024-09-11 21:14:44 - DEBUG: [load_yaml] ENABLE_CREATE_RECORD set to: false
+2024-09-11 21:14:44 - DEBUG: [main] Final ENABLE_CREATE_RECORD value: false
+2024-09-11 21:14:44 - DEBUG: [validate_config] Configuration validated successfully
+2024-09-11 21:14:46 - DEBUG: [check_api_connectivity] API connectivity check successful. Ping time: 1028 ms
+2024-09-11 21:14:47 - DEBUG: [process_domains_sequential] Processing jmrp.io: IPv4=true, IPv6=true, Proxied=true, TTL=auto
+2024-09-11 21:14:47 - DEBUG: [update_dns_record] Input parameters: zone_id=44d43a33307a232a60a5af4fc1504613, record_name=jmrp.io, ip=79.117.113.191, record_type=A, proxied=true, ttl=auto
+2024-09-11 21:14:47 - DEBUG: [update_dns_record] ENABLE_CREATE_RECORD: false
+2024-09-11 21:14:48 - DEBUG: [get_record_info] API URL for get_record_info: https://api.cloudflare.com/client/v4/zones/44d43a33307a232a60a5af4fc1504613/dns_records?name=jmrp.io&type=A
+2024-09-11 21:14:49 - DEBUG: [update_dns_record] Current record info: {
+  "id": "2bbb70f0608d75df58690b58a1c0a9f7",
+  "zone_id": "44d43a33307a232a60a5af4fc1504613",
+  "zone_name": "jmrp.io",
+  "name": "jmrp.io",
+  "type": "A",
+  "content": "79.117.113.191",
+  "proxiable": true,
+  "proxied": true,
+  "ttl": 1,
+  "settings": {},
+  "meta": {
+    "auto_added": false,
+    "fallback_origin": true,
+    "managed_by_apps": false,
+    "managed_by_argo_tunnel": false
+  },
+  "comment": null,
+  "tags": [],
+  "created_on": "2023-08-05T11:10:39.673184Z",
+  "modified_on": "2024-09-11T17:50:07.01281Z"
+}
+2024-09-11 21:14:49 - DEBUG: [update_dns_record] Current record info parsed: ID=2bbb70f0608d75df58690b58a1c0a9f7, IP=79.117.113.191, Proxied=true, TTL=auto
+2024-09-11 21:14:49 - INFO: [update_dns_record] No changes needed for jmrp.io (A)
+2024-09-11 21:14:49 - DEBUG: [process_domain] IPv4 changes: no_change
+2024-09-11 21:14:49 - DEBUG: [update_dns_record] Input parameters: zone_id=44d43a33307a232a60a5af4fc1504613, record_name=jmrp.io, ip=2a0c:5a84:b10b:2600::1, record_type=AAAA, proxied=true, ttl=auto
+2024-09-11 21:14:49 - DEBUG: [update_dns_record] ENABLE_CREATE_RECORD: false
+2024-09-11 21:14:50 - DEBUG: [get_record_info] API URL for get_record_info: https://api.cloudflare.com/client/v4/zones/44d43a33307a232a60a5af4fc1504613/dns_records?name=jmrp.io&type=AAAA
+2024-09-11 21:14:50 - DEBUG: [update_dns_record] Current record info: {
+  "id": "cdcbe94893e448fbcc5cb67d21bb374c",
+  "zone_id": "44d43a33307a232a60a5af4fc1504613",
+  "zone_name": "jmrp.io",
+  "name": "jmrp.io",
+  "type": "AAAA",
+  "content": "2a0c:5a84:b10b:2600::1",
+  "proxiable": true,
+  "proxied": true,
+  "ttl": 1,
+  "settings": {},
+  "meta": {
+    "auto_added": false,
+    "fallback_origin": true,
+    "managed_by_apps": false,
+    "managed_by_argo_tunnel": false
+  },
+  "comment": null,
+  "tags": [],
+  "created_on": "2024-05-05T23:00:41.07741Z",
+  "modified_on": "2024-09-11T19:13:26.504319Z"
+}
+2024-09-11 21:14:50 - DEBUG: [update_dns_record] Current record info parsed: ID=cdcbe94893e448fbcc5cb67d21bb374c, IP=2a0c:5a84:b10b:2600::1, Proxied=true, TTL=auto
+2024-09-11 21:14:50 - INFO: [update_dns_record] No changes needed for jmrp.io (AAAA)
+2024-09-11 21:14:50 - DEBUG: [process_domain] IPv6 changes: no_change
+2024-09-11 21:14:50 - DEBUG: [process_domain] Proxied changes: 
+2024-09-11 21:14:50 - DEBUG: [process_domain] TTL changes: 
+2024-09-11 21:14:50 - DEBUG: [process_domain] Current content of changes temporal file:
+    		jmrp.io|no_change|no_change|||true|true|3611
+2024-09-11 21:14:50 - DEBUG: [process_domains_sequential] Processing auth.jmrp.io: IPv4=true, IPv6=true, Proxied=true, TTL=auto
+2024-09-11 21:14:51 - DEBUG: [update_dns_record] Input parameters: zone_id=44d43a33307a232a60a5af4fc1504613, record_name=auth.jmrp.io, ip=79.117.113.191, record_type=A, proxied=true, ttl=auto
+2024-09-11 21:14:51 - DEBUG: [update_dns_record] ENABLE_CREATE_RECORD: false
+2024-09-11 21:14:52 - DEBUG: [get_record_info] API URL for get_record_info: https://api.cloudflare.com/client/v4/zones/44d43a33307a232a60a5af4fc1504613/dns_records?name=auth.jmrp.io&type=A
+2024-09-11 21:14:52 - DEBUG: [update_dns_record] Current record info: {
+  "id": "cdaa533e4a15527c7f38d28680f99ce7",
+  "zone_id": "44d43a33307a232a60a5af4fc1504613",
+  "zone_name": "jmrp.io",
+  "name": "auth.jmrp.io",
+  "type": "A",
+  "content": "79.117.113.191",
+  "proxiable": true,
+  "proxied": true,
+  "ttl": 1,
+  "settings": {},
+  "meta": {
+    "auto_added": false,
+    "managed_by_apps": false,
+    "managed_by_argo_tunnel": false
+  },
+  "comment": null,
+  "tags": [],
+  "created_on": "2024-07-25T09:35:34.532918Z",
+  "modified_on": "2024-09-11T17:50:09.996529Z"
+}
+2024-09-11 21:14:52 - DEBUG: [update_dns_record] Current record info parsed: ID=cdaa533e4a15527c7f38d28680f99ce7, IP=79.117.113.191, Proxied=true, TTL=auto
+2024-09-11 21:14:52 - INFO: [update_dns_record] No changes needed for auth.jmrp.io (A)
+2024-09-11 21:14:52 - DEBUG: [process_domain] IPv4 changes: no_change
+2024-09-11 21:14:52 - DEBUG: [update_dns_record] Input parameters: zone_id=44d43a33307a232a60a5af4fc1504613, record_name=auth.jmrp.io, ip=2a0c:5a84:b10b:2600::1, record_type=AAAA, proxied=true, ttl=auto
+2024-09-11 21:14:52 - DEBUG: [update_dns_record] ENABLE_CREATE_RECORD: false
+2024-09-11 21:14:53 - DEBUG: [get_record_info] API URL for get_record_info: https://api.cloudflare.com/client/v4/zones/44d43a33307a232a60a5af4fc1504613/dns_records?name=auth.jmrp.io&type=AAAA
+2024-09-11 21:14:54 - DEBUG: [update_dns_record] Current record info: {
+  "id": "4aac8a1fe22c1414042ba5e87e929e0d",
+  "zone_id": "44d43a33307a232a60a5af4fc1504613",
+  "zone_name": "jmrp.io",
+  "name": "auth.jmrp.io",
+  "type": "AAAA",
+  "content": "2a0c:5a84:b10b:2600::1",
+  "proxiable": true,
+  "proxied": true,
+  "ttl": 1,
+  "settings": {},
+  "meta": {
+    "auto_added": false,
+    "managed_by_apps": false,
+    "managed_by_argo_tunnel": false
+  },
+  "comment": null,
+  "tags": [],
+  "created_on": "2024-07-25T09:35:55.777494Z",
+  "modified_on": "2024-09-11T19:13:30.850575Z"
+}
+2024-09-11 21:14:54 - DEBUG: [update_dns_record] Current record info parsed: ID=4aac8a1fe22c1414042ba5e87e929e0d, IP=2a0c:5a84:b10b:2600::1, Proxied=true, TTL=auto
+2024-09-11 21:14:54 - INFO: [update_dns_record] No changes needed for auth.jmrp.io (AAAA)
+2024-09-11 21:14:54 - DEBUG: [process_domain] IPv6 changes: no_change
+2024-09-11 21:14:54 - DEBUG: [process_domain] Proxied changes: 
+2024-09-11 21:14:54 - DEBUG: [process_domain] TTL changes: 
+2024-09-11 21:14:54 - DEBUG: [process_domain] Current content of changes temporal file:
+    		jmrp.io|no_change|no_change|||true|true|3611
+		auth.jmrp.io|no_change|no_change|||true|true|3297
+2024-09-11 21:14:54 - DEBUG: [process_domains_sequential] Processing plensdeselva.jmrp.io: IPv4=true, IPv6=true, Proxied=true, TTL=auto
+2024-09-11 21:14:54 - DEBUG: [update_dns_record] Input parameters: zone_id=44d43a33307a232a60a5af4fc1504613, record_name=plensdeselva.jmrp.io, ip=79.117.113.191, record_type=A, proxied=true, ttl=auto
+2024-09-11 21:14:54 - DEBUG: [update_dns_record] ENABLE_CREATE_RECORD: false
+2024-09-11 21:14:55 - DEBUG: [get_record_info] API URL for get_record_info: https://api.cloudflare.com/client/v4/zones/44d43a33307a232a60a5af4fc1504613/dns_records?name=plensdeselva.jmrp.io&type=A
+2024-09-11 21:14:56 - DEBUG: [update_dns_record] Current record info: {
+  "id": "9a3b4d55fb12c56a74910845b9c1a94f",
+  "zone_id": "44d43a33307a232a60a5af4fc1504613",
+  "zone_name": "jmrp.io",
+  "name": "plensdeselva.jmrp.io",
+  "type": "A",
+  "content": "79.117.113.191",
+  "proxiable": true,
+  "proxied": true,
+  "ttl": 1,
+  "settings": {},
+  "meta": {
+    "auto_added": false,
+    "managed_by_apps": false,
+    "managed_by_argo_tunnel": false
+  },
+  "comment": null,
+  "tags": [],
+  "created_on": "2024-09-10T07:21:35.076882Z",
+  "modified_on": "2024-09-11T17:50:16.133612Z"
+}
+2024-09-11 21:14:56 - DEBUG: [update_dns_record] Current record info parsed: ID=9a3b4d55fb12c56a74910845b9c1a94f, IP=79.117.113.191, Proxied=true, TTL=auto
+2024-09-11 21:14:56 - INFO: [update_dns_record] No changes needed for plensdeselva.jmrp.io (A)
+2024-09-11 21:14:56 - DEBUG: [process_domain] IPv4 changes: no_change
+2024-09-11 21:14:56 - DEBUG: [update_dns_record] Input parameters: zone_id=44d43a33307a232a60a5af4fc1504613, record_name=plensdeselva.jmrp.io, ip=2a0c:5a84:b10b:2600::1, record_type=AAAA, proxied=true, ttl=auto
+2024-09-11 21:14:56 - DEBUG: [update_dns_record] ENABLE_CREATE_RECORD: false
+2024-09-11 21:14:57 - DEBUG: [get_record_info] API URL for get_record_info: https://api.cloudflare.com/client/v4/zones/44d43a33307a232a60a5af4fc1504613/dns_records?name=plensdeselva.jmrp.io&type=AAAA
+2024-09-11 21:14:57 - DEBUG: [update_dns_record] Current record info: {
+  "id": "c734472a623794c52a194ac34fef8d1d",
+  "zone_id": "44d43a33307a232a60a5af4fc1504613",
+  "zone_name": "jmrp.io",
+  "name": "plensdeselva.jmrp.io",
+  "type": "AAAA",
+  "content": "2a0c:5a84:b10b:2600::1",
+  "proxiable": true,
+  "proxied": true,
+  "ttl": 1,
+  "settings": {},
+  "meta": {
+    "auto_added": false,
+    "managed_by_apps": false,
+    "managed_by_argo_tunnel": false
+  },
+  "comment": null,
+  "tags": [],
+  "created_on": "2024-09-10T07:21:36.884096Z",
+  "modified_on": "2024-09-11T19:13:35.788395Z"
+}
+2024-09-11 21:14:57 - DEBUG: [update_dns_record] Current record info parsed: ID=c734472a623794c52a194ac34fef8d1d, IP=2a0c:5a84:b10b:2600::1, Proxied=true, TTL=auto
+2024-09-11 21:14:57 - INFO: [update_dns_record] No changes needed for plensdeselva.jmrp.io (AAAA)
+2024-09-11 21:14:57 - DEBUG: [process_domain] IPv6 changes: no_change
+2024-09-11 21:14:57 - DEBUG: [process_domain] Proxied changes: 
+2024-09-11 21:14:57 - DEBUG: [process_domain] TTL changes: 
+2024-09-11 21:14:57 - DEBUG: [process_domain] Current content of changes temporal file:
+    		jmrp.io|no_change|no_change|||true|true|3611
+		auth.jmrp.io|no_change|no_change|||true|true|3297
+		plensdeselva.jmrp.io|no_change|no_change|||true|true|3357
+2024-09-11 21:14:57 - INFO: [main] DNS update process completed successfully
+2024-09-11 21:14:57 - DEBUG: [display_summary] Processing domain: jmrp.io
+2024-09-11 21:14:57 - DEBUG: [display_summary] Processing domain: auth.jmrp.io
+2024-09-11 21:14:57 - DEBUG: [display_summary] Processing domain: plensdeselva.jmrp.io
+2024-09-11 21:21:35 - DEBUG: [load_yaml] Global settings: IPv4=true, IPv6=true, Proxied=true, TTL=auto
+2024-09-11 21:21:35 - DEBUG: [load_yaml] Configuration loaded from cloudflare-dns.yaml
+2024-09-11 21:21:35 - DEBUG: [load_yaml] ENABLE_CREATE_RECORD set to: false
+2024-09-11 21:21:35 - DEBUG: [main] Final ENABLE_CREATE_RECORD value: false
+2024-09-11 21:21:35 - DEBUG: [validate_config] Configuration validated successfully
+2024-09-11 21:21:36 - DEBUG: [check_api_connectivity] API connectivity check successful. Ping time: 765 ms
+2024-09-11 21:21:36 - DEBUG: [process_domains_sequential] Processing jmrp.io: IPv4=true, IPv6=true, Proxied=true, TTL=auto
+2024-09-11 21:21:37 - DEBUG: [update_dns_record] Input parameters: zone_id=44d43a33307a232a60a5af4fc1504613, record_name=jmrp.io, ip=79.117.113.191, record_type=A, proxied=true, ttl=auto
+2024-09-11 21:21:37 - DEBUG: [update_dns_record] ENABLE_CREATE_RECORD: false
+2024-09-11 21:21:38 - DEBUG: [get_record_info] API URL for get_record_info: https://api.cloudflare.com/client/v4/zones/44d43a33307a232a60a5af4fc1504613/dns_records?name=jmrp.io&type=A
+2024-09-11 21:21:38 - DEBUG: [update_dns_record] Current record info: {
+  "id": "2bbb70f0608d75df58690b58a1c0a9f7",
+  "zone_id": "44d43a33307a232a60a5af4fc1504613",
+  "zone_name": "jmrp.io",
+  "name": "jmrp.io",
+  "type": "A",
+  "content": "79.117.113.191",
+  "proxiable": true,
+  "proxied": true,
+  "ttl": 1,
+  "settings": {},
+  "meta": {
+    "auto_added": false,
+    "fallback_origin": true,
+    "managed_by_apps": false,
+    "managed_by_argo_tunnel": false
+  },
+  "comment": null,
+  "tags": [],
+  "created_on": "2023-08-05T11:10:39.673184Z",
+  "modified_on": "2024-09-11T17:50:07.01281Z"
+}
+2024-09-11 21:21:38 - DEBUG: [update_dns_record] Current record info parsed: ID=2bbb70f0608d75df58690b58a1c0a9f7, IP=79.117.113.191, Proxied=true, TTL=auto
+2024-09-11 21:21:38 - INFO: [update_dns_record] No changes needed for jmrp.io (A)
+2024-09-11 21:21:38 - DEBUG: [process_domain] IPv4 changes: no_change
+2024-09-11 21:21:38 - DEBUG: [update_dns_record] Input parameters: zone_id=44d43a33307a232a60a5af4fc1504613, record_name=jmrp.io, ip=2a0c:5a84:b10b:2600::1, record_type=AAAA, proxied=true, ttl=auto
+2024-09-11 21:21:38 - DEBUG: [update_dns_record] ENABLE_CREATE_RECORD: false
+2024-09-11 21:21:39 - DEBUG: [get_record_info] API URL for get_record_info: https://api.cloudflare.com/client/v4/zones/44d43a33307a232a60a5af4fc1504613/dns_records?name=jmrp.io&type=AAAA
+2024-09-11 21:21:40 - DEBUG: [update_dns_record] Current record info: {
+  "id": "cdcbe94893e448fbcc5cb67d21bb374c",
+  "zone_id": "44d43a33307a232a60a5af4fc1504613",
+  "zone_name": "jmrp.io",
+  "name": "jmrp.io",
+  "type": "AAAA",
+  "content": "2a0c:5a84:b10b:2600:8647:9ff:fe23:d6c7",
+  "proxiable": true,
+  "proxied": true,
+  "ttl": 1,
+  "settings": {},
+  "meta": {
+    "auto_added": false,
+    "fallback_origin": true,
+    "managed_by_apps": false,
+    "managed_by_argo_tunnel": false
+  },
+  "comment": null,
+  "tags": [],
+  "created_on": "2024-05-05T23:00:41.07741Z",
+  "modified_on": "2024-09-11T19:15:05.746679Z"
+}
+2024-09-11 21:21:40 - DEBUG: [update_dns_record] Current record info parsed: ID=cdcbe94893e448fbcc5cb67d21bb374c, IP=2a0c:5a84:b10b:2600:8647:9ff:fe23:d6c7, Proxied=true, TTL=auto
+2024-09-11 21:21:40 - INFO: [update_dns_record] Updating jmrp.io (AAAA): 2a0c:5a84:b10b:2600:8647:9ff:fe23:d6c7 -> 2a0c:5a84:b10b:2600::1 
+2024-09-11 21:21:40 - DEBUG: [update_dns_record] Payload for update_dns_record: {
+  "type": "AAAA",
+  "name": "jmrp.io",
+  "content": "2a0c:5a84:b10b:2600::1",
+  "ttl": 1,
+  "proxied": true
+}
+2024-09-11 21:21:40 - DEBUG: [update_dns_record] API URL: https://api.cloudflare.com/client/v4/zones/44d43a33307a232a60a5af4fc1504613/dns_records/cdcbe94893e448fbcc5cb67d21bb374c
+2024-09-11 21:21:40 - DEBUG: [retry_command] Executing command: curl -s -X PUT https://api.cloudflare.com/client/v4/zones/44d43a33307a232a60a5af4fc1504613/dns_records/cdcbe94893e448fbcc5cb67d21bb374c -H Authorization: Bearer rY7s0ciXH9ARs3FkxChCdBIti_X15oT_bSUN7xQP -H Content-Type: application/json --data {
+  "type": "AAAA",
+  "name": "jmrp.io",
+  "content": "2a0c:5a84:b10b:2600::1",
+  "ttl": 1,
+  "proxied": true
+}
+2024-09-11 21:21:41 - DEBUG: [retry_command] Command succeeded
+2024-09-11 21:21:41 - DEBUG: [update_dns_record] API Response: {"result":{"id":"cdcbe94893e448fbcc5cb67d21bb374c","zone_id":"44d43a33307a232a60a5af4fc1504613","zone_name":"jmrp.io","name":"jmrp.io","type":"AAAA","content":"2a0c:5a84:b10b:2600::1","proxiable":true,"proxied":true,"ttl":1,"settings":{},"meta":{"auto_added":false,"fallback_origin":true,"managed_by_apps":false,"managed_by_argo_tunnel":false},"comment":null,"tags":[],"created_on":"2024-05-05T23:00:41.07741Z","modified_on":"2024-09-11T19:21:41.069996Z"},"success":true,"errors":[],"messages":[]}
+2024-09-11 21:21:41 - INFO: [update_dns_record] DNS record for jmrp.io updated successfully with changes: 2a0c:5a84:b10b:2600:8647:9ff:fe23:d6c7 -> 2a0c:5a84:b10b:2600::1 
+2024-09-11 21:21:41 - DEBUG: [process_domain] IPv6 changes: 2a0c:5a84:b10b:2600:8647:9ff:fe23:d6c7 -> 2a0c:5a84:b10b:2600::1 
+2024-09-11 21:21:41 - DEBUG: [process_domain] Proxied changes: 
+2024-09-11 21:21:41 - DEBUG: [process_domain] TTL changes: 
+2024-09-11 21:21:41 - DEBUG: [process_domain] Current content of changes temporal file:
+    		jmrp.io|no_change|2a0c:5a84:b10b:2600:8647:9ff:fe23:d6c7 -> 2a0c:5a84:b10b:2600::1 |||true|true|4111
+2024-09-11 21:21:41 - DEBUG: [process_domains_sequential] Processing auth.jmrp.io: IPv4=true, IPv6=true, Proxied=true, TTL=auto
+2024-09-11 21:21:41 - DEBUG: [update_dns_record] Input parameters: zone_id=44d43a33307a232a60a5af4fc1504613, record_name=auth.jmrp.io, ip=79.117.113.191, record_type=A, proxied=true, ttl=auto
+2024-09-11 21:21:41 - DEBUG: [update_dns_record] ENABLE_CREATE_RECORD: false
+2024-09-11 21:21:42 - DEBUG: [get_record_info] API URL for get_record_info: https://api.cloudflare.com/client/v4/zones/44d43a33307a232a60a5af4fc1504613/dns_records?name=auth.jmrp.io&type=A
+2024-09-11 21:21:42 - DEBUG: [update_dns_record] Current record info: {
+  "id": "cdaa533e4a15527c7f38d28680f99ce7",
+  "zone_id": "44d43a33307a232a60a5af4fc1504613",
+  "zone_name": "jmrp.io",
+  "name": "auth.jmrp.io",
+  "type": "A",
+  "content": "79.117.113.191",
+  "proxiable": true,
+  "proxied": true,
+  "ttl": 1,
+  "settings": {},
+  "meta": {
+    "auto_added": false,
+    "managed_by_apps": false,
+    "managed_by_argo_tunnel": false
+  },
+  "comment": null,
+  "tags": [],
+  "created_on": "2024-07-25T09:35:34.532918Z",
+  "modified_on": "2024-09-11T17:50:09.996529Z"
+}
+2024-09-11 21:21:42 - DEBUG: [update_dns_record] Current record info parsed: ID=cdaa533e4a15527c7f38d28680f99ce7, IP=79.117.113.191, Proxied=true, TTL=auto
+2024-09-11 21:21:42 - INFO: [update_dns_record] No changes needed for auth.jmrp.io (A)
+2024-09-11 21:21:42 - DEBUG: [process_domain] IPv4 changes: no_change
+2024-09-11 21:21:43 - DEBUG: [update_dns_record] Input parameters: zone_id=44d43a33307a232a60a5af4fc1504613, record_name=auth.jmrp.io, ip=2a0c:5a84:b10b:2600::1, record_type=AAAA, proxied=true, ttl=auto
+2024-09-11 21:21:43 - DEBUG: [update_dns_record] ENABLE_CREATE_RECORD: false
+2024-09-11 21:21:43 - DEBUG: [get_record_info] API URL for get_record_info: https://api.cloudflare.com/client/v4/zones/44d43a33307a232a60a5af4fc1504613/dns_records?name=auth.jmrp.io&type=AAAA
+2024-09-11 21:21:44 - DEBUG: [update_dns_record] Current record info: {
+  "id": "4aac8a1fe22c1414042ba5e87e929e0d",
+  "zone_id": "44d43a33307a232a60a5af4fc1504613",
+  "zone_name": "jmrp.io",
+  "name": "auth.jmrp.io",
+  "type": "AAAA",
+  "content": "2a0c:5a84:b10b:2600:8647:9ff:fe23:d6c7",
+  "proxiable": true,
+  "proxied": true,
+  "ttl": 1,
+  "settings": {},
+  "meta": {
+    "auto_added": false,
+    "managed_by_apps": false,
+    "managed_by_argo_tunnel": false
+  },
+  "comment": null,
+  "tags": [],
+  "created_on": "2024-07-25T09:35:55.777494Z",
+  "modified_on": "2024-09-11T19:15:08.120316Z"
+}
+2024-09-11 21:21:44 - DEBUG: [update_dns_record] Current record info parsed: ID=4aac8a1fe22c1414042ba5e87e929e0d, IP=2a0c:5a84:b10b:2600:8647:9ff:fe23:d6c7, Proxied=true, TTL=auto
+2024-09-11 21:21:44 - INFO: [update_dns_record] Updating auth.jmrp.io (AAAA): 2a0c:5a84:b10b:2600:8647:9ff:fe23:d6c7 -> 2a0c:5a84:b10b:2600::1 
+2024-09-11 21:21:44 - DEBUG: [update_dns_record] Payload for update_dns_record: {
+  "type": "AAAA",
+  "name": "auth.jmrp.io",
+  "content": "2a0c:5a84:b10b:2600::1",
+  "ttl": 1,
+  "proxied": true
+}
+2024-09-11 21:21:44 - DEBUG: [update_dns_record] API URL: https://api.cloudflare.com/client/v4/zones/44d43a33307a232a60a5af4fc1504613/dns_records/4aac8a1fe22c1414042ba5e87e929e0d
+2024-09-11 21:21:44 - DEBUG: [retry_command] Executing command: curl -s -X PUT https://api.cloudflare.com/client/v4/zones/44d43a33307a232a60a5af4fc1504613/dns_records/4aac8a1fe22c1414042ba5e87e929e0d -H Authorization: Bearer rY7s0ciXH9ARs3FkxChCdBIti_X15oT_bSUN7xQP -H Content-Type: application/json --data {
+  "type": "AAAA",
+  "name": "auth.jmrp.io",
+  "content": "2a0c:5a84:b10b:2600::1",
+  "ttl": 1,
+  "proxied": true
+}
+2024-09-11 21:21:45 - DEBUG: [retry_command] Command succeeded
+2024-09-11 21:21:45 - DEBUG: [update_dns_record] API Response: {"result":{"id":"4aac8a1fe22c1414042ba5e87e929e0d","zone_id":"44d43a33307a232a60a5af4fc1504613","zone_name":"jmrp.io","name":"auth.jmrp.io","type":"AAAA","content":"2a0c:5a84:b10b:2600::1","proxiable":true,"proxied":true,"ttl":1,"settings":{},"meta":{"auto_added":false,"managed_by_apps":false,"managed_by_argo_tunnel":false},"comment":null,"tags":[],"created_on":"2024-07-25T09:35:55.777494Z","modified_on":"2024-09-11T19:21:45.373333Z"},"success":true,"errors":[],"messages":[]}
+2024-09-11 21:21:45 - INFO: [update_dns_record] DNS record for auth.jmrp.io updated successfully with changes: 2a0c:5a84:b10b:2600:8647:9ff:fe23:d6c7 -> 2a0c:5a84:b10b:2600::1 
+2024-09-11 21:21:45 - DEBUG: [process_domain] IPv6 changes: 2a0c:5a84:b10b:2600:8647:9ff:fe23:d6c7 -> 2a0c:5a84:b10b:2600::1 
+2024-09-11 21:21:45 - DEBUG: [process_domain] Proxied changes: 
+2024-09-11 21:21:45 - DEBUG: [process_domain] TTL changes: 
+2024-09-11 21:21:45 - DEBUG: [process_domain] Current content of changes temporal file:
+    		jmrp.io|no_change|2a0c:5a84:b10b:2600:8647:9ff:fe23:d6c7 -> 2a0c:5a84:b10b:2600::1 |||true|true|4111
+		auth.jmrp.io|no_change|2a0c:5a84:b10b:2600:8647:9ff:fe23:d6c7 -> 2a0c:5a84:b10b:2600::1 |||true|true|4160
+2024-09-11 21:21:45 - DEBUG: [process_domains_sequential] Processing plensdeselva.jmrp.io: IPv4=true, IPv6=true, Proxied=true, TTL=auto
+2024-09-11 21:21:45 - DEBUG: [update_dns_record] Input parameters: zone_id=44d43a33307a232a60a5af4fc1504613, record_name=plensdeselva.jmrp.io, ip=79.117.113.191, record_type=A, proxied=true, ttl=auto
+2024-09-11 21:21:45 - DEBUG: [update_dns_record] ENABLE_CREATE_RECORD: false
+2024-09-11 21:21:46 - DEBUG: [get_record_info] API URL for get_record_info: https://api.cloudflare.com/client/v4/zones/44d43a33307a232a60a5af4fc1504613/dns_records?name=plensdeselva.jmrp.io&type=A
+2024-09-11 21:21:47 - DEBUG: [update_dns_record] Current record info: {
+  "id": "9a3b4d55fb12c56a74910845b9c1a94f",
+  "zone_id": "44d43a33307a232a60a5af4fc1504613",
+  "zone_name": "jmrp.io",
+  "name": "plensdeselva.jmrp.io",
+  "type": "A",
+  "content": "79.117.113.191",
+  "proxiable": true,
+  "proxied": true,
+  "ttl": 1,
+  "settings": {},
+  "meta": {
+    "auto_added": false,
+    "managed_by_apps": false,
+    "managed_by_argo_tunnel": false
+  },
+  "comment": null,
+  "tags": [],
+  "created_on": "2024-09-10T07:21:35.076882Z",
+  "modified_on": "2024-09-11T17:50:16.133612Z"
+}
+2024-09-11 21:21:47 - DEBUG: [update_dns_record] Current record info parsed: ID=9a3b4d55fb12c56a74910845b9c1a94f, IP=79.117.113.191, Proxied=true, TTL=auto
+2024-09-11 21:21:47 - INFO: [update_dns_record] No changes needed for plensdeselva.jmrp.io (A)
+2024-09-11 21:21:47 - DEBUG: [process_domain] IPv4 changes: no_change
+2024-09-11 21:21:47 - DEBUG: [update_dns_record] Input parameters: zone_id=44d43a33307a232a60a5af4fc1504613, record_name=plensdeselva.jmrp.io, ip=2a0c:5a84:b10b:2600::1, record_type=AAAA, proxied=true, ttl=auto
+2024-09-11 21:21:47 - DEBUG: [update_dns_record] ENABLE_CREATE_RECORD: false
+2024-09-11 21:21:48 - DEBUG: [get_record_info] API URL for get_record_info: https://api.cloudflare.com/client/v4/zones/44d43a33307a232a60a5af4fc1504613/dns_records?name=plensdeselva.jmrp.io&type=AAAA
+2024-09-11 21:21:48 - DEBUG: [update_dns_record] Current record info: {
+  "id": "c734472a623794c52a194ac34fef8d1d",
+  "zone_id": "44d43a33307a232a60a5af4fc1504613",
+  "zone_name": "jmrp.io",
+  "name": "plensdeselva.jmrp.io",
+  "type": "AAAA",
+  "content": "2a0c:5a84:b10b:2600:8647:9ff:fe23:d6c7",
+  "proxiable": true,
+  "proxied": true,
+  "ttl": 1,
+  "settings": {},
+  "meta": {
+    "auto_added": false,
+    "managed_by_apps": false,
+    "managed_by_argo_tunnel": false
+  },
+  "comment": null,
+  "tags": [],
+  "created_on": "2024-09-10T07:21:36.884096Z",
+  "modified_on": "2024-09-11T19:15:12.014241Z"
+}
+2024-09-11 21:21:48 - DEBUG: [update_dns_record] Current record info parsed: ID=c734472a623794c52a194ac34fef8d1d, IP=2a0c:5a84:b10b:2600:8647:9ff:fe23:d6c7, Proxied=true, TTL=auto
+2024-09-11 21:21:48 - INFO: [update_dns_record] Updating plensdeselva.jmrp.io (AAAA): 2a0c:5a84:b10b:2600:8647:9ff:fe23:d6c7 -> 2a0c:5a84:b10b:2600::1 
+2024-09-11 21:21:48 - DEBUG: [update_dns_record] Payload for update_dns_record: {
+  "type": "AAAA",
+  "name": "plensdeselva.jmrp.io",
+  "content": "2a0c:5a84:b10b:2600::1",
+  "ttl": 1,
+  "proxied": true
+}
+2024-09-11 21:21:48 - DEBUG: [update_dns_record] API URL: https://api.cloudflare.com/client/v4/zones/44d43a33307a232a60a5af4fc1504613/dns_records/c734472a623794c52a194ac34fef8d1d
+2024-09-11 21:21:48 - DEBUG: [retry_command] Executing command: curl -s -X PUT https://api.cloudflare.com/client/v4/zones/44d43a33307a232a60a5af4fc1504613/dns_records/c734472a623794c52a194ac34fef8d1d -H Authorization: Bearer rY7s0ciXH9ARs3FkxChCdBIti_X15oT_bSUN7xQP -H Content-Type: application/json --data {
+  "type": "AAAA",
+  "name": "plensdeselva.jmrp.io",
+  "content": "2a0c:5a84:b10b:2600::1",
+  "ttl": 1,
+  "proxied": true
+}
+2024-09-11 21:21:49 - DEBUG: [retry_command] Command succeeded
+2024-09-11 21:21:49 - DEBUG: [update_dns_record] API Response: {"result":{"id":"c734472a623794c52a194ac34fef8d1d","zone_id":"44d43a33307a232a60a5af4fc1504613","zone_name":"jmrp.io","name":"plensdeselva.jmrp.io","type":"AAAA","content":"2a0c:5a84:b10b:2600::1","proxiable":true,"proxied":true,"ttl":1,"settings":{},"meta":{"auto_added":false,"managed_by_apps":false,"managed_by_argo_tunnel":false},"comment":null,"tags":[],"created_on":"2024-09-10T07:21:36.884096Z","modified_on":"2024-09-11T19:21:49.738199Z"},"success":true,"errors":[],"messages":[]}
+2024-09-11 21:21:49 - INFO: [update_dns_record] DNS record for plensdeselva.jmrp.io updated successfully with changes: 2a0c:5a84:b10b:2600:8647:9ff:fe23:d6c7 -> 2a0c:5a84:b10b:2600::1 
+2024-09-11 21:21:49 - DEBUG: [process_domain] IPv6 changes: 2a0c:5a84:b10b:2600:8647:9ff:fe23:d6c7 -> 2a0c:5a84:b10b:2600::1 
+2024-09-11 21:21:49 - DEBUG: [process_domain] Proxied changes: 
+2024-09-11 21:21:49 - DEBUG: [process_domain] TTL changes: 
+2024-09-11 21:21:49 - DEBUG: [process_domain] Current content of changes temporal file:
+    		jmrp.io|no_change|2a0c:5a84:b10b:2600:8647:9ff:fe23:d6c7 -> 2a0c:5a84:b10b:2600::1 |||true|true|4111
+		auth.jmrp.io|no_change|2a0c:5a84:b10b:2600:8647:9ff:fe23:d6c7 -> 2a0c:5a84:b10b:2600::1 |||true|true|4160
+		plensdeselva.jmrp.io|no_change|2a0c:5a84:b10b:2600:8647:9ff:fe23:d6c7 -> 2a0c:5a84:b10b:2600::1 |||true|true|4230
+2024-09-11 21:21:49 - INFO: [main] DNS update process completed successfully
+2024-09-11 21:21:49 - DEBUG: [display_summary] Processing domain: jmrp.io
+2024-09-11 21:21:49 - DEBUG: [display_summary] Processing domain: auth.jmrp.io
+2024-09-11 21:21:49 - DEBUG: [display_summary] Processing domain: plensdeselva.jmrp.io
