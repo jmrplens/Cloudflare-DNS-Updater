@@ -50,28 +50,43 @@ Cloudflare DNS Updater is a bash script designed to automate the management of D
 
 ## Requirements
 
-- [Bash](#bash-40) 4.0+
-- [curl](#curl)
-- [jq](#jq)
-- [yq](#yq) (YAML parser)
-- [openssl](#openssl) (for SSL/TLS connections in email notifications)
-- [netcat](#netcat) (for email notifications)
+### Mandatory
+
+- [Bash](#bash-40-required) 4.0+
+- [curl](#curl-required)
+- [jq](#jq-required) (JSON parser)
+
+### Recommended
+
+- [yq](#yq-optional-required-for-using-yaml-configuration) (YAML parser)
+
+### Optional
+
+- [openssl](#openssl-optional-required-for-ssltls-connections-in-email-notifications) (for email notifications)
+- [netcat](#netcat-optional-required-for-email-notifications) (for email notifications)
 
 ## Installation
 
 1. Clone the repository:
+
    ```shell
    git clone https://github.com/yourusername/cloudflare-dns-updater.git
    ```
+
 2. Make the script executable:
+
    ```shell
    chmod +x cloudflare-dns.sh
    ```
+
 3. (Optional) Copy the script to a directory in your PATH for system-wide access:
+
    ```shell
    sudo cp cloudflare-dns.sh /usr/local/bin/cloudflare-dns
    ```
+
 4. (Optional) Install the man page:
+
    ```shell
    sudo mkdir -p /usr/local/man/man1
    sudo cp cloudflare-dns.1 /usr/local/man/man1/
@@ -171,7 +186,6 @@ cloudflare-dns [COMMAND] [OPTIONS]
 
 ### Commands
 
-
 | Command | Description                                       |
 | ------- | ------------------------------------------------- |
 | update  | Update DNS records for specified domains          |
@@ -179,7 +193,6 @@ cloudflare-dns [COMMAND] [OPTIONS]
 | help    | Show help message and exit                        |
 
 ### Options
-
 
 | Option             | Description                             | Default Value       |
 | ------------------ | --------------------------------------- | ------------------- |
@@ -191,7 +204,6 @@ cloudflare-dns [COMMAND] [OPTIONS]
 | --version          | Show version information and exit       | -                   |
 
 ### Update Command Options
-
 
 | Option               | Description                               | Default Value |
 | -------------------- | ----------------------------------------- | ------------- |
@@ -206,7 +218,6 @@ cloudflare-dns [COMMAND] [OPTIONS]
 
 ### Environment Variables
 
-
 | Variable     | Description                                              |
 | ------------ | -------------------------------------------------------- |
 | CF_API_TOKEN | Cloudflare API Token (overrides config file and --token) |
@@ -219,21 +230,25 @@ cloudflare-dns [COMMAND] [OPTIONS]
    ```shell
    cloudflare-dns update
    ```
+
 2. Update DNS records using a custom configuration file:
 
    ```shell
    cloudflare-dns update -c my_config.yaml
    ```
+
 3. Run in test mode (dry run) without making changes:
 
    ```shell
    cloudflare-dns test
    ```
+
 4. Update specific domains:
 
    ```shell
    cloudflare-dns update --domains example.com,subdomain.example.com
    ```
+
 5. Use environment variables for sensitive data:
 
    ```shell
@@ -243,9 +258,11 @@ cloudflare-dns [COMMAND] [OPTIONS]
    ```
 
    Or:
+
    ```shell
    CF_API_TOKEN=your_token CF_ZONE_ID=your_zone_id cloudflare-dns update
    ```
+
 6. Update DNS records with custom options:
 
    ```shell
@@ -296,6 +313,7 @@ cloudflare-dns [COMMAND] [OPTIONS]
      terminal_output: true
      verbosity: "info"
    ```
+
 2. Run the script in test mode:
 
    ```shell
@@ -308,6 +326,7 @@ cloudflare-dns [COMMAND] [OPTIONS]
    ```shell
    cloudflare-dns update -c cloudflare-dns.yaml
    ```
+
 4. Review the terminal output and log file to confirm the changes were applied correctly.
 
 ## Dependencies
