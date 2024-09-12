@@ -21,12 +21,19 @@ VERSION="1.0.0"
 #==============================================================================
 # SCRIPT SETTINGS
 #==============================================================================
+# shellcheck disable=SC2034
 SCRIPT_NAME="Cloudflare DNS Management Script"
+# shellcheck disable=SC2034
 SCRIPT_VERSION="$VERSION"
+# shellcheck disable=SC2034
 SCRIPT_DESCRIPTION="Manage your Cloudflare DNS records with ease"
+# shellcheck disable=SC2034
 SCRIPT_URL=""
+# shellcheck disable=SC2034
 SCRIPT_AUTHOR="Jose Manuel Requena Plens"
+# shellcheck disable=SC2034
 SCRIPT_AUTHOR_URL=""
+# shellcheck disable=SC2034
 SCRIPT_LICENSE="GNU General Public License v3.0"
 
 #==============================================================================
@@ -40,7 +47,7 @@ LOG_TO_TERMINAL=true
 RETRY_ATTEMPTS=3
 RETRY_INTERVAL=5
 VERBOSITY="error"
-MAX_PARALLEL_JOBS=1
+MAX_PARALLEL_JOBS=3
 
 # Default global settings
 DEFAULT_GLOBAL_IPV4=true
@@ -94,7 +101,7 @@ declare -A COLORS=(
 # UTILITY FUNCTIONS
 #==============================================================================
 
-# Date function. If host is macOS, use gdate instead of date, if gdate are not installed, prompt user to install it.
+# Date function compatible with both Linux and macOS
 date_compat() {
     # Host is macOS
     if [[ "$OSTYPE" == "darwin"* ]]; then
@@ -127,6 +134,11 @@ log() {
         debug) color="${COLORS[MAGENTA]}" ;;
     esac
 
+    # LOG
+    local log_message="[${caller_func}] ${message}"
+    # Save to file (all levels)
+    echo "$timestamp - ${level^^}: $log_message" >> "$LOG_FILE"
+
     # Check if the current log level should be displayed based on verbosity
     case "$VERBOSITY" in
         debug) ;;
@@ -136,13 +148,9 @@ log() {
         success) [[ "$level" != "success" && "$level" != "error" ]] && return ;;
     esac
 
-    local log_message="[${caller_func}] ${message}"
-
     if [[ "$LOG_TO_TERMINAL" == true ]]; then
         echo -e "${color}${timestamp} - ${level^^}: ${log_message}${COLORS[RESET]}" >&2
     fi
-
-    echo "$timestamp - ${level^^}: $log_message" >> "$LOG_FILE"
 }
 
 # Shorthand logging functions
@@ -168,9 +176,9 @@ print_centered_title() {
 
     # Padding on the left and right
     local left_padding
-    left_padding=$(printf '%*s' "$half_fill" | tr ' ' "$fill_char")
+    left_padding=$(printf '%*s' "$half_fill" '' | tr ' ' "$fill_char")
     local right_padding
-    right_padding=$(printf '%*s' "$((total_fill - half_fill))" | tr ' ' "$fill_char")
+    right_padding=$(printf '%*s' "$((total_fill - half_fill))" '' | tr ' ' "$fill_char")
 
     local title="${left_padding} ${title} ${right_padding}"
 
@@ -217,7 +225,7 @@ retry_command() {
 
     log_debug "Command failed after $max_attempts attempts."
     log_debug "Final command output: $output"
-    #return 1
+    return 1
 }
 
 # Check API connectivity and get ping time
@@ -243,15 +251,121 @@ check_api_connectivity() {
     fi
 }
 
-# Get current IPv4 and IPv6 addresses
+# Print current IPv4 and IPv6 addresses
 get_current_ips() {
     local ipv4
     local ipv6
-    ipv4=$(curl -s https://ipv4.icanhazip.com)
-    ipv6=$(curl -s https://ipv6.icanhazip.com)
+    ipv4=$(get_ip "ipv4")
+    ipv6=$(get_ip "ipv6")
     # Print with pretty formatting
     echo -e "IPv4: ${COLORS[CYAN]}${COLORS[BOLD]}$ipv4${COLORS[RESET]}"
     echo -e "IPv6: ${COLORS[CYAN]}${COLORS[BOLD]}$ipv6${COLORS[RESET]}"
+}
+
+# Display domains to be processed
+display_domains_to_process() {
+    local max_length="${1:-0}"
+    local domain_config
+    local ipv4_enabled
+    local ipv6_enabled
+    local proxied
+    local ttl
+
+    local index=1
+    IFS=',' read -ra DOMAIN_ARRAY <<< "$DOMAINS"
+    # Display domains
+    for domain in "${DOMAIN_ARRAY[@]}"; do
+        domain_config=$(yq ".domains[] | select(.name == \"$domain\")" "$CONFIG_FILE")
+        ipv4_enabled=$(echo "$domain_config" | yq ".ipv4 // \"$GLOBAL_IPV4\"")
+        ipv6_enabled=$(echo "$domain_config" | yq ".ipv6 // \"$GLOBAL_IPV6\"")
+        proxied=$(echo "$domain_config" | yq ".proxied // \"$GLOBAL_PROXIED\"")
+        ttl=$(echo "$domain_config" | yq ".ttl // \"${GLOBAL_TTL}\"")
+
+        # Remove quotes if present
+        ipv4_enabled=$(echo "$ipv4_enabled" | tr -d '"')
+        ipv6_enabled=$(echo "$ipv6_enabled" | tr -d '"')
+        proxied=$(echo "$proxied" | tr -d '"')
+        ttl=$(echo "$ttl" | tr -d '"')
+
+        # Construct the settings string
+        local settings=""
+        [[ "$ipv4_enabled" == "true" ]] && settings+="IPv4, "
+        [[ "$ipv6_enabled" == "true" ]] && settings+="IPv6, "
+        [[ "$proxied" == "true" ]] && settings+="Proxied, "
+        settings+="TTL: $ttl"
+
+        # Check if using global settings
+        local global_indicator=""
+        if [[ -z "$(echo "$domain_config" | yq '.ipv4')" && \
+              -z "$(echo "$domain_config" | yq '.ipv6')" && \
+              -z "$(echo "$domain_config" | yq '.proxied')" && \
+              -z "$(echo "$domain_config" | yq '.ttl')" ]]; then
+            global_indicator=" (using global settings)"
+        fi
+
+        printf "${COLORS[BOLD]}%2d${COLORS[NO_BOLD]}. %-$((max_length + 2))s -> %s%s\n" \
+            "$index" "$domain" \
+            "$settings" \
+            "$global_indicator"
+        ((index++))
+    done
+    echo # New line
+}
+
+# Display detailed summary of changes
+display_summary() {
+    local max_length="${1:-0}"
+    local domain_ ipv4_changes_ ipv6_changes_ proxied_changes_ ttl_changes_ ipv4_enabled_ ipv6_enabled_ duration_
+
+    print_centered_title "Summary" $((max_length + 60)) "=" "${COLORS[BLUE]}${COLORS[BOLD]}"
+    echo "Total domains processed: ${#DOMAIN_ARRAY[@]}"
+    echo "Create missing records: $ENABLE_CREATE_RECORD"
+    echo "Details:"
+
+    if [[ ! -f "$TEMP_CHANGES_FILE" ]]; then
+        log_error "Temporary changes file not found. Expected at: $TEMP_CHANGES_FILE"
+        return 1
+    fi
+
+    if [[ ! -s "$TEMP_CHANGES_FILE" ]]; then
+        log_warning "No changes were recorded. No summary to display. (Empty changes file)"
+        return 0
+    fi
+
+    # shellcheck disable=SC2034
+    while IFS='|' read -r domain_ ipv4_changes_ ipv6_changes_ proxied_changes_ ttl_changes_ ipv4_enabled_ ipv6_enabled_ duration_ || [[ -n "$domain" ]]; do
+        log_debug "Processing domain: $domain_"
+
+        if [[ -z "$domain_" ]]; then
+            echo "Error: Empty domain name encountered." >&2
+            continue
+        fi
+
+        echo -n "  $domain_: "
+        if [[ "$ipv4_changes_" == "no_change" && "$ipv6_changes_" == "no_change" && -z "$proxied_changes_" && -z "$ttl_changes_" ]]; then
+            echo "👍 No changes needed."
+        else
+            echo "👍 Updated!"
+            if [[ "$ipv4_enabled_" == "true" && "$ipv4_changes_" != "no_change" ]]; then
+                echo "      - IPv4: $ipv4_changes_"
+            elif [[ "$ipv4_enabled_" == "false" ]]; then
+                echo "      - IPv4: Disabled"
+            fi
+            if [[ "$ipv6_enabled_" == "true" && "$ipv6_changes_" != "no_change" ]]; then
+                echo "      - IPv6: $ipv6_changes_"
+            elif [[ "$ipv6_enabled_" == "false" ]]; then
+                echo "      - IPv6: Disabled"
+            fi
+            if [[ -n "$proxied_changes_" ]]; then
+                echo "      - Proxied: $proxied_changes_"
+            fi
+            if [[ -n "$ttl_changes_" ]]; then
+                echo "      - TTL: $ttl_changes_"
+            fi
+        fi
+    done < "$TEMP_CHANGES_FILE"
+
+    log_debug "Summary display completed."
 }
 
 #==============================================================================
@@ -291,7 +405,7 @@ load_yaml() {
     GLOBAL_IPV4=$(yq '.globals.ipv4 // true' "$config_file")
     GLOBAL_IPV6=$(yq '.globals.ipv6 // true' "$config_file")
     GLOBAL_PROXIED=$(yq '.globals.proxied // true' "$config_file")
-    GLOBAL_TTL=$(yq '.globals.ttl // 1' "$config_file")
+    GLOBAL_TTL=$(remove_quotes "$(yq '.globals.ttl // 1' "$config_file")")
 
     log_debug "Global settings: IPv4=$GLOBAL_IPV4, IPv6=$GLOBAL_IPV6, Proxied=$GLOBAL_PROXIED, TTL=$GLOBAL_TTL"
 
@@ -310,12 +424,14 @@ load_notification_settings() {
     local config_file="$1"
 
     if [[ $(yq .notifications.telegram.enabled "$config_file") == "true" ]]; then
+        log_debug "Telegram Notification loading."
         NOTIFICATION_PLUGINS["telegram"]=true
         TELEGRAM_BOT_TOKEN=$(remove_quotes "$(yq .notifications.telegram.bot_token "$config_file")")
         TELEGRAM_CHAT_ID=$(remove_quotes "$(yq .notifications.telegram.chat_id "$config_file")")
     fi
 
     if [[ $(yq .notifications.email.enabled "$config_file") == "true" ]]; then
+        log_debug "Email Notification loading."
         NOTIFICATION_PLUGINS["email"]=true
         notifications_email_smtp_server=$(remove_quotes "$(yq .notifications.email.smtp_server "$config_file")")
         notifications_email_smtp_port=$(remove_quotes "$(yq .notifications.email.smtp_port "$config_file")")
@@ -327,19 +443,48 @@ load_notification_settings() {
     fi
 
     if [[ $(yq .notifications.slack.enabled "$config_file") == "true" ]]; then
+        log_debug "Slack Notification loading."
         NOTIFICATION_PLUGINS["slack"]=true
         notifications_slack_webhook_url=$(remove_quotes "$(yq .notifications.slack.webhook_url "$config_file")")
     fi
 
     if [[ $(yq .notifications.discord.enabled "$config_file") == "true" ]]; then
+        log_debug "Discord Notification loading."
         NOTIFICATION_PLUGINS["discord"]=true
         notifications_discord_webhook_url=$(remove_quotes "$(yq .notifications.discord.webhook_url "$config_file")")
     fi
+
+    log_debug "Notification settings loaded"
 }
 
 #==============================================================================
 # DNS MANAGEMENT
 #==============================================================================
+
+# Get domain-specific user configuration
+get_domain_config() {
+    local domain="$1"
+    local config_file="$2"
+    local domain_config
+    local ipv4_enabled
+    local ipv6_enabled
+    local proxied
+    local ttl
+
+    domain_config=$(yq ".domains[] | select(.name == \"$domain\")" "$config_file")
+    ipv4_enabled=$(echo "$domain_config" | yq ".ipv4 // \"$GLOBAL_IPV4\"")
+    ipv6_enabled=$(echo "$domain_config" | yq ".ipv6 // \"$GLOBAL_IPV6\"")
+    proxied=$(echo "$domain_config" | yq ".proxied // \"$GLOBAL_PROXIED\"")
+    ttl=$(echo "$domain_config" | yq ".ttl // \"${GLOBAL_TTL}\"")
+
+    # Remove quotes if present
+    ipv4_enabled=$(echo "$ipv4_enabled" | tr -d '"')
+    ipv6_enabled=$(echo "$ipv6_enabled" | tr -d '"')
+    proxied=$(echo "$proxied" | tr -d '"')
+    ttl=$(echo "$ttl" | tr -d '"')
+
+    echo "$ipv4_enabled|$ipv6_enabled|$proxied|$ttl"
+}
 
 # Get IP address (IPv4 or IPv6)
 get_ip() {
@@ -423,6 +568,29 @@ check_record_exists() {
     [[ "$record_count" -gt 0 ]]
 }
 
+# Prepare DNS update/create payload
+prepare_dns_update_payload() {
+    local record_type="$1"
+    local record_name="$2"
+    local ip="$3"
+    local ttl="$4"
+    local proxied="$5"
+
+    jq -n \
+        --arg type "$record_type" \
+        --arg name "$record_name" \
+        --arg content "$ip" \
+        --argjson ttl "$ttl" \
+        --argjson proxied "$proxied" \
+        '{
+            "type": $type,
+            "name": $name,
+            "content": $content,
+            "ttl": $ttl,
+            "proxied": $proxied,
+        }'
+}
+
 # Update or create a DNS record
 update_dns_record() {
     local zone_id="$1"
@@ -493,19 +661,7 @@ update_dns_record() {
 
     # Prepare the JSON payload for the API request
     local payload
-    payload=$(jq -n \
-        --arg type "$record_type" \
-        --arg name "$record_name" \
-        --arg content "$ip" \
-        --argjson ttl "${ttl}" \
-        --argjson proxied "$proxied" \
-        '{
-            "type": $type,
-            "name": $name,
-            "content": $content,
-            "ttl": $ttl,
-            "proxied": $proxied,
-        }')
+    payload=$(prepare_dns_update_payload "$record_type" "$record_name" "$ip" "$ttl" "$proxied")
 
     log_debug "Payload for update_dns_record: $payload"
 
@@ -551,19 +707,8 @@ create_dns_record() {
     fi
 
     local create_payload
-    create_payload=$(jq -n \
-        --arg type "$record_type" \
-        --arg name "$record_name" \
-        --arg content "$ip" \
-        --argjson ttl "$ttl" \
-        --argjson proxied "$proxied" \
-        '{
-            "type": $type,
-            "name": $name,
-            "content": $content,
-            "ttl": $ttl,
-            "proxied": $proxied,
-        }')
+    create_payload=$(prepare_dns_update_payload "$record_type" "$record_name" "$ip" "$ttl" "$proxied")
+
 
     log_debug "Payload for create_dns_record: $create_payload"
 
@@ -734,10 +879,9 @@ notify_discord() {
 process_domain() {
     local domain_name="$1"
     local zone_id="$2"
-    local ipv4_enabled="$3"
-    local ipv6_enabled="$4"
-    local proxied="$5"
-    local ttl="$6"
+    local config="$3"
+
+    IFS='|' read -r ipv4_enabled ipv6_enabled proxied ttl <<< "$config"
 
     local start_time
     start_time=$(date_compat +%s%N)
@@ -762,7 +906,7 @@ process_domain() {
         delete_dns_record "$zone_id" "$domain_name" "AAAA"
     fi
 
-    # Extraer cambios de Proxied y TTL
+    # Extract Proxied and TTL changes
     if [[ "$ipv4_changes" != "no_change" && "$ipv4_changes" != "Disabled" ]]; then
         proxied_changes=$(echo "$ipv4_changes" | grep -o "Proxied:[^,]*" | cut -d':' -f2 || echo "")
         ttl_changes=$(echo "$ipv4_changes" | grep -o "TTL:[^,]*" | cut -d':' -f2 || echo "")
@@ -774,7 +918,7 @@ process_domain() {
     log_debug "Proxied changes: $proxied_changes"
     log_debug "TTL changes: $ttl_changes"
 
-    local end_time=
+    local end_time
     end_time=$(date_compat +%s%N)
     local duration=$(( (end_time - start_time) / 1000000 ))
 
@@ -790,35 +934,54 @@ process_domain() {
 # Process domains sequentially
 process_domains_sequential() {
     local domains=("$@")
-    local domain_config=""
-    local ipv4_enabled=""
-    local ipv6_enabled=""
-    local proxied=""
-    local ttl=""
+    local domain_config
 
     for domain in "${domains[@]}"; do
-        domain_config=$(yq ".domains[] | select(.name == \"$domain\")" "$CONFIG_FILE")
-        ipv4_enabled=$(echo "$domain_config" | yq ".ipv4 // \"$GLOBAL_IPV4\"")
-        ipv6_enabled=$(echo "$domain_config" | yq ".ipv6 // \"$GLOBAL_IPV6\"")
-        proxied=$(echo "$domain_config" | yq ".proxied // \"$GLOBAL_PROXIED\"")
-        ttl=$(echo "$domain_config" | yq ".ttl // \"${GLOBAL_TTL}\"")
-
-        # Convert empty strings and "null" to global values
-        [[ -z "$ipv4_enabled" || "$ipv4_enabled" == "null" ]] && ipv4_enabled="$GLOBAL_IPV4"
-        [[ -z "$ipv6_enabled" || "$ipv6_enabled" == "null" ]] && ipv6_enabled="$GLOBAL_IPV6"
-        [[ -z "$proxied" || "$proxied" == "null" ]] && proxied="$GLOBAL_PROXIED"
-        [[ -z "$ttl" || "$ttl" == "null" ]] && ttl="${GLOBAL_TTL}"
-
-        # Remove quotes if present
-        ipv4_enabled=$(echo "$ipv4_enabled" | tr -d '"')
-        ipv6_enabled=$(echo "$ipv6_enabled" | tr -d '"')
-        proxied=$(echo "$proxied" | tr -d '"')
-        ttl=$(echo "$ttl" | tr -d '"')
-
-        log_debug "Processing ${domain}: IPv4=$ipv4_enabled, IPv6=$ipv6_enabled, Proxied=$proxied, TTL=$ttl"
-
-        process_domain "$domain" "$ZONE_ID" "$ipv4_enabled" "$ipv6_enabled" "$proxied" "$ttl"
+        domain_config=$(get_domain_config "$domain" "$CONFIG_FILE")
+        log_debug "Processing ${domain}: $domain_config"
+        process_domain "$domain" "$ZONE_ID" "$domain_config"
     done
+}
+
+# Process domains in parallel
+process_domains_parallel() {
+    local domains=("$@")
+    local pid
+    local pids=()
+    local domain_config
+
+    log_debug "Parallel process started."
+
+    for domain in "${domains[@]}"; do
+        domain_config=$(get_domain_config "$domain" "$CONFIG_FILE")
+        log_debug "Processing ${domain}: $domain_config"
+
+        (process_domain "$domain" "$ZONE_ID" "$domain_config")  &
+        pids+=($!)
+
+        # Wait if we've reached the maximum number of parallel jobs
+        while [[ ${#pids[@]} -ge $MAX_PARALLEL_JOBS ]]; do
+            local i
+            for i in "${!pids[@]}"; do
+                if ! kill -0 "${pids[$i]}" 2>/dev/null; then
+                    wait "${pids[$i]}" 2>/dev/null
+                    unset 'pids[$i]'
+                    break
+                fi
+            done
+            pids=("${pids[@]}")  # Reindex the array
+            [[ ${#pids[@]} -ge $MAX_PARALLEL_JOBS ]] && sleep 0.1
+        done
+    done
+
+    log_debug "Parallel process ended. Wait for remaining processes to finish"
+
+    # Wait for remaining processes to finish
+    for pid in "${pids[@]}"; do
+        wait "$pid" 2>/dev/null
+    done
+
+    log_debug "Parallel process complete successfully"
 }
 
 # Print formatted status for a domain
@@ -864,84 +1027,26 @@ print_domain_status() {
     echo -e "$formatted_output"
 }
 
-# Process domains in parallel
-process_domains_parallel() {
-    local domains=("$@")
-    local temp_dir
-    temp_dir=$(mktemp -d)
-    local pid
-    local pids=()
-    local domain_config=""
-    local ipv4_enabled=""
-    local ipv6_enabled=""
-    local proxied=""
-    local ttl=""
-
-    for domain in "${domains[@]}"; do
-        domain_config=$(yq ".domains[] | select(.name == \"$domain\")" "$CONFIG_FILE")
-        ipv4_enabled=$(echo "$domain_config" | yq ".ipv4 // \"$GLOBAL_IPV4\"")
-        ipv6_enabled=$(echo "$domain_config" | yq ".ipv6 // \"$GLOBAL_IPV6\"")
-        proxied=$(echo "$domain_config" | yq ".proxied // \"$GLOBAL_PROXIED\"")
-        ttl=$(echo "$domain_config" | yq ".ttl // \"${GLOBAL_TTL}\"")
-
-        # Convert empty strings and "null" to global values
-        [[ -z "$ipv4_enabled" || "$ipv4_enabled" == "null" ]] && ipv4_enabled="$GLOBAL_IPV4"
-        [[ -z "$ipv6_enabled" || "$ipv6_enabled" == "null" ]] && ipv6_enabled="$GLOBAL_IPV6"
-        [[ -z "$proxied" || "$proxied" == "null" ]] && proxied="$GLOBAL_PROXIED"
-        [[ -z "$ttl" || "$ttl" == "null" ]] && ttl="${GLOBAL_TTL}"
-
-        # Remove quotes if present
-        ipv4_enabled=$(echo "$ipv4_enabled" | tr -d '"')
-        ipv6_enabled=$(echo "$ipv6_enabled" | tr -d '"')
-        proxied=$(echo "$proxied" | tr -d '"')
-        ttl=$(echo "$ttl" | tr -d '"')
-
-        log_debug "Processing ${domain}: IPv4=$ipv4_enabled, IPv6=$ipv6_enabled, Proxied=$proxied, TTL=$ttl"
-
-        process_domain "$domain" "$ZONE_ID" "$ipv4_enabled" "$ipv6_enabled" "$proxied" "$ttl" > "$temp_dir/$domain" &
-        pids+=($!)
-
-        # Wait if we've reached the maximum number of parallel jobs
-        while [[ ${#pids[@]} -ge $MAX_PARALLEL_JOBS ]]; do
-            for pid in "${pids[@]}"; do
-                if ! kill -0 "$pid" 2>/dev/null; then
-                    wait "$pid"
-                    pids=("${pids[@]/$pid}")
-                    break
-                fi
-            done
-            sleep 0.1
-        done
-    done
-
-    # Wait for remaining processes to finish
-    for pid in "${pids[@]}"; do
-        wait "$pid"
-    done
-
-    # Print results in order
-    for domain in "${domains[@]}"; do
-        cat "$temp_dir/$domain"
-    done
-
-    rm -rf "$temp_dir"
-}
-
 # Run in test mode (dry run)
 test_mode() {
     local ipv4
     local ipv6
+    local domain_config
     log_info "Running in test mode (dry run)"
     for domain in ${DOMAINS//,/ }; do
+        domain_config=$(get_domain_config "$domain" "$CONFIG_FILE")
+        IFS='|' read -r ipv4_enabled ipv6_enabled proxied ttl <<< "$domain_config"
+
         log_info "Would update DNS records for domain: $domain"
-        if [[ "$UPDATE_IPV4" == "true" ]]; then
+        if [[ "$ipv4_enabled" == "true" ]]; then
             ipv4=$(get_ip "ipv4")
             log_info "Would update A record for $domain with IP: $ipv4"
         fi
-        if [[ "$UPDATE_IPV6" == "true" ]]; then
+        if [[ "$ipv6_enabled" == "true" ]]; then
             ipv6=$(get_ip "ipv6")
             log_info "Would update AAAA record for $domain with IP: $ipv6"
         fi
+        log_info "Proxied: $proxied, TTL: $ttl"
     done
     log_info "Test mode completed. No changes were made."
 }
@@ -1103,7 +1208,7 @@ validate_config() {
 
     # Validate boolean values
     local var
-    for var in UPDATE_IPV4 UPDATE_IPV6 GLOBAL_PROXIED ENABLE_CREATE_RECORD; do
+    for var in GLOBAL_IPV4 GLOBAL_IPV6 GLOBAL_PROXIED ENABLE_CREATE_RECORD; do
         if [[ "${!var}" != "true" && "${!var}" != "false" ]]; then
             log_error "Invalid value for $var. Must be 'true' or 'false'."
             exit 1
@@ -1111,9 +1216,9 @@ validate_config() {
     done
 
     # Validate TTL
-    if [[ "$TTL" == "auto" || "$TTL" == "1" ]]; then
-        TTL=1  # Cloudflare uses 1 to represent "auto"
-    elif ! [[ "$TTL" =~ ^[0-9]+$ ]] || [[ "$TTL" -lt 120 || "$TTL" -gt 7200 ]]; then
+    if [[ "$GLOBAL_TTL" == "auto" || "$GLOBAL_TTL" == "1" ]]; then
+        GLOBAL_TTL=1  # Cloudflare uses 1 to represent "auto"
+    elif ! [[ "$GLOBAL_TTL" =~ ^[0-9]+$ ]] || [[ "$GLOBAL_TTL" -lt 120 || "$GLOBAL_TTL" -gt 7200 ]]; then
         log_error "Invalid TTL value. Must be 'auto', 1, or an integer between 120 and 7200."
         exit 1
     fi
@@ -1129,10 +1234,10 @@ main() {
     local command=""
 
     # Set default values
-    UPDATE_IPV4="$DEFAULT_GLOBAL_IPV4"
-    UPDATE_IPV6="$DEFAULT_GLOBAL_IPV6"
+    GLOBAL_IPV4="$DEFAULT_GLOBAL_IPV4"
+    GLOBAL_IPV6="$DEFAULT_GLOBAL_IPV6"
     GLOBAL_PROXIED="$DEFAULT_GLOBAL_PROXIED"
-    TTL="${DEFAULT_GLOBAL_TTL}"
+    GLOBAL_TTL="${DEFAULT_GLOBAL_TTL}"
     ENABLE_CREATE_RECORD="$DEFAULT_ENABLE_CREATE_RECORD"
     DOMAINS=""
     
@@ -1180,11 +1285,11 @@ main() {
                 shift 2
                 ;;
             --ipv4)
-                UPDATE_IPV4="$2"
+                GLOBAL_IPV4="$2"
                 shift 2
                 ;;
             --ipv6)
-                UPDATE_IPV6="$2"
+                GLOBAL_IPV6="$2"
                 shift 2
                 ;;
             --proxied)
@@ -1192,7 +1297,7 @@ main() {
                 shift 2
                 ;;
             --ttl)
-                TTL="$2"
+                GLOBAL_TTL="$2"
                 shift 2
                 ;;
             --create-record)
@@ -1276,8 +1381,16 @@ main() {
             echo -e "Legend: ${COLORS[GREEN]}${COLORS[BOLD]}[+]${COLORS[RESET]} Updated/Created | ${COLORS[GRAY]}${COLORS[BOLD]}[·]${COLORS[RESET]} No changes needed | ${COLORS[RED]}${COLORS[BOLD]}[-]${COLORS[RESET]} Disabled/Deleted"
             echo
 
-            # Process one by one. Parallel generate problems to log.
-            process_domains_sequential "${DOMAIN_ARRAY[@]}"
+            # Choose between sequential or parallel processing based on MAX_PARALLEL_JOBS
+            if [[ $MAX_PARALLEL_JOBS -le 1 ]]; then
+                log_info "Processing domains sequentially"
+                process_domains_sequential "${DOMAIN_ARRAY[@]}"
+            elif [[ $MAX_PARALLEL_JOBS -gt 1 ]]; then
+                log_info "Processing domains in parallel (max jobs: $MAX_PARALLEL_JOBS)"
+                process_domains_parallel "${DOMAIN_ARRAY[@]}"
+            else
+                log_error "Wrong Max Parallel Jobs value: MAX_PARALLEL_JOBS=${MAX_PARALLEL_JOBS}"
+            fi
 
             #send_notification "DNS records have been updated."
             log_info "DNS update process completed successfully"
@@ -1302,110 +1415,6 @@ main() {
             exit 1
             ;;
     esac
-}
-
-# Display domains to be processed
-display_domains_to_process() {
-    local max_length="${1:-0}"
-    local domain_config
-    local ipv4_enabled
-    local ipv6_enabled
-    local proxied
-    local ttl
-
-    local index=1
-    IFS=',' read -ra DOMAIN_ARRAY <<< "$DOMAINS"
-    # Display domains
-    for domain in "${DOMAIN_ARRAY[@]}"; do
-        domain_config=$(yq ".domains[] | select(.name == \"$domain\")" "$CONFIG_FILE")
-        ipv4_enabled=$(echo "$domain_config" | yq ".ipv4 // \"$GLOBAL_IPV4\"")
-        ipv6_enabled=$(echo "$domain_config" | yq ".ipv6 // \"$GLOBAL_IPV6\"")
-        proxied=$(echo "$domain_config" | yq ".proxied // \"$GLOBAL_PROXIED\"")
-        ttl=$(echo "$domain_config" | yq ".ttl // \"${GLOBAL_TTL}\"")
-
-        # Remove quotes if present
-        ipv4_enabled=$(echo "$ipv4_enabled" | tr -d '"')
-        ipv6_enabled=$(echo "$ipv6_enabled" | tr -d '"')
-        proxied=$(echo "$proxied" | tr -d '"')
-        ttl=$(echo "$ttl" | tr -d '"')
-
-        # Construct the settings string
-        local settings=""
-        [[ "$ipv4_enabled" == "true" ]] && settings+="IPv4, "
-        [[ "$ipv6_enabled" == "true" ]] && settings+="IPv6, "
-        [[ "$proxied" == "true" ]] && settings+="Proxied, "
-        settings+="TTL: $ttl"
-
-        # Check if using global settings
-        local global_indicator=""
-        if [[ -z "$(echo "$domain_config" | yq '.ipv4')" && \
-              -z "$(echo "$domain_config" | yq '.ipv6')" && \
-              -z "$(echo "$domain_config" | yq '.proxied')" && \
-              -z "$(echo "$domain_config" | yq '.ttl')" ]]; then
-            global_indicator=" (using global settings)"
-        fi
-
-        printf "${COLORS[BOLD]}%d${COLORS[NO_BOLD]}. %-$((max_length + 2))s -> %s%s\n" \
-            "$index" "$domain" \
-            "$settings" \
-            "$global_indicator"
-        ((index++))
-    done
-    echo # New line
-}
-
-# Display detailed summary of changes
-display_summary() {
-    local max_length="${1:-0}"
-
-    echo -e "\n${COLORS[CYAN]}==== SUMMARY ====${COLORS[RESET]}"
-    echo "Total domains processed: ${#DOMAIN_ARRAY[@]}"
-    echo "Create missing records: $ENABLE_CREATE_RECORD"
-    echo "Details:"
-
-    if [[ ! -f "$TEMP_CHANGES_FILE" ]]; then
-        log_error "Temporary changes file not found. Expected at: $TEMP_CHANGES_FILE"
-        return 1
-    fi
-
-    if [[ ! -s "$TEMP_CHANGES_FILE" ]]; then
-        log_warning "No changes were recorded. No summary to display. (Empty changes file)"
-        return 0
-    fi
-
-    while IFS='|' read -r domain ipv4_changes ipv6_changes proxied_changes ttl_changes ipv4_enabled ipv6_enabled duration || [[ -n "$domain" ]]; do
-        log_debug "Processing domain: $domain"
-
-        if [[ -z "$domain" ]]; then
-            echo "Error: Empty domain name encountered." >&2
-            continue
-        fi
-
-        echo -n "  $domain: "
-        if [[ "$ipv4_changes" == "no_change" && "$ipv6_changes" == "no_change" && -z "$proxied_changes" && -z "$ttl_changes" ]]; then
-            echo "👍 No changes needed."
-        else
-            echo "👍 Updated!"
-            if [[ "$ipv4_enabled" == "true" && "$ipv4_changes" != "no_change" ]]; then
-                echo "      - IPv4: $ipv4_changes"
-            elif [[ "$ipv4_enabled" == "false" ]]; then
-                echo "      - IPv4: Disabled"
-            fi
-            if [[ "$ipv6_enabled" == "true" && "$ipv6_changes" != "no_change" ]]; then
-                echo "      - IPv6: $ipv6_changes"
-            elif [[ "$ipv6_enabled" == "false" ]]; then
-                echo "      - IPv6: Disabled"
-            fi
-            if [[ -n "$proxied_changes" ]]; then
-                echo "      - Proxied: $proxied_changes"
-            fi
-            if [[ -n "$ttl_changes" ]]; then
-                echo "      - TTL: $ttl_changes"
-            fi
-        fi
-    done < "$TEMP_CHANGES_FILE"
-
-    echo "Summary display completed." >&2  # Debug output
 }
 
 # Start the script with the main function

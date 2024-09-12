@@ -6,3 +6,5 @@ test/Gemfile.lock
 test/test-output/
 
 .idea/
+
+cloudflare-dns.log

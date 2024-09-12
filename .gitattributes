@@ -1,4 +1,0 @@
-# Ignore when calculating language stats
-circleci/* linguist-vendored
-coverage/* linguist-vendored
-test/* linguist-vendored

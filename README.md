@@ -1,437 +1,419 @@
-[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fjmrplens%2FDynDNS_Cloudflare_IPv4-6.svg?type=small)](https://app.fossa.com/projects/git%2Bgithub.com%2Fjmrplens%2FDynDNS_Cloudflare_IPv4-6?ref=badge_small)
-[![codecov](https://img.shields.io/codecov/c/github/jmrplens/DynDNS_Cloudflare_IPv4-6?token=N7ZTDZSQXP&style=flat-square&logo=codecov)](https://codecov.io/github/jmrplens/DynDNS_Cloudflare_IPv4-6)
-[![Unit and Coverage test](https://img.shields.io/github/actions/workflow/status/jmrplens/DynDNS_Cloudflare_IPv4-6/.github%2Fworkflows%2Ftest_cov_main.yaml?style=flat-square&logo=github&label=Ubuntu%2022.04;%20Debian%2012;)](https://github.com/jmrplens/DynDNS_Cloudflare_IPv4-6/actions/workflows/test_cov_main.yaml)
+# Cloudflare DNS Updater
 
+## Table of Contents
 
-# 1. Dynamic DNS - Cloudflare
+1. [Description](#description)
+2. [Features](#features)
+3. [Requirements](#requirements)
+4. [Installation](#installation)
+5. [Configuration](#configuration)
+6. [Usage](#usage)
+7. [Examples](#examples)
+8. [Dependencies](#dependencies)
+9. [Troubleshooting](#troubleshooting)
+10. [Contributing](#contributing)
+11. [License](#license)
 
-Bash script to update IPv4 and IPv6 records in Cloudflare. Update with WAN or LAN IP.
+## Description
 
-- [1. Dynamic DNS - Cloudflare](#1-dynamic-dns---cloudflare)
-  - [1.1. Real life example](#11-real-life-example)
-  - [1.2. About](#12-about)
-  - [1.3. Requirements](#13-requirements)
-  - [1.4. Installation](#14-installation)
-  - [1.5. Configuration file](#15-configuration-file)
-  - [1.6. Configuration Parameters](#16-configuration-parameters)
-  - [1.7. Running The Script](#17-running-the-script)
-  - [1.8. Automation With Crontab](#18-automation-with-crontab)
-  - [1.9. Logs](#19-logs)
-- [2. Information for Developers](#2-information-for-developers)
-  - [2.1. Units Test y Code Coverage](#21-units-test-y-code-coverage)
-  - [2.2. Github CI (actions)](#22-github-ci-actions)
-- [3. More info](#3-more-info)
-  - [3.1. Code Quality](#31-code-quality)
-  - [3.2. Code Coverage](#32-code-coverage)
-  - [3.3. License](#33-license)
-## 1.1. Real life example
+Cloudflare DNS Updater is a bash script designed to automate the management of DNS records in Cloudflare. It allows updating A (IPv4) and AAAA (IPv6) records for multiple domains, offering flexible configuration options and various notification methods.
 
-<table>
-<tr>
-<td> Result </td> <td> Settings </td>
-</tr>
-<tr>
-<td> <img width="100%" alt="Screenshot of Termius (9-6-23, 01-13-49)" src="https://github.com/jmrplens/DynDNS_Cloudflare_IPv4-6/assets/28966312/3209e061-27ee-4644-9890-d509a8ca4a28"> </td>
-<td>
+## Features
 
-```yaml
-domains:
-    - name: jmrp.dev
-      ip_type: external
-      ipv4: true
-      ipv6: true
-      proxied: true
-      ttl: auto
-    - name: git.jmrp.dev
-      ip_type: external
-      ipv4: true
-      ipv6: true
-      proxied: true
-      ttl: auto
-    - name: jenkins.jmrp.dev
-      ip_type: external
-      ipv4: true
-      ipv6: true
-      proxied: true
-      ttl: auto
+- **DNS Record Management**:
 
-settings:
-    cloudflare:
-        - zone_id: #########
-        - zone_api_token: ########
-    misc:
-        - create_if_no_exist: false
+  - Update A (IPv4) and AAAA (IPv6) records
+  - Support for multiple domains
+  - Create new DNS records if they don't exist (optional)
+  - Delete DNS records when IPv4 or IPv6 is set to false
+- **Configuration**:
 
-notifications:
-    telegram:
-        enabled: false
-        bot_token: token
-        chat_id: id
-```
+  - YAML configuration file for easy setup
+  - Command-line options for quick adjustments
+  - Support for environment variables for sensitive data
+- **Performance**:
 
-</td>
-</tr>
-</table>
+  - Parallel processing of domains
+  - Configurable retry mechanism for API requests
+- **Testing and Debugging**:
 
-## 1.2. About
+  - Test mode (dry run) for verification without making changes
+  - Extensive logging capabilities
+  - Debug mode for detailed output
+- **Notification Systems**:
 
-- Bash Script for most **Linux**, **Unix** distributions and **MacOS**.
-- Choose any source IP address to update **external** or **internal** _(WAN/LAN)_ for ech domain.
-- For multiply lan interfaces like Wifi, Docker Networks and Bridges the script will automatically detects the primary Interface by priority.
-- Cloudflare's options proxy and TTL configurable via the config file for each domain.
-- Optional Telegram Notifications
+  - Multiple notification methods (Email, Telegram, Slack, Discord)
+- **User Interface**:
 
+  - Colorized terminal output with progress indication
+  - Man page for easy reference
 
-## 1.3. Requirements
+## Requirements
 
-- [curl](https://everything.curl.dev/get)
-- Cloudflare [api-token](https://dash.cloudflare.com/profile/api-tokens) with ZONE-DNS-EDIT Permissions
-- DNS Record must be pre created in web interface (WIP: Create record if no exist)
+- [Bash](#bash-40) 4.0+
+- [curl](#curl)
+- [jq](#jq)
+- [yq](#yq) (YAML parser)
+- [openssl](#openssl) (for SSL/TLS connections in email notifications)
+- [netcat](#netcat) (for email notifications)
 
-### Creating Cloudflare API Token
+## Installation
 
-To create a CloudFlare API token for your DNS zone go to [cloudflare-api-token-url](https://dash.cloudflare.com/profile/api-tokens) and follow these steps:
+1. Clone the repository:
+   ```shell
+   git clone https://github.com/yourusername/cloudflare-dns-updater.git
+   ```
+2. Make the script executable:
+   ```shell
+   chmod +x cloudflare-dns.sh
+   ```
+3. (Optional) Copy the script to a directory in your PATH for system-wide access:
+   ```shell
+   sudo cp cloudflare-dns.sh /usr/local/bin/cloudflare-dns
+   ```
+4. (Optional) Install the man page:
+   ```shell
+   sudo mkdir -p /usr/local/man/man1
+   sudo cp cloudflare-dns.1 /usr/local/man/man1/
+   sudo mandb
+   ```
 
-1. Click Create Token
-2. Select Create Custom Token
-3. Provide the token a name, for example, `example.com-dns-zone-readonly`
-4. Grant the token the following permissions:
-   - Zone - DNS - Edit
-5. Set the zone resources to:
-   - Include - Specific Zone - `example.com`
-6. Complete the wizard and use the generated token at the `CLOUDFLARE_API_TOKEN` variable for the container
+## Configuration
 
-## 1.4. Installation
-
-You can place the script at any location manually.
-
-**MacOS**: Don't use the _/usr/local/bin/_ for the script location. Create a separate folder under your user path _/Users/${USER}_
-
-The automatic install examples below will place the script at _/usr/local/bin/_
-
-```shell
-wget https://raw.githubusercontent.com/jmrplens/DyDNS_Cloudflare_IPv4-6/main/cloudflare-dns.sh
-sudo chmod +x cloudflare-dns.sh
-sudo mv cloudflare-dns.sh /usr/local/bin/cloudflare-dns
-```
-
-## 1.5. Configuration file
-
-You can use default config file _cloudflare-dns.yaml_ or pass your own config file as parameter to script.
-
-```shell
-wget https://raw.githubusercontent.com/jmrplens/DyDNS_Cloudflare_IPv4-6/main/cloudflare-dns.yaml
-```
-
-Place the **config** file in the directory as the **update-cloudflare-dns** for above example at _/usr/local/bin/_
-
-```shell
-sudo mv cloudflare-dns.yaml /usr/local/bin/cloudflare-dns.yaml
-```
-
-Edit it with your favorite editor and set the necessary parameters.
-
-## 1.6. Configuration Parameters
+Create a YAML configuration file named `cloudflare-dns.yaml` in the same directory as the script or specify a custom path using the `-c` option. Here's an example configuration:
 
 ```yaml
+# Cloudflare account settings
+cloudflare:
+  zone_id: "your_zone_id_here"
+  zone_api_token: "your_api_token_here"
+
+# Global settings (applied to all domains unless overridden)
+globals:
+  ipv4: true
+  ipv6: true
+  proxied: true
+  ttl: auto
+  enable_create_record: false
+
+# Domain-specific settings
 domains:
   - name: example.com
-    ip_type: external
     ipv4: true
     ipv6: true
     proxied: true
-    ttl: auto
+    ttl: 1
+  - name: subdomain.example.com
+    ipv4: true
+    ipv6: false
+    proxied: false
+    ttl: 3600
 
-settings:
-  cloudflare:
-    - zone_id: #########
-    - zone_api_token: ########
-  misc:
-    - create_if_no_exist: false
+# Advanced settings
+advanced:
+  retry_attempts: 3
+  retry_interval: 5
+  max_parallel_jobs: 5
 
+# Notification settings
 notifications:
   telegram:
     enabled: false
-    bot_token: token
-    chat_id: id
+    bot_token: "your_telegram_bot_token"
+    chat_id: "your_telegram_chat_id"
+  email:
+    enabled: true
+    smtp_server: "smtp.example.com"
+    smtp_port: 587
+    use_ssl: true
+    username: "your_email@example.com"
+    password: "your_email_password"
+    from_address: "your_email@example.com"
+    to_address: "recipient@example.com"
+    subject: "Cloudflare DNS Update Notification"
+  slack:
+    enabled: false
+    webhook_url: "https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK"
+  discord:
+    enabled: false
+    webhook_url: "https://discord.com/api/webhooks/YOUR/DISCORD/WEBHOOK"
+
+# Logging settings
+logging:
+  file: "/var/log/cloudflare-dns.log"
+  terminal_output: true
+  debug_mode: false
 ```
 
-Multiple domains is supported:
+## How to obtain Cloudflare API Token and Zone ID
 
-```yaml
-domains:
-  - name: example.com
-    ip_type: external
-    ipv4: true
-    ipv6: true
-    proxied: true
-    ttl: auto
-  - name: example2.com # Only name = using default settings
-  - name: example3.com
-    ip_type: external
-    ipv4: true
-    ipv6: true
-    proxied: false
-    ttl: auto
-  - name: ..........
-.........
-```
+1. API Token:
 
-#### Domains
+   - Log in to your Cloudflare account.
+   - Go to "My Profile" > "API Tokens".
+   - Click "Create Token".
+   - Use the "Edit zone DNS" template or create a custom token with the necessary permissions
+     Copy the generated token.
+2. Zone ID:
 
-| **Option**                | **Example**       | **Description**                                                                                                           |
-| ------------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| name                      | example.com       | Domain name. **Required**                                                                                                 |
-| ip_type                   | external          | Which IP should be used for the record: internal/external. **Optional** (default: external)                               |
-| ipv4                      | true              | Update IPv4 DNS Record: true/false. **Optional** (default: true)                                                          |
-| ipv6                      | true              | Update IPv6 DNS Record: true/false. **Optional** (default: true)                                                          |
-| proxied                   | true              | Use Cloudflare proxy on dns record: true/false. **Optional** (default: true)                                              |
-| ttl                       | 3600              | 120-7200 in seconds or auto. **Optional** (default: auto)                                                                 |
+   - Log in to your Cloudflare account.
+   - Select the domain you want to manage.
+   - The Zone ID is displayed on the right side of the overview page.
+   - Copy the Zone ID.
 
-#### Cloudflare
+## Usage
 
-| **Option**                | **Example**       | **Description**                                                                                                           |
-| ------------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| zone_api_token            | token             | Cloudflare [API Token](https://dash.cloudflare.com/profile/api-tokens) **KEEP IT PRIVATE!!!!**                                                                              |
-| zone_id                   | id                | Cloudflare's [Zone ID](https://developers.cloudflare.com/fundamentals/get-started/basic-tasks/find-account-and-zone-ids/) |
-
-##### Cloudflare misc
-
-| **Option**                | **Example**       | **Description**                                                                                                           |
-| ------------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| create_if_no_exist        | false             | Not yet implemented                                                                                                       |
-
-#### Notifications
-
-##### Telegram
-
-| **Option**              | **Example** | **Description**                          |
-| ----------------------- | ----------- | ---------------------------------------- |
-| enabled                 | true        | Use Telegram notifications: true/false.  |
-| bot_token               | token       | Telegram's Bot API Token                 |
-| chat_id                 | id          | Chat ID of the bot                       |
-
-## 1.7. Running The Script
-
-When placed in _/usr/local/bin/_
+Basic usage:
 
 ```shell
-cloudflare-dns dyndns-update
+cloudflare-dns [COMMAND] [OPTIONS]
 ```
 
-With your config file (need to be placed in same folder)
+### Commands
+
+
+| Command | Description                                       |
+| ------- | ------------------------------------------------- |
+| update  | Update DNS records for specified domains          |
+| test    | Run in test mode (dry run) without making changes |
+| help    | Show help message and exit                        |
+
+### Options
+
+
+| Option             | Description                             | Default Value       |
+| ------------------ | --------------------------------------- | ------------------- |
+| -h, --help         | Show help message and exit              | -                   |
+| -c, --config FILE  | Specify the configuration file          | cloudflare-dns.yaml |
+| -q, --quiet        | Disable terminal output                 | false               |
+| -d, --debug        | Enable debug mode                       | false               |
+| -p, --parallel NUM | Set the maximum number of parallel jobs | 1                   |
+| --version          | Show version information and exit       | -                   |
+
+### Update Command Options
+
+
+| Option               | Description                               | Default Value |
+| -------------------- | ----------------------------------------- | ------------- |
+| --zone-id ID         | Cloudflare Zone ID                        | -             |
+| --token TOKEN        | Cloudflare API Token                      | -             |
+| --domains D1,D2,...  | Comma-separated list of domains to update | -             |
+| --ipv4 BOOL          | Update IPv4 records                       | true          |
+| --ipv6 BOOL          | Update IPv6 records                       | true          |
+| --proxied BOOL       | Enable Cloudflare proxying                | true          |
+| --ttl NUM            | Set TTL for DNS records                   | 1 (Auto)      |
+| --create-record BOOL | Enable creation of missing records        | false         |
+
+### Environment Variables
+
+
+| Variable     | Description                                              |
+| ------------ | -------------------------------------------------------- |
+| CF_API_TOKEN | Cloudflare API Token (overrides config file and --token) |
+| CF_ZONE_ID   | Cloudflare Zone ID (overrides config file and --zone-id) |
+
+## Examples
+
+1. Update DNS records using the default configuration file:
+
+   ```shell
+   cloudflare-dns update
+   ```
+2. Update DNS records using a custom configuration file:
+
+   ```shell
+   cloudflare-dns update -c my_config.yaml
+   ```
+3. Run in test mode (dry run) without making changes:
+
+   ```shell
+   cloudflare-dns test
+   ```
+4. Update specific domains:
+
+   ```shell
+   cloudflare-dns update --domains example.com,subdomain.example.com
+   ```
+5. Use environment variables for sensitive data:
+
+   ```shell
+   export CF_API_TOKEN="your_api_token_here"
+   export CF_ZONE_ID="your_zone_id_here"
+   cloudflare-dns update
+   ```
+
+   Or:
+   ```shell
+   CF_API_TOKEN=your_token CF_ZONE_ID=your_zone_id cloudflare-dns update
+   ```
+6. Update DNS records with custom options:
+
+   ```shell
+   cloudflare-dns update --ipv4 false --ipv6 true --proxied false --ttl 3600
+   ```
+
+## Step-by-step Example: Configuring and Updating Multiple Domains
+
+1. Create a configuration file cloudflare-dns.yaml:
+
+   ```yaml
+   cloudflare:
+     zone_id: "44d43a33307a232a60a5af4fc1504613"
+     zone_api_token: "rY7s0ciXH9ARs3FkxChCdBIti_X15oT_bSUN7xQP"
+
+   globals:
+     ipv4: true
+     ipv6: true
+     proxied: true
+     ttl: auto
+
+   domains:
+     - name: example.com
+     - name: blog.example.com
+       ipv6: false
+     - name: api.example.com
+       proxied: false
+       ttl: 3600
+
+   advanced:
+     retry_attempts: 3
+     retry_interval: 5
+     max_parallel_jobs: 2
+
+   notifications:
+     email:
+       enabled: true
+       smtp_server: "smtp.gmail.com"
+       smtp_port: 587
+       use_ssl: true
+       username: "your_email@gmail.com"
+       password: "your_gmail_app_password"
+       from_address: "your_email@gmail.com"
+       to_address: "admin@example.com"
+
+   logging:
+     file: "cloudflare-dns.log"
+     terminal_output: true
+     verbosity: "info"
+   ```
+2. Run the script in test mode:
+
+   ```shell
+   cloudflare-dns test -c cloudflare-dns.yaml
+   ```
+
+   This will show what changes would be made without actually applying them.
+3. If satisfied with the proposed changes, run the script to update the records:
+
+   ```shell
+   cloudflare-dns update -c cloudflare-dns.yaml
+   ```
+4. Review the terminal output and log file to confirm the changes were applied correctly.
+
+## Dependencies
+
+### Bash 4.0+ (Required)
+
+Generally pre-installed on Linux systems. On macOS, you can update it using Homebrew:
 
 ```shell
-cloudflare-dns dyndns-update your_config.yaml
+brew install bash
 ```
 
-## 1.8. Automation With Crontab
+[More information about Bash](https://www.gnu.org/software/bash/).
 
-You can run the script via crontab
+### curl (Required)
 
-```shell
-crontab -e
-```
+Tool for transferring data with URL syntax. Installation:
 
-### Examples
+- On Ubuntu/Debian: `sudo apt-get install curl`
+- On CentOS/Fedora: `sudo yum install curl`
+- On macOS with Homebrew: `brew install curl`
 
-<table>
-<tr>
-<td> Example </td> <td> Code </td>
-</tr>
-<tr>
-  <td> Run <a href="https://crontab.guru/every-1-minute">every minute</a> </td>
-<td>
+[More information about curl](https://curl.se/).
 
-```shell
-* * * * * /usr/local/bin/cloudflare-dns dyndns-update
-```
+### jq (Required)
 
-</td>
-</tr>
-<tr>
-  <td> Run every minute with your specific config file </td>
-<td>
+Command-line JSON processor. Installation:
 
-```shell
-* * * * * /usr/local/bin/cloudflare-dns dyndns-update myconfig.yaml
-```
+- On Ubuntu/Debian: `sudo apt-get install jq`
+- On CentOS/Fedora: `sudo yum install jq`
+- On macOS with Homebrew: `brew install jq`
 
-</td>
-</tr>
-<tr>
-  <td> Run every <a href="https://crontab.guru/#*/2_*_*_*_*">every 2 minutes</a> </td>
-<td>
+[More information about jq](https://stedolan.github.io/jq/).
 
-```shell
-*/2 * * * * /usr/local/bin/cloudflare-dns dyndns-update
-```
+### yq (Optional. Required for using YAML configuration)
 
-</td>
-</tr>
-<tr>
-  <td> Run at <a href="https://crontab.guru/#@reboot">boot</a> </td>
-<td>
+Command-line YAML processor. Installation:
 
-```shell
-@reboot /usr/local/bin/cloudflare-dns dyndns-update
-```
+- On Ubuntu/Debian: `sudo apt-get install yq`
+- On CentOS/Fedora: `sudo yum install yq`
+- On macOS with Homebrew: `brew install yq`
 
-</td>
-</tr>
-<tr>
-  <td> Run 1 minute after boot </td>
-<td>
+[More information about yq](https://mikefarah.gitbook.io/yq/).
 
-```shell
-@reboot sleep 60 && /usr/local/bin/cloudflare-dns dyndns-update
-```
+### openssl (Optional. Required for SSL/TLS connections in email notifications)
 
-</td>
-</tr>
-</table>
+Cryptography toolkit. Generally pre-installed. If not:
 
-## 1.9. Logs
+- On Ubuntu/Debian: `sudo apt-get install openssl`
+- On CentOS/Fedora: `sudo yum install openssl`
+- On macOS with Homebrew: `brew install openssl`
 
-This Script will create a log file with **only** the last run information
-Log file will be located at the script's location.
+[More information about openssl](https://www.openssl.org/).
 
-Example:
+### netcat (Optional. Required for email notifications)
 
-```bash
-/usr/local/bin/cloudflare-dns.log
-```
+Networking utility for reading from and writing to network connections. Installation:
 
+- On Ubuntu/Debian: `sudo apt-get install netcat`
+- On CentOS/Fedora: `sudo yum install netcat`
+- On macOS with Homebrew: `brew install netcat`
 
-# 2. Information for Developers
+[More information about netcat](http://netcat.sourceforge.net/).
 
-## 2.1. Units Test y Code Coverage
+## Troubleshooting
 
-The [bats](https://github.com/bats-core) framework is used to perform the **unit tests**. In addition, if you want to obtain the **Code Coverage** you use [bashcov](https://github.com/infertux/bashcov).
+1. **Script cannot connect to Cloudflare API**
+   - Check your internet connection.
+   - Ensure your Cloudflare API token is valid and has the correct permissions.
+   - Review debug logs for more information.
+   - Verify that the Cloudflare API endpoint is not blocked by your firewall.
+2. **DNS records are not updating**
+   - Confirm that domains are correctly configured in the YAML file.
+   - Verify that you have permissions to modify DNS records in Cloudflare.
+   - Run the script in debug mode for more details.
+   - Check if the Cloudflare zone (domain) is active and not pending.
+3. **Notifications are not being sent**
+   - Review notification settings in the YAML file.
+   - Ensure your notification service credentials are correct.
+   - Verify that your mail server or webhook service is functioning properly.
+   - Check your firewall settings to ensure outgoing connections are allowed.
+4. **Script is running slowly**
+   - Reduce the number of domains being processed simultaneously.
+   - Check your internet connection speed.
+   - Ensure that your system's DNS resolution is working correctly.
+5. **Error: "jq: command not found" or similar**
+   - Make sure all dependencies are installed correctly.
+   - Verify that the installed tools are in your system's PATH.
+   - Try reinstalling the missing dependency.
+6. **YAML parsing errors**
+   - Validate your YAML configuration file syntax. Use an online YAML validator or a linter. Examples: [YAML Lint](http://www.yamllint.com/), [Online YAML Parser](https://yaml-online-parser.appspot.com/).
+   - Ensure there are no tabs used for indentation (use spaces instead).
+   - Check for any special characters that might need to be escaped.
+7. **Permission denied errors**
+   - Ensure the script has execute permissions (chmod +x cloudflare-dns.sh).
+   - Check if you have write permissions for the log file directory.
+8. **API rate limiting issues**
+   - Increase the retry_interval in the advanced settings.
+   - Reduce the max_parallel_jobs to lower the number of simultaneous API calls.
 
-To run them locally:
+For additional help, review the debug logs or open an issue on the GitHub repository.
 
-1. Clone this repository and update the submodules:
-      ```bash
-      git clone https://github.com/jmrplens/DynDNS_Cloudflare_IPv4-6.git
-      cd DynDNS_Cloudflare_IPv4-6
-      git submodule update --init --recursive
-      ```
-1. Execute the tests:
+## Contributing
 
-     - Without code coverage:
-        ```bash
-        # Path: ../DynDNS_Cloudflare_IPv4-6/
-        ./unit_test.sh
-        ```
+Contributions are welcome! Please feel free to submit a Pull Request (AKA Merge Request) with your changes or improvements. If you encounter any issues or have suggestions for new features, please open an issue on the GitHub repository.
 
-     - With code coverage:
-       1. With Ruby 3 or higher, install the dependencies:
-          ```bash
-          # Path: ../DynDNS_Cloudflare_IPv4-6/
-          gem install bundler
-          export BUNDLE_GEMFILE=test/Gemfile
-          bundle install
-          ```
+## License
 
-       1. Execute tests with code coverage:
-          ```bash
-          # Path: ../DynDNS_Cloudflare_IPv4-6/
-          bashcov ./unit_test.sh
-          ```
-
-## 2.2. Github CI (actions)
-
-Here we describe how the Github CI workflows for unit testing and code coverage work.
-
-<br>
-
-### 2.2.1. Workflow
-
-<br>
-
-
-```mermaid
-%%{
-  init: {
-    "fontFamily": "monospace",
-    "flowchart": {
-      "htmlLabels": true
-    },
-    "sequence": {}
-  }
-}%%
-
-flowchart LR
-subgraph WC[Main Workflow]
-    A(<b>Unit Test and Coverage</b>\n <i><small><a href='https://github.com/jmrplens/DynDNS_Cloudflare_IPv4-6/blob/main/.github/workflows/test_cov_main.yaml'>test_cov_main.yaml</a></small></i>)
-    A --> B[Matrix strategy\n\n<table><tr><td align='left'><b>OS&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspRUBY</b></td><td>&nbsp3.0&nbsp</td><td style='background-color:'>&nbsp3.1&nbsp</td><td>&nbsp3.2&nbsp</td><td>&nbsp3.3&nbsp</td></tr><tr style='color:brown'><td>Ubuntu 22.04&nbsp&nbsp&nbsp&nbsp&nbsp</td><td>&#x2022</td><td>&#x2022</td><td>&#x2022</td><td>&#x2022</td></tr><tr style='color:darkviolet'><td align='left'>Debian 12&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp</td><td>&#x2022</td><td>&#x2022</td><td>&#x2022</td><td>&#x2022</td></tr><tr style='color:darkorange'><td align='left'>Mac OS 14&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp</td><td>&#x2022</td><td>&#x2022</td><td>&#x2022</td><td>&#x2022</td></tr></table>\n]
-    B ==>C[Call a worker for each combination]
-    linkStyle 1 stroke-width:2px,stroke:red;
-
-end
-
-C -->WU
-C -->WU
-C -->WU
-C -->WU
-C -->WU
-C -->WU
-C -->WU
-C -->WU
-C -->WU
-C -->WU
-C -->WU
-C -->WU
-C -->WU
-C -->WU
-C -->WU
-C -->WU
-
-subgraph WU[Reusable Workflow]
-    D[<b>Worker to run the tests and coverage</b>\n<i><small><a href='https://github.com/jmrplens/DynDNS_Cloudflare_IPv4-6/blob/main/.github/workflows/test_cov_worker.yaml'>test_cov_worker.yaml</a></small></i>]
-    D --> E[Checkout repository with submodules]
-    E --> F[Build/Install Ruby and the needed Gems\n<i><small><a href='https://github.com/jmrplens/DynDNS_Cloudflare_IPv4-6/blob/main/test/Gemfile'>test/Gemfile</a></small></i>]
-    F --> G[Run unit test with coverage\n<small><code>bashcov ./unit-test.sh</code></small>]
-    G --> H[Upload coverage reports to:\n<a href='https://app.codecov.io/github/jmrplens/DynDNS_Cloudflare_IPv4-6'>Codecov</a> and <a href='https://app.codacy.com/gh/jmrplens/DynDNS_Cloudflare_IPv4-6/dashboard'>Codacy</a>]
-end
-```
-
-### 2.2.2. Self-hosted runners
-
-To run the Github CI on Debian, [**self-hosted runners**](https://docs.github.com/en/actions/hosting-your-own-runners) are used.
-
-For Debian operating systems it is necessary to manually install the Ruby versions that will run the tests. This is required:
-
-1. Install [**self-hosted runner**](https://docs.github.com/en/actions/hosting-your-own-runners/managing-self-hosted-runners/adding-self-hosted-runners).
-2. Install [**ruby-build**](https://github.com/rbenv/ruby-build). Follow the instructions in [_Install manually as a standalone program_](https://github.com/rbenv/ruby-build#install-manually-as-a-standalone-program).
-3. Assuming you have used the default work folder name `_work` , you must install the Ruby versions to be run in the runner into that folder:
-    ```bash
-    ruby-build X.Y.Z ACTION_RUNNER_PATH/_work/_tool/Ruby/X.Y.Z/x64
-    ```
-    Where X.Y.Z is the Ruby version you want to install (3.0.6, 3.1.4, ...).
-
-    And mark it as completed with:
-    ```bash
-    touch /root/actions-runner/_work/_tool/Ruby/X.Y.Z/x64.complete
-    ```
-    Where X.Y.Z is the Ruby version you have installed (3.0.6, 3.1.4, ...).
-
-
-# 3. More info
-
-
-## 3.1. Code Quality
-[![Codacy Badge](https://app.codacy.com/project/badge/Grade/f99db5eaf05e4ea4805e6a0d5bfe52da)](https://app.codacy.com/gh/jmrplens/DynDNS_Cloudflare_IPv4-6/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
-[![CodeFactor](https://www.codefactor.io/repository/github/jmrplens/dyndns_cloudflare_ipv4-6/badge)](https://www.codefactor.io/repository/github/jmrplens/dyndns_cloudflare_ipv4-6)
-[![Shellcheck](https://github.com/jmrplens/DynDNS_Cloudflare_IPv4-6/actions/workflows/shellcheck.yaml/badge.svg?branch=main)](https://github.com/jmrplens/DynDNS_Cloudflare_IPv4-6/actions/workflows/shellcheck.yaml)
-[![CircleCI](https://dl.circleci.com/status-badge/img/gh/jmrplens/DynDNS_Cloudflare_IPv4-6/tree/main.svg?style=shield)](https://dl.circleci.com/status-badge/redirect/gh/jmrplens/DynDNS_Cloudflare_IPv4-6/tree/main)
-
-## 3.2. Code Coverage
-
-[![Codacy Badge](https://app.codacy.com/project/badge/Coverage/f99db5eaf05e4ea4805e6a0d5bfe52da)](https://app.codacy.com/gh/jmrplens/DynDNS_Cloudflare_IPv4-6/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_coverage)
-[![codecov](https://codecov.io/gh/jmrplens/DynDNS_Cloudflare_IPv4-6/branch/main/graph/badge.svg?token=ZQZQZQZQZQ)](https://codecov.io/gh/jmrplens/DynDNS_Cloudflare_IPv4-6)
-## 3.3. License
-
-[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fjmrplens%2FDynDNS_Cloudflare_IPv4-6.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fjmrplens%2FDynDNS_Cloudflare_IPv4-6?ref=badge_large)
-
+This project is licensed under the GNU General Public License v3.0. For more information, see the [LICENSE](LICENSE) file.
