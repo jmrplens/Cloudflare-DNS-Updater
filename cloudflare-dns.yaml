@@ -1,32 +1,60 @@
+# Cloudflare account settings
+cloudflare:
+  zone_id: "your_zone_id_here"
+  zone_api_token: "your_api_token_here"
+
+# Global settings (applied to all domains unless overridden)
+globals:
+  ipv4: true
+  ipv6: true
+  proxied: true
+  ttl: auto
+  enable_create_record: false
+
+# Domain-specific settings
 domains:
-  - name: sub.example.com
-    ip_type: external
-    ipv4: true
-    ipv6: true
-    proxied: true
-    ttl: auto
   - name: example.com
-    ip_type: external
     ipv4: true
     ipv6: true
     proxied: true
-    ttl: 3600
-  - name: other.example.com
-    ip_type: internal
-    ipv4: false
-    ipv6: true
+    ttl: 1
+  - name: subdomain.example.com
+    ipv4: true
+    ipv6: false
     proxied: false
-    ttl: auto
+    ttl: 3600
 
-settings:
-  cloudflare:
-    - zone_id: <your_id>
-    - zone_api_token: <your_token>
-  misc:
-    - create_if_no_exist: false
+# Advanced settings
+advanced:
+  retry_attempts: 3
+  retry_interval: 5
+  max_parallel_jobs: 5
 
+# Notification settings
 notifications:
   telegram:
     enabled: false
-    bot_token: token
-    chat_id: id
+    bot_token: "your_telegram_bot_token"
+    chat_id: "your_telegram_chat_id"
+  email:
+    enabled: true
+    smtp_server: "smtp.example.com"
+    smtp_port: 587
+    use_ssl: true
+    username: "your_email@example.com"
+    password: "your_email_password"
+    from_address: "your_email@example.com"
+    to_address: "recipient@example.com"
+    subject: "Cloudflare DNS Update Notification"
+  slack:
+    enabled: false
+    webhook_url: "https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK"
+  discord:
+    enabled: false
+    webhook_url: "https://discord.com/api/webhooks/YOUR/DISCORD/WEBHOOK"
+
+# Logging settings
+logging:
+  file: "/var/log/cloudflare-dns.log"
+  terminal_output: true
+  debug_mode: false
