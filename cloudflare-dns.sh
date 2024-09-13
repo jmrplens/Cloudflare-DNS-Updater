@@ -73,7 +73,8 @@ CLI_ENABLE_CREATE_RECORD=""
 
 # Notification plugins
 declare -A NOTIFICATION_PLUGINS
-
+# Initialize all notification plugins to false by default
+NOTIFICATION_PLUGINS=(["telegram"]=false ["email"]=false ["slack"]=false ["discord"]=false)
 # Colors for terminal output
 declare -A COLORS=(
     # From \033[0;30m to \033[0;37m
@@ -441,6 +442,7 @@ display_domains_to_process() {
 display_summary() {
     local max_length="${1:-0}"
     local domain_ ipv4_changes_ ipv6_changes_ proxied_changes_ ttl_changes_ ipv4_enabled_ ipv6_enabled_ duration_
+    local domain_len gap_texts gap_texts_items
 
     print_centered_title "Summary" $((max_length + 60)) "=" "${COLORS[BLUE]}${COLORS[BOLD]}"
     echo "Total domains processed: ${#DOMAIN_ARRAY[@]}"
@@ -466,34 +468,38 @@ display_summary() {
             continue
         fi
 
+        domain_len=${#domain_}
+        gap_texts=$(printf '%*s' "$((max_length-domain_len))" '')
+        gap_texts_items=$(printf '%*s' "$((max_length+7))" '')
+        
         echo -n "  $domain_: "
         if [[ "$ipv4_changes_" == "no_change" && "$ipv6_changes_" == "no_change" && -z "$proxied_changes_" && -z "$ttl_changes_" ]]; then
-            echo "👍 No changes needed."
+            echo "${gap_texts}👍 No changes needed."
             log_info "No changes needed for $domain_"
         else
-            echo "👍 Updated!"
+            echo "${gap_texts}👍 Updated!"
             log_info "Changes made for $domain_"
             if [[ "$ipv4_enabled_" == "true" && "$ipv4_changes_" != "no_change" ]]; then
-                echo "      - IPv4: $ipv4_changes_"
-                log_info "      - IPv4: $ipv4_changes_"
+                echo "${gap_texts_items}· IPv4: $ipv4_changes_"
+                log_info "${gap_texts_items}· IPv4: $ipv4_changes_"
             elif [[ "$ipv4_enabled_" == "false" ]]; then
-                echo "      - IPv4: Disabled"
-                log_info "      - IPv4: Disabled"
+                echo "${gap_texts_items}· IPv4: Disabled"
+                log_info "${gap_texts_items}· IPv4: Disabled"
             fi
             if [[ "$ipv6_enabled_" == "true" && "$ipv6_changes_" != "no_change" ]]; then
-                echo "      - IPv6: $ipv6_changes_"
-                log_info "      - IPv6: $ipv6_changes_"
+                echo "${gap_texts_items}· IPv6: $ipv6_changes_"
+                log_info "${gap_texts_items}· IPv6: $ipv6_changes_"
             elif [[ "$ipv6_enabled_" == "false" ]]; then
-                echo "      - IPv6: Disabled"
-                log_info "      - IPv6: Disabled"
+                echo "${gap_texts_items}· IPv6: Disabled"
+                log_info "${gap_texts_items}· IPv6: Disabled"
             fi
             if [[ -n "$proxied_changes_" ]]; then
-                echo "      - Proxied: $proxied_changes_"
-                log_info "      - Proxied: $proxied_changes_"
+                echo "${gap_texts_items}· Proxied: $proxied_changes_"
+                log_info "${gap_texts_items}· Proxied: $proxied_changes_"
             fi
             if [[ -n "$ttl_changes_" ]]; then
-                echo "      - TTL: $ttl_changes_"
-                log_info "      - TTL: $ttl_changes_"
+                echo "${gap_texts_items}· TTL: $ttl_changes_"
+                log_info "${gap_texts_items}· TTL: $ttl_changes_"
             fi
         fi
     done < "$TEMP_CHANGES_FILE"
@@ -645,7 +651,7 @@ get_record_info() {
 
     local api_url="https://api.cloudflare.com/client/v4/zones/${zone_id}/dns_records?name=${record_name}&type=${record_type}"
     log_debug "API URL for get_record_info: $api_url"
-    
+
     local response
     response=$(curl -s -X GET "$api_url" \
         -H "Authorization: Bearer ${ZONE_API_TOKEN}" \
@@ -1157,7 +1163,7 @@ print_domain_status() {
     }
 
     local formatted_output
-    formatted_output=$(printf "%-30s %sIPv4%s %sIPv6%s %sProxied%s %sTTL%s | %s %d %s\n" \
+    formatted_output=$(printf "%-25s %sIPv4%s %sIPv6%s %sProxied%s %sTTL%s | %s %d %s\n" \
         "$domain:" \
         "$(get_color "$ipv4_status")$ipv4_status" "${COLORS[RESET]}" \
         "$(get_color "$ipv6_status")$ipv6_status" "${COLORS[RESET]}" \
@@ -1417,8 +1423,8 @@ validate_config() {
     fi
 
     # Validate VERBOSITY
-    if [[ ! "$VERBOSITY" =~ ^(debug|info|warning|error)$ ]]; then
-        log_validation_error "Invalid VERBOSITY level. Must be one of: debug, info, warning, error."
+    if [[ ! "$VERBOSITY" =~ ^(debug|info|warning|error|success)$ ]]; then
+        log_validation_error "Invalid VERBOSITY level. Must be one of: debug, info, warning, error, success."
     fi
 
     # Validate LOG_FILE
@@ -1427,13 +1433,13 @@ validate_config() {
     fi
 
     # Validate notification settings
-    if [[ "${NOTIFICATION_PLUGINS[telegram]}" == "true" ]]; then
+    if [[ "${NOTIFICATION_PLUGINS["telegram"]}" == "true" ]]; then
         if [[ -z "$TELEGRAM_BOT_TOKEN" || -z "$TELEGRAM_CHAT_ID" ]]; then
             log_validation_error "Telegram notification is enabled but bot token or chat ID is missing."
         fi
     fi
 
-    if [[ "${NOTIFICATION_PLUGINS[email]}" == "true" ]]; then
+    if [[ "${NOTIFICATION_PLUGINS["email"]}" == "true" ]]; then
         for var in notifications_email_smtp_server notifications_email_smtp_port notifications_email_username notifications_email_password notifications_email_from_address notifications_email_to_address; do
             if [[ -z "${!var}" ]]; then
                 log_validation_error "Email notification is enabled but $var is missing."
@@ -1441,13 +1447,13 @@ validate_config() {
         done
     fi
 
-    if [[ "${NOTIFICATION_PLUGINS[slack]}" == "true" ]]; then
+    if [[ "${NOTIFICATION_PLUGINS["slack"]}" == "true" ]]; then
         if [[ -z "$notifications_slack_webhook_url" ]]; then
             log_validation_error "Slack notification is enabled but webhook URL is missing."
         fi
     fi
 
-    if [[ "${NOTIFICATION_PLUGINS[discord]}" == "true" ]]; then
+    if [[ "${NOTIFICATION_PLUGINS["discord"]}" == "true" ]]; then
         if [[ -z "$notifications_discord_webhook_url" ]]; then
             log_validation_error "Discord notification is enabled but webhook URL is missing."
         fi
