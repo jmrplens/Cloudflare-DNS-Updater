@@ -193,14 +193,14 @@ rotate_log() {
 
     # Check if log file exists
     if [[ ! -f "$log_file" ]]; then
-        log_debug_logging "Log file does not exist: $log_file" >> "$log_file"
+        log_debug "Log file does not exist: $log_file" >> "$log_file"
         return 1
     fi
     log_debug_logging "Log file exists: $log_file" >> "$log_file"
 
     # Check if log file is readable
     if [[ ! -r "$log_file" ]]; then
-        log_debug_logging "Log file is not readable: $log_file" >> "$log_file"
+        log_debug "Log file is not readable: $log_file" >> "$log_file"
         return 1
     fi
     log_debug_logging "Log file is readable: $log_file" >> "$log_file"
@@ -210,7 +210,7 @@ rotate_log() {
     current_size=$(find "$log_file" -type f -printf "%s" 2>/dev/null || find "$log_file" -type f -exec stat -f "%z" {} +)
 
     if [[ -z "$current_size" ]]; then
-        log_debug_logging "Failed to get size of log file: $log_file" >> "$log_file"
+        log_debug "Failed to get size of log file: $log_file" >> "$log_file"
         return 1
     fi
 
@@ -218,31 +218,31 @@ rotate_log() {
 
     # Check if rotation is needed
     if [[ $current_size -gt $max_size ]]; then
-        log_debug_logging "Log rotation needed. Current size: $current_size, Max size: $max_size" >> "$log_file"
+        log_debug "Log rotation needed. Current size: $current_size, Max size: $max_size" >> "$log_file"
         # Perform rotation
         local i
         for i in $(seq $((rotate_count - 1)) -1 1); do
             if [[ -f "${log_file}.$i" ]]; then
                 if mv "${log_file}.$i" "${log_file}.$((i+1))"; then
-                    log_debug_logging "Moved ${log_file}.$i to ${log_file}.$((i+1))"
+                    log_debug "Moved ${log_file}.$i to ${log_file}.$((i+1))"
                 else
-                    log_debug_logging "Failed to move ${log_file}.$i to ${log_file}.$((i+1))"
+                    log_debug "Failed to move ${log_file}.$i to ${log_file}.$((i+1))"
                 fi
             fi
         done
 
         if mv "$log_file" "${log_file}.1"; then
-            log_debug_logging "Rotated log file: ${log_file} -> ${log_file}.1"
+            log_debug "Rotated log file: ${log_file} -> ${log_file}.1"
             if touch "$log_file"; then
-                log_debug_logging "Created new log file: $log_file"
+                log_debug "Created new log file: $log_file"
             else
-                log_debug_logging "Failed to create new log file: $log_file"
+                log_debug "Failed to create new log file: $log_file"
             fi
         else
-            log_debug_logging "Failed to rotate log file: $log_file"
+            log_debug "Failed to rotate log file: $log_file"
         fi
     else
-        log_debug_logging "Log rotation not needed. Current size ($current_size bytes) is within limit." >> "$log_file"
+        log_debug_logging "Log rotation not needed. Current size ($current_size bytes) is within limit."
     fi
 }
 
@@ -1670,8 +1670,8 @@ main() {
             else
                 log_error "Wrong Max Parallel Jobs value: MAX_PARALLEL_JOBS=${MAX_PARALLEL_JOBS}"
             fi
+            echo
 
-            #send_notification "DNS records have been updated."
             log_info "DNS update process completed successfully"
 
             # Display detailed summary
