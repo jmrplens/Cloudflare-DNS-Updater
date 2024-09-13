@@ -10,7 +10,7 @@
 # The script can be run manually or scheduled to run periodically using cron or systemd timers.
 #
 # For more information, please visit:
-#
+# https://github.com/jmrplens/Cloudflare-DNS-Updater
 
 # Pipefail is required to catch errors in jq commands. If any command in a pipeline fails, the
 # pipeline will return a non-zero status code, which will be caught by the script.
@@ -42,11 +42,8 @@ SCRIPT_LICENSE="GNU General Public License v3.0"
 
 # Default configuration values
 CONFIG_FILE="cloudflare-dns.yaml"
-LOG_FILE="cloudflare-dns.log"
-LOG_TO_TERMINAL=true
 RETRY_ATTEMPTS=3
 RETRY_INTERVAL=5
-VERBOSITY="error"
 MAX_PARALLEL_JOBS=3
 
 # Default global settings
@@ -55,6 +52,17 @@ DEFAULT_GLOBAL_IPV6=true
 DEFAULT_GLOBAL_PROXIED=true
 DEFAULT_GLOBAL_TTL="auto"
 DEFAULT_ENABLE_CREATE_RECORD=false
+
+# Log configuration
+LOG_FILE="cloudflare-dns.log"
+LOG_DIR="."
+LOG_TO_TERMINAL=true
+VERBOSITY="success"
+MAX_LOG_SIZE=$((10 * 1024 * 1024))  # 10 MB
+LOG_ROTATE_COUNT=5
+LOG_COMPRESS_DAYS=7
+LOG_CLEAN_DAYS=30
+LOG_TO_SYSTEM=true
 
 # Cloudflare API settings
 ZONE_ID=""
@@ -117,10 +125,10 @@ date_compat() {
     fi
 }
 
-# Enhanced logging function with support for different verbosity levels
+# Enhanced logging function
 log() {
     local message="$1"
-    local level="${2:-info}"
+    local level="${2:-success}"
     local timestamp
     local color="${COLORS[RESET]}"
     local caller_func="${FUNCNAME[2]:-${FUNCNAME[1]:-main}}"
@@ -128,28 +136,144 @@ log() {
 
     case "$level" in
         error) color="${COLORS[RED]}" ;;
-        success) color="${COLORS[GREEN]}" ;;
         warning) color="${COLORS[YELLOW]}" ;;
         info) color="${COLORS[BLUE]}" ;;
         debug) color="${COLORS[MAGENTA]}" ;;
+        debug_logging) color="${COLORS[GRAY]}" ;;
+        success) color="" ;;
     esac
 
-    # LOG
-    local log_message="[${caller_func}] ${message}"
-    # Save to file (all levels)
-    echo "$timestamp - ${level^^}: $log_message" >> "$LOG_FILE"
+    # Only rotate log if it's not a debug message
+    if [[ "$level" != "debug_logging" ]]; then
+        rotate_log "$LOG_FILE" "$MAX_LOG_SIZE" "$LOG_ROTATE_COUNT"
+    fi
+
+    # Log to file
+    if [[ "$level" != "debug_logging" ]]; then
+      echo "$timestamp - ${level^^}: [${caller_func}] ${message}" >> "$LOG_FILE"
+    fi
+
+    # Log to system if enabled
+    [[ "$LOG_TO_SYSTEM" == "true" ]] && log_to_system "$message" "$level"
 
     # Check if the current log level should be displayed based on verbosity
-    case "$VERBOSITY" in
-        debug) ;;
-        info) [[ "$level" == "debug" ]] && return ;;
-        warning) [[ "$level" == "debug" || "$level" == "info" ]] && return ;;
-        error) [[ "$level" != "error" ]] && return ;;
-        success) [[ "$level" != "success" && "$level" != "error" ]] && return ;;
+    if should_log "$level"; then
+        if [[ "$LOG_TO_TERMINAL" == true ]] && [[ $color ]]; then
+            echo -e "${color}${timestamp} - ${level^^}: ${message}${COLORS[RESET]}" >&2
+        else
+            echo "${timestamp} - ${level^^}: ${message}" >&2
+        fi
+    fi
+}
+
+# Function to determine if a message should be logged based on verbosity
+should_log() {
+    local level="$1"
+    local verbosity="$VERBOSITY"
+
+    case "$verbosity" in
+        debug) return 0 ;;
+        info) [[ "$level" != "debug" ]] && return 0 ;;
+        warning) [[ "$level" != "debug" && "$level" != "info" ]] && return 0 ;;
+        error) [[ "$level" == "error" ]] && return 0 ;;
+        debug_logging) [[ "$level" == "debug_logging" ]] && return 0 ;;
+        *) return 1 ;;
     esac
 
-    if [[ "$LOG_TO_TERMINAL" == true ]]; then
-        echo -e "${color}${timestamp} - ${level^^}: ${log_message}${COLORS[RESET]}" >&2
+    return 1
+}
+
+rotate_log() {
+    local log_file="$1"
+    local max_size="$2"
+    local rotate_count="$3"
+
+    log_debug_logging "rotate_log called with: log_file=$log_file, max_size=$max_size, rotate_count=$rotate_count" >> "$log_file"
+
+    # Check if log file exists
+    if [[ ! -f "$log_file" ]]; then
+        log_debug_logging "Log file does not exist: $log_file" >> "$log_file"
+        return 1
+    fi
+    log_debug_logging "Log file exists: $log_file" >> "$log_file"
+
+    # Check if log file is readable
+    if [[ ! -r "$log_file" ]]; then
+        log_debug_logging "Log file is not readable: $log_file" >> "$log_file"
+        return 1
+    fi
+    log_debug_logging "Log file is readable: $log_file" >> "$log_file"
+
+    # Get file size using find (compatible with both Linux and macOS)
+    local current_size
+    current_size=$(find "$log_file" -type f -printf "%s" 2>/dev/null || find "$log_file" -type f -exec stat -f "%z" {} +)
+
+    if [[ -z "$current_size" ]]; then
+        log_debug_logging "Failed to get size of log file: $log_file" >> "$log_file"
+        return 1
+    fi
+
+    log_debug_logging "Current log file size: $current_size bytes" >> "$log_file"
+
+    # Check if rotation is needed
+    if [[ $current_size -gt $max_size ]]; then
+        log_debug_logging "Log rotation needed. Current size: $current_size, Max size: $max_size" >> "$log_file"
+        # Perform rotation
+        local i
+        for i in $(seq $((rotate_count - 1)) -1 1); do
+            if [[ -f "${log_file}.$i" ]]; then
+                if mv "${log_file}.$i" "${log_file}.$((i+1))"; then
+                    log_debug_logging "Moved ${log_file}.$i to ${log_file}.$((i+1))"
+                else
+                    log_debug_logging "Failed to move ${log_file}.$i to ${log_file}.$((i+1))"
+                fi
+            fi
+        done
+
+        if mv "$log_file" "${log_file}.1"; then
+            log_debug_logging "Rotated log file: ${log_file} -> ${log_file}.1"
+            if touch "$log_file"; then
+                log_debug_logging "Created new log file: $log_file"
+            else
+                log_debug_logging "Failed to create new log file: $log_file"
+            fi
+        else
+            log_debug_logging "Failed to rotate log file: $log_file"
+        fi
+    else
+        log_debug_logging "Log rotation not needed. Current size ($current_size bytes) is within limit." >> "$log_file"
+    fi
+}
+
+# Function to compress old logs
+compress_old_logs() {
+    find "$LOG_DIR" -name "${LOG_FILE}.*" -mtime "+$LOG_COMPRESS_DAYS" -exec gzip {} \;
+}
+
+# Function to clean old logs
+clean_old_logs() {
+    find "$LOG_DIR" -name "${LOG_FILE}.*" -mtime "+$LOG_CLEAN_DAYS" -delete
+}
+
+# Function to log to system
+log_to_system() {
+    local message="$1"
+    local level="$2"
+    local syslog_priority
+
+    case "$level" in
+        error) syslog_priority="err" ;;
+        success) syslog_priority="notice" ;;
+        warning) syslog_priority="warning" ;;
+        info) syslog_priority="info" ;;
+        debug) syslog_priority="debug" ;;
+        debug_logging) syslog_priority="notice" ;;
+    esac
+
+    if command -v logger &>/dev/null; then
+        logger -p "user.$syslog_priority" -t "cloudflare-dns" "$message"
+    elif [[ -e /dev/log ]]; then
+        echo "<$syslog_priority>cloudflare-dns: $message" > /dev/log
     fi
 }
 
@@ -159,6 +283,7 @@ log_error() { log "$1" "error"; }
 log_warning() { log "$1" "warning"; }
 log_info() { log "$1" "info"; }
 log_debug() { log "$1" "debug"; }
+log_debug_logging() { log "$1" "debug_logging"; }
 
 # Format terminal titles
 print_centered_title() {
@@ -333,39 +458,47 @@ display_summary() {
     fi
 
     # shellcheck disable=SC2034
-    while IFS='|' read -r domain_ ipv4_changes_ ipv6_changes_ proxied_changes_ ttl_changes_ ipv4_enabled_ ipv6_enabled_ duration_ || [[ -n "$domain" ]]; do
+    while IFS='|' read -r domain_ ipv4_changes_ ipv6_changes_ proxied_changes_ ttl_changes_ ipv4_enabled_ ipv6_enabled_ duration_ || [[ -n "$domain_" ]]; do
         log_debug "Processing domain: $domain_"
 
         if [[ -z "$domain_" ]]; then
-            echo "Error: Empty domain name encountered." >&2
+            log_error "Empty domain name encountered."
             continue
         fi
 
         echo -n "  $domain_: "
         if [[ "$ipv4_changes_" == "no_change" && "$ipv6_changes_" == "no_change" && -z "$proxied_changes_" && -z "$ttl_changes_" ]]; then
             echo "👍 No changes needed."
+            log_info "No changes needed for $domain_"
         else
             echo "👍 Updated!"
+            log_info "Changes made for $domain_"
             if [[ "$ipv4_enabled_" == "true" && "$ipv4_changes_" != "no_change" ]]; then
                 echo "      - IPv4: $ipv4_changes_"
+                log_info "      - IPv4: $ipv4_changes_"
             elif [[ "$ipv4_enabled_" == "false" ]]; then
                 echo "      - IPv4: Disabled"
+                log_info "      - IPv4: Disabled"
             fi
             if [[ "$ipv6_enabled_" == "true" && "$ipv6_changes_" != "no_change" ]]; then
                 echo "      - IPv6: $ipv6_changes_"
+                log_info "      - IPv6: $ipv6_changes_"
             elif [[ "$ipv6_enabled_" == "false" ]]; then
                 echo "      - IPv6: Disabled"
+                log_info "      - IPv6: Disabled"
             fi
             if [[ -n "$proxied_changes_" ]]; then
                 echo "      - Proxied: $proxied_changes_"
+                log_info "      - Proxied: $proxied_changes_"
             fi
             if [[ -n "$ttl_changes_" ]]; then
                 echo "      - TTL: $ttl_changes_"
+                log_info "      - TTL: $ttl_changes_"
             fi
         fi
     done < "$TEMP_CHANGES_FILE"
 
-    log_debug "Summary display completed."
+    log_info "Summary display completed."
 }
 
 #==============================================================================
@@ -397,9 +530,17 @@ load_yaml() {
     RETRY_ATTEMPTS=$(yq .advanced.retry_attempts "$config_file")
     RETRY_INTERVAL=$(yq .advanced.retry_interval "$config_file")
     MAX_PARALLEL_JOBS=$(yq .advanced.max_parallel_jobs "$config_file")
+
+    # Load logging settings
     LOG_FILE=$(remove_quotes "$(yq .logging.file "$config_file")")
+    LOG_DIR=$(dirname "$LOG_FILE")
     LOG_TO_TERMINAL=$(yq .logging.terminal_output "$config_file")
     VERBOSITY=$(yq .logging.verbosity "$config_file")
+    MAX_LOG_SIZE=$(yq '.logging.max_size // 10485760' "$config_file")  # Default 10MB
+    LOG_ROTATE_COUNT=$(yq '.logging.rotate_count // 5' "$config_file")
+    LOG_COMPRESS_DAYS=$(yq '.logging.compress_days // 7' "$config_file")
+    LOG_CLEAN_DAYS=$(yq '.logging.clean_days // 30' "$config_file")
+    LOG_TO_SYSTEM=$(yq '.logging.log_to_system // false' "$config_file")
 
     # Load global settings
     GLOBAL_IPV4=$(yq '.globals.ipv4 // true' "$config_file")
@@ -1074,7 +1215,7 @@ Options:
   -h, --help              Show this help message and exit
   -c, --config FILE       Specify the configuration file (default: $CONFIG_FILE)
   -q, --quiet             Disable terminal output
-  -vv, --verbosity        Set terminal log verbosity level
+  -v, --verbosity LEVEL   Set log verbosity level (debug|info|warning|error)
   -p, --parallel NUM      Set the maximum number of parallel jobs (default: $MAX_PARALLEL_JOBS)
   --version               Show version information and exit
 
@@ -1088,6 +1229,14 @@ Update command options:
   --ttl NUM               Set TTL for DNS records (default: $DEFAULT_GLOBAL_TTL)
   --create-record BOOL    Enable creation of missing records (default: $DEFAULT_ENABLE_CREATE_RECORD)
 
+Logging options:
+  --log-file FILE         Specify log file (default: $LOG_FILE)
+  --log-max-size BYTES    Maximum log file size before rotation (default: $MAX_LOG_SIZE)
+  --log-rotate-count NUM  Number of rotated log files to keep (default: $LOG_ROTATE_COUNT)
+  --log-compress-days NUM Days after which to compress old logs (default: $LOG_COMPRESS_DAYS)
+  --log-clean-days NUM    Days after which to delete old logs (default: $LOG_CLEAN_DAYS)
+  --log-to-system BOOL    Send logs to the operating system's logging system (default: $LOG_TO_SYSTEM)
+
 Environment variables:
   CF_API_TOKEN            Cloudflare API Token (overrides config file and --token)
   CF_ZONE_ID              Cloudflare Zone ID (overrides config file and --zone-id)
@@ -1100,6 +1249,9 @@ EOF
 show_extended_help() {
     cat << EOF
 Cloudflare DNS Updater v$VERSION
+Copyright (c) 2024 Jose Manuel Requena Plens
+License: GNU General Public License v3.0
+Git repository: https://github.com/jmrplens/Cloudflare-DNS-Updater
 
 DESCRIPTION
     This script updates DNS records for specified domains using the Cloudflare API.
@@ -1117,7 +1269,7 @@ OPTIONS
     -h, --help          Show this help message and exit
     -c, --config FILE   Specify the configuration file (default: $CONFIG_FILE)
     -q, --quiet         Disable terminal output
-    -vv, --verbosity    Set terminal log verbosity level
+    -v, --verbosity     Set log verbosity level (debug|info|warning|error)
     -p, --parallel NUM  Set the maximum number of parallel jobs (default: $MAX_PARALLEL_JOBS)
     --version           Show version information and exit
 
@@ -1130,6 +1282,14 @@ OPTIONS
     --proxied BOOL      Enable Cloudflare proxying (default: $DEFAULT_GLOBAL_PROXIED)
     --ttl NUM           Set TTL for DNS records (default: $DEFAULT_GLOBAL_TTL)
     --create-record BOOL Enable creation of missing records (default: $DEFAULT_ENABLE_CREATE_RECORD)
+
+    Logging options:
+    --log-file FILE     Specify log file (default: $LOG_FILE)
+    --log-max-size BYTES Maximum log file size before rotation (default: $MAX_LOG_SIZE)
+    --log-rotate-count NUM Number of rotated log files to keep (default: $LOG_ROTATE_COUNT)
+    --log-compress-days NUM Days after which to compress old logs (default: $LOG_COMPRESS_DAYS)
+    --log-clean-days NUM Days after which to delete old logs (default: $LOG_CLEAN_DAYS)
+    --log-to-system BOOL Send logs to the operating system's logging system (default: $LOG_TO_SYSTEM)
 
 ENVIRONMENT VARIABLES
     CF_API_TOKEN        Cloudflare API Token (overrides config file and --token)
@@ -1153,8 +1313,22 @@ WORKFLOW
     └────────┬────────┘
              │
     ┌────────▼────────┐
-    │ Process Domains │
+    │ Rotate/Clean    │
+    │     Logs        │
     └────────┬────────┘
+             │
+    ┌────────▼────────┐    ┌─────────────────┐
+    │ Process Domains │◄───┤ Parallel Logging │
+    └────────┬────────┘    │    (Ongoing)     │
+             │             └─────────────────┘
+        ┌────┴────┐
+        │         │
+    ┌───▼───┐ ┌───▼───┐
+    │Serial │ │Parallel
+    │Process│ │Process│
+    └───┬───┘ └───┬───┘
+        │         │
+        └────┬────┘
              │
     ┌────────▼────────┐
     │  Update DNS     │
@@ -1167,6 +1341,9 @@ WORKFLOW
     ┌────────▼────────┐
     │    Finish       │
     └─────────────────┘
+
+    Note: Logging occurs in parallel throughout the entire script execution.
+          Domain processing can be sequential or parallel based on configuration.
 
 EXAMPLES
     Update DNS records using a custom config file:
@@ -1191,27 +1368,32 @@ EOF
 
 # Validate configuration settings
 validate_config() {
+    local error_count=0
+
+    # Function to log validation errors
+    log_validation_error() {
+        log_error "Config validation error: $1"
+        ((error_count++))
+    }
+
+    # Validate Cloudflare settings
     if [[ -z "$ZONE_ID" ]]; then
-        log_error "Cloudflare Zone ID is missing. Use --zone-id option, set it in the config file, or use CF_ZONE_ID environment variable."
-        exit 1
+        log_validation_error "Cloudflare Zone ID is missing. Use --zone-id option, set it in the config file, or use CF_ZONE_ID environment variable."
     fi
 
     if [[ -z "$ZONE_API_TOKEN" ]]; then
-        log_error "Cloudflare API Token is missing. Use --token option, set it in the config file, or use CF_API_TOKEN environment variable."
-        exit 1
+        log_validation_error "Cloudflare API Token is missing. Use --token option, set it in the config file, or use CF_API_TOKEN environment variable."
     fi
 
     if [[ -z "$DOMAINS" ]]; then
-        log_error "No domains specified. Use --domains option or set them in the config file."
-        exit 1
+        log_validation_error "No domains specified. Use --domains option or set them in the config file."
     fi
 
     # Validate boolean values
     local var
-    for var in GLOBAL_IPV4 GLOBAL_IPV6 GLOBAL_PROXIED ENABLE_CREATE_RECORD; do
+    for var in GLOBAL_IPV4 GLOBAL_IPV6 GLOBAL_PROXIED ENABLE_CREATE_RECORD LOG_TO_TERMINAL LOG_TO_SYSTEM; do
         if [[ "${!var}" != "true" && "${!var}" != "false" ]]; then
-            log_error "Invalid value for $var. Must be 'true' or 'false'."
-            exit 1
+            log_validation_error "Invalid value for $var. Must be 'true' or 'false'."
         fi
     done
 
@@ -1219,7 +1401,61 @@ validate_config() {
     if [[ "$GLOBAL_TTL" == "auto" || "$GLOBAL_TTL" == "1" ]]; then
         GLOBAL_TTL=1  # Cloudflare uses 1 to represent "auto"
     elif ! [[ "$GLOBAL_TTL" =~ ^[0-9]+$ ]] || [[ "$GLOBAL_TTL" -lt 120 || "$GLOBAL_TTL" -gt 7200 ]]; then
-        log_error "Invalid TTL value. Must be 'auto', 1, or an integer between 120 and 7200."
+        log_validation_error "Invalid TTL value. Must be 'auto', 1, or an integer between 120 and 7200."
+    fi
+
+    # Validate numeric values
+    for var in MAX_PARALLEL_JOBS RETRY_ATTEMPTS RETRY_INTERVAL MAX_LOG_SIZE LOG_ROTATE_COUNT LOG_COMPRESS_DAYS LOG_CLEAN_DAYS; do
+        if ! [[ "${!var}" =~ ^[0-9]+$ ]]; then
+            log_validation_error "Invalid value for $var. Must be a positive integer."
+        fi
+    done
+
+    # Validate MAX_PARALLEL_JOBS
+    if [[ "$MAX_PARALLEL_JOBS" -lt 1 ]]; then
+        log_validation_error "MAX_PARALLEL_JOBS must be at least 1."
+    fi
+
+    # Validate VERBOSITY
+    if [[ ! "$VERBOSITY" =~ ^(debug|info|warning|error)$ ]]; then
+        log_validation_error "Invalid VERBOSITY level. Must be one of: debug, info, warning, error."
+    fi
+
+    # Validate LOG_FILE
+    if [[ ! -w "$(dirname "$LOG_FILE")" ]]; then
+        log_validation_error "Log file directory is not writable: $(dirname "$LOG_FILE")"
+    fi
+
+    # Validate notification settings
+    if [[ "${NOTIFICATION_PLUGINS[telegram]}" == "true" ]]; then
+        if [[ -z "$TELEGRAM_BOT_TOKEN" || -z "$TELEGRAM_CHAT_ID" ]]; then
+            log_validation_error "Telegram notification is enabled but bot token or chat ID is missing."
+        fi
+    fi
+
+    if [[ "${NOTIFICATION_PLUGINS[email]}" == "true" ]]; then
+        for var in notifications_email_smtp_server notifications_email_smtp_port notifications_email_username notifications_email_password notifications_email_from_address notifications_email_to_address; do
+            if [[ -z "${!var}" ]]; then
+                log_validation_error "Email notification is enabled but $var is missing."
+            fi
+        done
+    fi
+
+    if [[ "${NOTIFICATION_PLUGINS[slack]}" == "true" ]]; then
+        if [[ -z "$notifications_slack_webhook_url" ]]; then
+            log_validation_error "Slack notification is enabled but webhook URL is missing."
+        fi
+    fi
+
+    if [[ "${NOTIFICATION_PLUGINS[discord]}" == "true" ]]; then
+        if [[ -z "$notifications_discord_webhook_url" ]]; then
+            log_validation_error "Discord notification is enabled but webhook URL is missing."
+        fi
+    fi
+
+    # Check if there were any validation errors
+    if [[ $error_count -gt 0 ]]; then
+        log_error "Configuration validation failed with $error_count error(s). Please correct the issues and try again."
         exit 1
     fi
 
@@ -1233,15 +1469,19 @@ validate_config() {
 main() {
     local command=""
 
-    # Set default values
+    # Default values
     GLOBAL_IPV4="$DEFAULT_GLOBAL_IPV4"
     GLOBAL_IPV6="$DEFAULT_GLOBAL_IPV6"
     GLOBAL_PROXIED="$DEFAULT_GLOBAL_PROXIED"
     GLOBAL_TTL="${DEFAULT_GLOBAL_TTL}"
     ENABLE_CREATE_RECORD="$DEFAULT_ENABLE_CREATE_RECORD"
     DOMAINS=""
+
+    log_debug "Script started with: LOG_FILE=$LOG_FILE, MAX_LOG_SIZE=$MAX_LOG_SIZE, LOG_ROTATE_COUNT=$LOG_ROTATE_COUNT"
+    log_debug "Current working directory: $(pwd)"
+    log_debug "Script executed by user: $(whoami)"
     
-    # Parse command-line arguments
+    # Parse command line arguments
     while [[ $# -gt 0 ]]; do
         case $1 in
             update|test|help)
@@ -1260,7 +1500,7 @@ main() {
                 LOG_TO_TERMINAL=false
                 shift
                 ;;
-            -vv|--verbosity)
+            -v|--verbosity)
                 VERBOSITY="$2"
                 shift 2
                 ;;
@@ -1301,7 +1541,31 @@ main() {
                 shift 2
                 ;;
             --create-record)
-                CLI_ENABLE_CREATE_RECORD="$2"
+                ENABLE_CREATE_RECORD="$2"
+                shift 2
+                ;;
+            --log-file)
+                LOG_FILE="$2"
+                shift 2
+                ;;
+            --log-max-size)
+                MAX_LOG_SIZE="$2"
+                shift 2
+                ;;
+            --log-rotate-count)
+                LOG_ROTATE_COUNT="$2"
+                shift 2
+                ;;
+            --log-compress-days)
+                LOG_COMPRESS_DAYS="$2"
+                shift 2
+                ;;
+            --log-clean-days)
+                LOG_CLEAN_DAYS="$2"
+                shift 2
+                ;;
+            --log-to-system)
+                LOG_TO_SYSTEM="$2"
                 shift 2
                 ;;
             *)
@@ -1349,8 +1613,17 @@ main() {
     # Validate configuration
     validate_config
 
+    log_debug "Logging system final config: LOG_FILE=$LOG_FILE, LOG_TO_TERMINAL=$LOG_TO_TERMINAL, MAX_LOG_SIZE=$MAX_LOG_SIZE,
+    LOG_ROTATE_COUNT=$LOG_ROTATE_COUNT, LOG_COMPRESS_DAYS=$LOG_COMPRESS_DAYS, LOG_CLEAN_DAYS=$LOG_CLEAN_DAYS, LOG_TO_SYSTEM=$LOG_TO_SYSTEM"
+
+    # Perform log maintenance
+    compress_old_logs
+    clean_old_logs
+
     # Create a temporary file to store changes
     TEMP_CHANGES_FILE=$(mktemp)
+
+    log_debug "Temporary changes file created: $TEMP_CHANGES_FILE"
 
     # Execute the appropriate command
     case "$command" in

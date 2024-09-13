@@ -37,7 +37,7 @@ notifications:
     bot_token: "your_telegram_bot_token"
     chat_id: "your_telegram_chat_id"
   email:
-    enabled: true
+    enabled: false
     smtp_server: "smtp.example.com"
     smtp_port: 587
     use_ssl: true
@@ -55,6 +55,11 @@ notifications:
 
 # Logging settings
 logging:
-  file: "/var/log/cloudflare-dns.log"
+  file: "cloudflare-dns.log"
   terminal_output: true
-  debug_mode: false
+  verbosity: "success"
+  max_size: 10485760  # 10 MB in bytes
+  rotate_count: 5
+  compress_days: 7
+  clean_days: 30
+  log_to_system: true
