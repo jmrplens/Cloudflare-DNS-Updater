@@ -1,3 +1,5 @@
+# Cloudflare DNS Configuration
+
 # Cloudflare account settings
 cloudflare:
   zone_id: "your_zone_id_here"
@@ -63,3 +65,4 @@ logging:
   compress_days: 7
   clean_days: 30
   log_to_system: true
+  sanitize_logs: true
