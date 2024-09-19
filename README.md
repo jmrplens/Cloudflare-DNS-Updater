@@ -9,10 +9,12 @@
 5. [Configuration](#configuration)
 6. [Usage](#usage)
 7. [Examples](#examples)
-8. [Dependencies](#dependencies)
-9. [Troubleshooting](#troubleshooting)
-10. [Contributing](#contributing)
-11. [License](#license)
+8. [Workflow](#workflow)
+9. [Flowcharts](#flowcharts)
+10. [Dependencies](#dependencies)
+11. [Troubleshooting](#troubleshooting)
+12. [Contributing](#contributing)
+13. [License](#license)
 
 ## Description
 
@@ -72,19 +74,16 @@ Cloudflare DNS Updater is a bash script designed to automate the management of D
    ```shell
    git clone https://github.com/yourusername/cloudflare-dns-updater.git
    ```
-
 2. Make the script executable:
 
    ```shell
    chmod +x cloudflare-dns.sh
    ```
-
 3. (Optional) Copy the script to a directory in your PATH for system-wide access:
 
    ```shell
    sudo cp cloudflare-dns.sh /usr/local/bin/cloudflare-dns
    ```
-
 4. (Optional) Install the man page:
 
    ```shell
@@ -155,9 +154,15 @@ notifications:
 
 # Logging settings
 logging:
-  file: "/var/log/cloudflare-dns.log"
+  file: "cloudflare-dns.log"
   terminal_output: true
-  debug_mode: false
+  verbosity: "success"
+  max_size: 10485760  # 10 MB in bytes
+  rotate_count: 5
+  compress_days: 7
+  clean_days: 30
+  log_to_system: false
+  sanitize_logs: true
 ```
 
 ## How to obtain Cloudflare API Token and Zone ID
@@ -186,6 +191,7 @@ cloudflare-dns [COMMAND] [OPTIONS]
 
 ### Commands
 
+
 | Command | Description                                       |
 | ------- | ------------------------------------------------- |
 | update  | Update DNS records for specified domains          |
@@ -194,16 +200,18 @@ cloudflare-dns [COMMAND] [OPTIONS]
 
 ### Options
 
-| Option             | Description                             | Default Value       |
-| ------------------ | --------------------------------------- | ------------------- |
-| -h, --help         | Show help message and exit              | -                   |
-| -c, --config FILE  | Specify the configuration file          | cloudflare-dns.yaml |
-| -q, --quiet        | Disable terminal output                 | false               |
-| -d, --debug        | Enable debug mode                       | false               |
-| -p, --parallel NUM | Set the maximum number of parallel jobs | 1                   |
-| --version          | Show version information and exit       | -                   |
+
+| Option                | Description                             | Default Value       |
+| --------------------- | --------------------------------------- | ------------------- |
+| -h, --help            | Show help message and exit              | -                   |
+| -c, --config FILE     | Specify the configuration file          | cloudflare-dns.yaml |
+| -q, --quiet           | Disable terminal output                 | false               |
+| -v, --verbosity LEVEL | Set log verbosity level                 | success             |
+| -p, --parallel NUM    | Set the maximum number of parallel jobs | 1                   |
+| --version             | Show version information and exit       | -                   |
 
 ### Update Command Options
+
 
 | Option               | Description                               | Default Value |
 | -------------------- | ----------------------------------------- | ------------- |
@@ -216,7 +224,32 @@ cloudflare-dns [COMMAND] [OPTIONS]
 | --ttl NUM            | Set TTL for DNS records                   | 1 (Auto)      |
 | --create-record BOOL | Enable creation of missing records        | false         |
 
+### Logging Options
+
+
+| Option                     | Description                                           | Default Value      |
+| -------------------------- | ----------------------------------------------------- | ------------------ |
+| --log-file FILE            | Specify log file                                      | cloudflare-dns.log |
+| --log-max-size BYTES       | Maximum log file size before rotation                 | 10485760 (10MB)    |
+| --log-rotate-count NUM     | Number of rotated log files to keep                   | 5                  |
+| --log-compress-days NUM    | Days after which to compress old logs                 | 7                  |
+| --log-clean-days NUM       | Days after which to delete old logs                   | 30                 |
+| --log-to-system BOOL       | Send logs to the operating system's logging system    | false              |
+| --disable-log-sanitization | Disable sanitization of sensitive information in logs | false              |
+
+### Verbosity Levels
+
+The `--verbosity` option accepts the following levels:
+
+- `debug_logging`: Most detailed logging, including debug information about the logging system itself
+- `debug`: Detailed information, typically of interest only when diagnosing problems
+- `info`: Confirmation that things are working as expected
+- `warning`: An indication that something unexpected happened, or indicative of some problem in the near future
+- `error`: Due to a more serious problem, the software has not been able to perform some function
+- `success`: Information about successful operations (default)
+
 ### Environment Variables
+
 
 | Variable     | Description                                              |
 | ------------ | -------------------------------------------------------- |
@@ -230,25 +263,21 @@ cloudflare-dns [COMMAND] [OPTIONS]
    ```shell
    cloudflare-dns update
    ```
-
 2. Update DNS records using a custom configuration file:
 
    ```shell
    cloudflare-dns update -c my_config.yaml
    ```
-
 3. Run in test mode (dry run) without making changes:
 
    ```shell
    cloudflare-dns test
    ```
-
 4. Update specific domains:
 
    ```shell
    cloudflare-dns update --domains example.com,subdomain.example.com
    ```
-
 5. Use environment variables for sensitive data:
 
    ```shell
@@ -262,11 +291,20 @@ cloudflare-dns [COMMAND] [OPTIONS]
    ```shell
    CF_API_TOKEN=your_token CF_ZONE_ID=your_zone_id cloudflare-dns update
    ```
-
 6. Update DNS records with custom options:
 
    ```shell
    cloudflare-dns update --ipv4 false --ipv6 true --proxied false --ttl 3600
+   ```
+7. Run with custom logging options:
+
+   ```shell
+   cloudflare-dns update --log-file /var/log/cf-dns-update.log --log-max-size 20971520 --log-rotate-count 10 --verbosity debug
+   ```
+8. Enable system logging and disable log sanitization:
+
+   ```shell
+   cloudflare-dns update --log-to-system true --disable-log-sanitization
    ```
 
 ## Step-by-step Example: Configuring and Updating Multiple Domains
@@ -313,7 +351,6 @@ cloudflare-dns [COMMAND] [OPTIONS]
      terminal_output: true
      verbosity: "info"
    ```
-
 2. Run the script in test mode:
 
    ```shell
@@ -326,8 +363,147 @@ cloudflare-dns [COMMAND] [OPTIONS]
    ```shell
    cloudflare-dns update -c cloudflare-dns.yaml
    ```
-
 4. Review the terminal output and log file to confirm the changes were applied correctly.
+
+## Workflow
+
+┌─────────────────┐
+│  Start Script   │
+└────────┬────────┘
+         │
+┌────────▼────────┐
+│  Parse Config   │
+└────────┬────────┘
+         │
+┌────────▼────────┐
+│ Validate Input  │
+└────────┬────────┘
+         │
+┌────────▼────────┐
+│ Rotate/Clean    │
+│     Logs        │
+└────────┬────────┘
+         │
+┌────────▼────────┐    ┌─────────────────┐
+│ Process Domains │◄───┤ Parallel Logging │
+└────────┬────────┘    │    (Ongoing)     │
+         │             └─────────────────┘
+    ┌────┴────┐
+    │         │
+┌───▼───┐ ┌───▼───┐
+│Serial │ │Parallel
+│Process│ │Process│
+└───┬───┘ └───┬───┘
+    │         │
+    └────┬────┘
+         │
+┌────────▼────────┐
+│  Update DNS     │
+└────────┬────────┘
+         │
+┌────────▼────────┐
+│   Notify        │
+└────────┬────────┘
+         │
+┌────────▼────────┐
+│    Finish       │
+└─────────────────┘
+
+Note: Logging occurs in parallel throughout the entire script execution.
+      Domain processing can be sequential or parallel based on configuration.
+## Flowcharts
+
+This section provides visual representations of the script's workflow and decision-making processes. These flowcharts aim to help users understand the inner workings of the Cloudflare DNS Updater script.
+
+### Main Script Flowchart
+
+The following diagram illustrates the main flow of the script, from startup to completion:
+
+```mermaid
+graph TD
+    A[Start Script] --> B[Parse Command Line Arguments]
+    B --> C[Load Configuration]
+    C --> D[Validate Configuration]
+    D --> E[Initialize Logging]
+    E --> F{Command?}
+    F -->|Update| G[Get Current IPs]
+    G --> H[Process Domains]
+    H --> I[Display Summary]
+    I --> J[Send Notifications]
+    F -->|Test| K[Run Test Mode]
+    F -->|Help| L[Display Help]
+    J & K & L --> M[End Script]
+
+    subgraph Process Domains
+        H --> N{Parallel Processing?}
+        N -->|Yes| O[Process Domains in Parallel]
+        N -->|No| P[Process Domains Sequentially]
+    end
+```
+This flowchart shows the overall structure of the script, including configuration loading, command processing, and the main update process.
+
+### Domain Processing Flowchart
+
+The following diagram details how each domain is processed:
+
+```mermaid
+graph TD
+    A[Start Domain Processing] --> B{IPv4 Enabled?}
+    B -->|Yes| C[Get Local IPv4]
+    B -->|No| D{IPv6 Enabled?}
+    C --> E[Process A Record]
+    E --> D
+    D -->|Yes| F[Get Local IPv6]
+    D -->|No| G[End Domain Processing]
+    F --> H[Process AAAA Record]
+    H --> G
+
+    subgraph Process DNS Record
+        E & H --> I{Record Exists?}
+        I -->|Yes| J{Needs Update?}
+        I -->|No| K{Create Enabled?}
+        J -->|Yes| L[Update Record]
+        J -->|No| M[No Changes]
+        K -->|Yes| N[Create New Record]
+        K -->|No| O[Log Error]
+        L & M & N & O --> P[Log Changes]
+    end
+
+    B -->|No| Q[Delete A Record]
+    D -->|No| R[Delete AAAA Record]
+    Q & R --> P
+```
+This flowchart illustrates how the script handles both IPv4 (A records) and IPv6 (AAAA records) for each domain, including the decision process for updating, creating, or deleting records.
+
+### Update DNS Record Flowchart
+
+The following diagram shows the detailed process of updating a single DNS record:
+
+```mermaid
+graph TD
+    A[Start Update DNS Record] --> B{Record Exists?}
+    B -->|Yes| C[Get Current Record Info]
+    B -->|No| D{Create Enabled?}
+    C --> E{Changes Needed?}
+    E -->|Yes| F[Prepare Update Payload]
+    E -->|No| G[No Changes Needed]
+    F --> H[Send API Request]
+    H --> I{API Success?}
+    I -->|Yes| J[Log Success]
+    I -->|No| K[Log Error]
+    D -->|Yes| L[Create New Record]
+    D -->|No| M[Log Error]
+    G & J & K & L & M --> N[End Update DNS Record]
+
+    subgraph Changes Checked
+        E --> O{IP Changed?}
+        E --> P{Proxied Status Changed?}
+        E --> Q{TTL Changed?}
+    end
+```
+This flowchart provides a detailed view of how the script determines whether a DNS record needs to be updated and the steps involved in the update process.
+
+These flowcharts are designed to be interconnected, with the Domain Processing Flowchart being a more detailed view of the "Process Domains" step in the Main Script Flowchart, and the Update DNS Record Flowchart expanding on the "Process DNS Record" subgraph in the Domain Processing Flowchart.
 
 ## Dependencies
 
@@ -338,7 +514,6 @@ Generally pre-installed on Linux systems. On macOS, you can update it using Home
 ```shell
 brew install bash
 ```
-
 [More information about Bash](https://www.gnu.org/software/bash/).
 
 ### curl (Required)
