@@ -42,7 +42,8 @@ SCRIPT_LICENSE="GNU General Public License v3.0"
 #==============================================================================
 
 # Default configuration values
-CONFIG_FILE="cloudflare-dns.yaml"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+CONFIG_FILE="${SCRIPT_DIR}/cloudflare-dns.yaml"
 RETRY_ATTEMPTS=3
 RETRY_INTERVAL=5
 MAX_PARALLEL_JOBS=1
@@ -803,7 +804,7 @@ load_yaml() {
         log_error "Configuration file not found: $config_file"
         exit 1
     fi
-    
+
     if ! command -v yq &> /dev/null; then
         log_error "yq is not installed. Please install yq to parse YAML files."
         exit 1
@@ -830,13 +831,13 @@ load_yaml() {
     LOG_FILE=$(remove_quotes "$(yq .logging.file "$config_file")")
     LOG_DIR=$(dirname "$LOG_FILE")
     LOG_TO_TERMINAL=$(yq .logging.terminal_output "$config_file")
-    VERBOSITY=$(yq .logging.verbosity "$config_file")
+    VERBOSITY=$(remove_quotes "$(yq .logging.verbosity "$config_file")")
     MAX_LOG_SIZE=$(yq '.logging.max_size // 10485760' "$config_file")  # Default 10MB
     LOG_ROTATE_COUNT=$(yq '.logging.rotate_count // 5' "$config_file")
     LOG_COMPRESS_DAYS=$(yq '.logging.compress_days // 7' "$config_file")
     LOG_CLEAN_DAYS=$(yq '.logging.clean_days // 30' "$config_file")
     LOG_TO_SYSTEM=$(yq '.logging.log_to_system // false' "$config_file")
-    SANITIZE_LOGS=$(yq '.logging.sanitize_logs // true' "$config_file")
+    SANITIZE_LOGS=$(remove_quotes "$(yq '.logging.sanitize_logs' "$config_file")")
 
     # Load global settings
     GLOBAL_IPV4=$(yq '.globals.ipv4 // true' "$config_file")
@@ -1043,7 +1044,8 @@ compare_and_prepare_changes() {
     local ip_changed="no_change" proxied_changed="no_change" ttl_changed="no_change"
 
     [[ "$new_ip" != "$current_ip" ]] && ip_changed="$new_ip"
-    [[ "$new_proxied" != "$current_proxied" ]] && proxied_changed="$new_proxied"
+    #[[ "$new_proxied" != "$current_proxied" ]] && proxied_changed="$new_proxied"
+    proxied_changed="$new_proxied" # Proxied changes is imperative for Cloudflare Payload
     [[ "$new_ttl" != "$current_ttl" ]] && ttl_changed="$new_ttl"
 
     if [[ "$ip_changed" == "no_change" && "$proxied_changed" == "no_change" && "$ttl_changed" == "no_change" ]]; then
@@ -1104,6 +1106,12 @@ prepare_update_payload() {
     fi
 
     if [[ "$ttl_changed" != "no_change" ]]; then
+        if [[ "$ttl_changed" == "auto" || "$ttl_changed" -le 1 ]]; then
+            ttl_changed=1  # Cloudflare uses 1 to represent "auto"
+        elif [[ "$ttl" -lt 120 || "$ttl" -gt 2147483647 ]]; then
+            log_warning "Invalid TTL value ($ttl). Setting to auto."
+            ttl_changed=1
+        fi
         payload_args+=("ttl" "$ttl_changed")
         log_debug "Including TTL change in payload: $ttl_changed"
     fi
@@ -1528,18 +1536,20 @@ process_domains_parallel() {
 
         # Wait if we've reached the maximum number of parallel jobs
         while [[ ${#pids[@]} -ge $MAX_PARALLEL_JOBS ]]; do
+            local new_pids=()
             for pid in "${pids[@]}"; do
-                if ! kill -0 "$pid" 2>/dev/null; then
+                if kill -0 "$pid" 2>/dev/null; then
+                    new_pids+=("$pid")
+                else
                     wait "$pid"
                     exit_status=$?
                     if [[ $exit_status -ne 0 ]]; then
                         failed_domains+=("$domain")
                         log_error "Processing of domain $domain failed with exit status $exit_status"
                     fi
-                    pids=("${pids[@]/$pid}")
-                    break
                 fi
             done
+            pids=("${new_pids[@]}")
             [[ ${#pids[@]} -ge $MAX_PARALLEL_JOBS ]] && sleep 0.1
         done
     done
@@ -1548,17 +1558,18 @@ process_domains_parallel() {
 
     # Wait for remaining processes to finish
     for pid in "${pids[@]}"; do
-        wait "$pid"
-        exit_status=$?
-        if [[ $exit_status -ne 0 ]]; then
-            local domain
-            for domain in "${domains[@]}"; do
-                if ! kill -0 "$pid" 2>/dev/null; then
-                    failed_domains+=("$domain")
-                    log_error "Processing of domain $domain failed with exit status $exit_status"
-                    break
-                fi
-            done
+        if kill -0 "$pid" 2>/dev/null; then
+            wait "$pid"
+            exit_status=$?
+            if [[ $exit_status -ne 0 ]]; then
+                for domain in "${domains[@]}"; do
+                    if ! kill -0 "$pid" 2>/dev/null; then
+                        failed_domains+=("$domain")
+                        log_error "Processing of domain $domain failed with exit status $exit_status"
+                        break
+                    fi
+                done
+            fi
         fi
     done
 
@@ -1957,7 +1968,7 @@ main() {
     log_debug "Script started with: LOG_FILE=$LOG_FILE, MAX_LOG_SIZE=$MAX_LOG_SIZE, LOG_ROTATE_COUNT=$LOG_ROTATE_COUNT"
     log_debug "Current working directory: $(pwd)"
     log_debug "Script executed by user: $(whoami)"
-    
+
     # Parse command line arguments
     while [[ $# -gt 0 ]]; do
         case $1 in
