@@ -60,6 +60,7 @@ LOG_FILE="cloudflare-dns.log"
 LOG_DIR="."
 LOG_TO_TERMINAL=true
 VERBOSITY="success"
+ENABLE_ROTATE_LOG=false
 MAX_LOG_SIZE=$((10 * 1024 * 1024))  # 10 MB
 LOG_ROTATE_COUNT=5
 LOG_COMPRESS_DAYS=7
@@ -146,7 +147,7 @@ log() {
     esac
 
     # Only rotate log if it's not a debug message
-    if [[ "$level" != "debug_logging" ]]; then
+    if [[ "$level" != "debug_logging" && "$ENABLE_ROTATE_LOG" == true ]]; then
         rotate_log "$LOG_FILE" "$MAX_LOG_SIZE" "$LOG_ROTATE_COUNT"
     fi
 
@@ -217,7 +218,7 @@ rotate_log() {
     log_debug_logging "Current log file size: $current_size bytes"
 
     # Check if rotation is needed
-    if [[ $current_size -gt $max_size ]]; then
+    if [[ $current_size -gt $max_size && $ENABLE_ROTATE_LOG == true ]]; then
         log_debug "Log rotation needed. Current size: $current_size, Max size: $max_size"
         # Perform rotation
         local i
@@ -832,6 +833,7 @@ load_yaml() {
     LOG_DIR=$(dirname "$LOG_FILE")
     LOG_TO_TERMINAL=$(yq .logging.terminal_output "$config_file")
     VERBOSITY=$(remove_quotes "$(yq .logging.verbosity "$config_file")")
+    ENABLE_ROTATE_LOG=$(yq '.logging.rotate_log // false' "$config_file")
     MAX_LOG_SIZE=$(yq '.logging.max_size // 10485760' "$config_file")  # Default 10MB
     LOG_ROTATE_COUNT=$(yq '.logging.rotate_count // 5' "$config_file")
     LOG_COMPRESS_DAYS=$(yq '.logging.compress_days // 7' "$config_file")

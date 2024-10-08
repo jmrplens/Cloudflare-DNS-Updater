@@ -60,6 +60,7 @@ logging:
   file: "cloudflare-dns.log"
   terminal_output: true
   verbosity: "success"
+  rotate_log: false
   max_size: 10485760  # 10 MB in bytes
   rotate_count: 5
   compress_days: 7
