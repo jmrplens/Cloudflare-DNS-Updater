@@ -9,7 +9,6 @@
 5. [Configuration](#configuration)
 6. [Usage](#usage)
 7. [Examples](#examples)
-8. [Workflow](#workflow)
 9. [Flowcharts](#flowcharts)
 10. [Dependencies](#dependencies)
 11. [Troubleshooting](#troubleshooting)
@@ -365,52 +364,6 @@ The `--verbosity` option accepts the following levels:
    ```
 4. Review the terminal output and log file to confirm the changes were applied correctly.
 
-## Workflow
-
-┌─────────────────┐
-│  Start Script   │
-└────────┬────────┘
-         │
-┌────────▼────────┐
-│  Parse Config   │
-└────────┬────────┘
-         │
-┌────────▼────────┐
-│ Validate Input  │
-└────────┬────────┘
-         │
-┌────────▼────────┐
-│ Rotate/Clean    │
-│     Logs        │
-└────────┬────────┘
-         │
-┌────────▼────────┐    ┌─────────────────┐
-│ Process Domains │◄───┤ Parallel Logging │
-└────────┬────────┘    │    (Ongoing)     │
-         │             └─────────────────┘
-    ┌────┴────┐
-    │         │
-┌───▼───┐ ┌───▼───┐
-│Serial │ │Parallel
-│Process│ │Process│
-└───┬───┘ └───┬───┘
-    │         │
-    └────┬────┘
-         │
-┌────────▼────────┐
-│  Update DNS     │
-└────────┬────────┘
-         │
-┌────────▼────────┐
-│   Notify        │
-└────────┬────────┘
-         │
-┌────────▼────────┐
-│    Finish       │
-└─────────────────┘
-
-Note: Logging occurs in parallel throughout the entire script execution.
-      Domain processing can be sequential or parallel based on configuration.
 ## Flowcharts
 
 This section provides visual representations of the script's workflow and decision-making processes. These flowcharts aim to help users understand the inner workings of the Cloudflare DNS Updater script.
