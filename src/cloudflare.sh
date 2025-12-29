@@ -33,9 +33,26 @@ cf_parse_records_to_lines() {
     local json="$1"
     
     # If jq is available, use it (robust)
+    # Find JQ (support .exe for WSL/Windows mixed envs)
+    local jq_cmd="jq"
     if command -v jq &> /dev/null; then
-        echo "$json" | jq -r '.result[] | "\(.id)|\(.name)|\(.type)|\(.content)|\(.proxied)"'
+        jq_cmd="jq"
+    elif command -v jq.exe &> /dev/null; then
+        jq_cmd="jq.exe"
+    elif [[ -f "/mnt/c/msys64/mingw64/bin/jq.exe" ]]; then
+        jq_cmd="/mnt/c/msys64/mingw64/bin/jq.exe"
+    elif [[ -f "/c/msys64/mingw64/bin/jq.exe" ]]; then
+        jq_cmd="/c/msys64/mingw64/bin/jq.exe"
     else
+        jq_cmd=""
+    fi
+
+    # Use jq if found
+    if [[ -n "$jq_cmd" ]]; then
+        log_debug "Using JSON parser: $jq_cmd"
+        echo "$json" | "$jq_cmd" -r '.result[] | "\(.id)|\(.name)|\(.type)|\(.content)|\(.proxied)"'
+    else
+        log_warn "jq not found. Using sed parser fallback (limited reliability)."
         # Fallback pure bash/sed/awk (fragile but functional for standard CF output)
         # We assume standard formatting. 
         # Strategy: split by "}," to separate objects (roughly)

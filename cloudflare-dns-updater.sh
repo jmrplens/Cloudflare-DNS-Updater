@@ -5,7 +5,7 @@ DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 CONFIG_FILE="$DIR/cloudflare-dns.yaml"
 
 # Add MSYS2/MinGW64 to PATH for better tools (jq, curl, etc) if available
-export PATH="/c/msys64/mingw64/bin:$PATH"
+export PATH="/c/msys64/mingw64/bin:/mnt/c/msys64/mingw64/bin:$PATH"
 
 # --- LOCK MECHANISM ---
 LOCKFILE="/tmp/cloudflare-dns-updater.lock"
