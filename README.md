@@ -44,6 +44,14 @@ You can run this tool using pre-compiled binaries (recommended) or directly from
     ```
 2.  **Dependencies**: Ensure you have `bash`, `curl` (or `wget`), and `jq` installed.
 
+    **Installation Commands:**
+    *   **Debian/Ubuntu**: `sudo apt install curl jq`
+    *   **RHEL/CentOS**: `sudo yum install curl jq`
+    *   **macOS**: `brew install jq` (curl is built-in)
+    *   **Windows**:
+        *   **Chocolatey**: `choco install jq curl`
+        *   **Winget**: `winget install jqlang.jq` (curl is built-in on Windows 10/11)
+
 ---
 
 ## ⚙️ Configuration
@@ -149,6 +157,4 @@ We use **GitHub Actions** to guarantee safe, reproducible builds.
 -   **Compiler**: Uses `shc` to convert the Bash scripts into standalone binaries for Linux, Mac, and Windows (Cross-compiled).
 -   **Versioning**: Every release tag (e.g., `v1.0.0`) triggers a build and upload of authenticated assets.
 
-### Security
--   **Token Safety**: Your API Token is read locally from `cloudflare-dns.yaml`. It is never transmitted except to Cloudflare's official API.
--   **Clean History**: Configuration files are ignored by Git (`.gitignore`) to prevent accidental commits.
+
