@@ -42,15 +42,25 @@ You can run this tool using pre-compiled binaries (recommended) or directly from
     git clone https://github.com/jmrplens/Cloudflare-DNS-Updater.git
     cd Cloudflare-DNS-Updater
     ```
-2.  **Dependencies**: Ensure you have `bash`, `curl` (or `wget`), and `jq` installed.
 
-    **Installation Commands:**
-    *   **Debian/Ubuntu**: `sudo apt install curl jq`
-    *   **RHEL/CentOS**: `sudo yum install curl jq`
-    *   **macOS**: `brew install jq` (curl is built-in)
-    *   **Windows**:
-        *   **Chocolatey**: `choco install jq curl`
-        *   **Winget**: `winget install jqlang.jq` (curl is built-in on Windows 10/11)
+---
+
+## 🛠️ Requirements (Binaries & Source)
+
+Both the **Binaries** and **Source Code** require the following system tools installed:
+
+1.  **curl**: Required for API communication.
+    *   *Most systems have this pre-installed.*
+2.  **jq** (Recommended): For robust JSON parsing.
+    *   *The script has a fallback parser, but `jq` is faster and safer.*
+
+**Installation Commands:**
+*   **Debian/Ubuntu**: `sudo apt install curl jq`
+*   **RHEL/CentOS**: `sudo yum install curl jq`
+*   **macOS**: `brew install jq` (curl is built-in)
+*   **Windows**:
+    *   **Chocolatey**: `choco install jq curl`
+    *   **Winget**: `winget install jqlang.jq` (curl is built-in on Windows 10/11)
 
 ---
 
