@@ -1,6 +1,14 @@
-.DS_store
-._*
-.vscode/
-coverage/
-test/Gemfile.lock
-test/test-output/
+# Config
+cloudflare-dns.yaml
+
+# Logs
+# Logs
+logs/
+*.log
+
+# System
+.DS_Store
+# Build Artifacts
+dist/
+tools/bundle.sh # Actually we want tools in git, but dist should be ignored.
+
