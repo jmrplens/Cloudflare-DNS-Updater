@@ -1,25 +1,39 @@
+# Cloudflare DNS Updater Configuration
+
+cloudflare:
+  zone_id: "YOUR_ZONE_ID"
+  api_token: "YOUR_API_TOKEN"
+
+options:
+  proxied: true   # Default: true (Orange Cloud). Set to false for Grey Cloud (DNS Only).
+  ttl: 1          # Default: 1 (Auto). Set to 60-3600 for specific TTL.
+
 domains:
-  - name: example.com
-    proxied: true
-    ipv4: true
-    ipv6: false
-    ttl: auto
+  # Example 1: Update both IPv4 (A) and IPv6 (AAAA) if detected (Default behavior)
+  - name: "example.com"
 
-  - name: *.example.com
+  # Example 2: Update only IPv4 (A record)
+  - name: "ipv4.example.com"
+    ip_type: "ipv4"
+
+  # Example 3: Update only IPv6 (AAAA record)
+  - name: "ipv6.example.com"
+    ip_type: "ipv6"
+
+  # Example 4: Disable Proxy (DNS Only)
+  - name: "direct.example.com"
     proxied: false
-    ipv4: true
-    ipv6: true
-    ttl: 120
 
-settings:
-  cloudflare:
-    zone_id: your_zone_id_here
-    zone_api_token: your_api_token_here
-  notifications:
-    telegram:
-      enabled: false
-      bot_token: ""
-      chat_id: ""
-    discord:
-      enabled: false
-      webhook_url: ""
+  # Example 5: Explicitly update both
+  - name: "both.example.com"
+    ip_type: "both"
+
+notifications:
+  telegram:
+    enabled: false
+    bot_token: ""
+    chat_id: ""
+  
+  discord:
+    enabled: false
+    webhook_url: ""

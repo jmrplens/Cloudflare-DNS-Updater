@@ -86,6 +86,18 @@ parse_config() {
                     domains_ipv4[current_idx]="${BASH_REMATCH[1]}"
                 elif [[ "$clean_line" =~ ^ipv6:[[:space:]]*(.*) ]]; then
                     domains_ipv6[current_idx]="${BASH_REMATCH[1]}"
+                elif [[ "$clean_line" =~ ^ip_type:[[:space:]]*(.*) ]]; then
+                    val="${BASH_REMATCH[1]}"
+                    if [[ "$val" == "ipv4" ]]; then
+                        domains_ipv4[current_idx]="true"
+                        domains_ipv6[current_idx]="false"
+                    elif [[ "$val" == "ipv6" ]]; then
+                        domains_ipv4[current_idx]="false"
+                        domains_ipv6[current_idx]="true"
+                    elif [[ "$val" == "both" ]]; then
+                        domains_ipv4[current_idx]="true"
+                        domains_ipv6[current_idx]="true"
+                    fi
                 elif [[ "$clean_line" =~ ^ttl:[[:space:]]*(.*) ]]; then
                     domains_ttl[current_idx]="${BASH_REMATCH[1]}"
                 fi
