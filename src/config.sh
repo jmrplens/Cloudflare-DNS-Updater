@@ -20,7 +20,7 @@ parse_config() {
 
     # Parse Global Settings
     CF_ZONE_ID=$(grep "zone_id:" "$yaml_file" | head -n1 | awk -F': ' '{print $2}' | tr -d ' "')
-    CF_API_TOKEN=$(grep "zone_api_token:" "$yaml_file" | head -n1 | awk -F': ' '{print $2}' | tr -d ' "')
+    CF_API_TOKEN=$(grep "api_token:" "$yaml_file" | head -n1 | awk -F': ' '{print $2}' | tr -d ' "')
     
     TG_ENABLED=$(grep -A 5 "telegram:" "$yaml_file" | grep "enabled:" | head -n1 | awk -F': ' '{print $2}' | tr -d ' "')
     TG_BOT_TOKEN=$(grep -A 5 "telegram:" "$yaml_file" | grep "bot_token:" | head -n1 | awk -F': ' '{print $2}' | tr -d ' "')
