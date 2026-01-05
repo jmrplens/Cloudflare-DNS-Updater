@@ -2,12 +2,25 @@
 name: Lint & Validation
 
 on:
+
   push:
-    branches: [ main, feature/** ]
+
+    branches: [main, feature/**]
+
   pull_request:
-    branches: [ main ]
+
+    branches: [main]
+
+
+
+permissions:
+
+  contents: read
+
+
 
 jobs:
+
   shellcheck:
     name: ShellCheck
     runs-on: ubuntu-latest
