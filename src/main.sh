@@ -60,7 +60,7 @@ main() {
     parsed_records=$(cf_parse_records_to_lines "$raw_records")
     local record_lines
     record_lines=$(echo "$parsed_records" | wc -l)
-    log_info "Parsed $record_lines records from Cloudflare."
+    log_info "Parsed $record_lines records from Cloudflare (processing $DOMAIN_COUNT domains)."
     
     # 4. Analyze Records
     log_info "Analyzing records..."
