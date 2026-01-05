@@ -27,11 +27,8 @@ void get_self_path(char *buffer, size_t size) {
 	uint32_t bsize = (uint32_t)size;
 	_NSGetExecutablePath(buffer, &bsize);
 #else
-	ssize_t len = readlink("/proc/self/exe", buffer, size - 1);
-	if (len < 0) {
+	if (realpath("/proc/self/exe", buffer) == NULL) {
 		buffer[0] = '\0';
-	} else {
-		buffer[len] = '\0';
 	}
 #endif
 }
@@ -40,7 +37,7 @@ int main(int argc, char *argv[]) {
 	char temp_dir[512];
 #ifdef _WIN32
 	char *tmp = getenv("TEMP");
-	sprintf(temp_dir, "%s\\cf-updater-%%d", tmp ? tmp : "C:\\Windows\\Temp", getpid());
+	sprintf(temp_dir, "%s\\cf-updater-%d", tmp ? tmp : "C:\\Windows\\Temp", getpid());
 	_mkdir(temp_dir);
 #else
 	strcpy(temp_dir, "/tmp/cf-updater-XXXXXX");
@@ -50,7 +47,7 @@ int main(int argc, char *argv[]) {
 	}
 #endif
 
-	char self_path[1024];
+	char self_path[PATH_MAX];
 	get_self_path(self_path, sizeof(self_path));
 
 	FILE *f = fopen(self_path, "rb");
