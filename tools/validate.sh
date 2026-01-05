@@ -81,4 +81,4 @@ if check_tool "actionlint" "GitHub Actions Validation"; then
 	fi
 fi
 
-exit ${EXIT_CODE:-0}
+exit "${EXIT_CODE:-0}"
