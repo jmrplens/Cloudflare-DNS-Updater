@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC1091,SC2154,SC2034
 
-# Global Reference for Analyzers
+# Global state for static analysis
 domains_names=()
 domains_proxied=()
 domains_ipv4=()
@@ -31,7 +31,7 @@ logger_init "$LOG_PATH"
 # shellcheck source=src/ip.sh
 # shellcheck source=src/cloudflare.sh
 
-# Global State
+# Project metadata
 VERSION="1.1.0"
 updates_json_list=""
 update_count=0

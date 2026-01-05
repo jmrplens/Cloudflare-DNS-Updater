@@ -27,7 +27,7 @@ done
 echo "Adding src/main.sh..."
 {
 	echo -e "\n# --- Module: src/main.sh ---"
-		sed '/^#!/d; /^[[:space:]]*source /d; /^[[:space:]]*# shellcheck /d; /^[[:space:]]*DIR=/d; /^[[:space:]]*main \"\$@\"/d' src/main.sh
+	sed '/^#!/d; /^[[:space:]]*source /d; /^[[:space:]]*# shellcheck /d; /^[[:space:]]*DIR=/d; /^[[:space:]]*main \"\$@\"/d' src/main.sh
 } >>"$OUTPUT"
 
 # 4. Add Lock and Config Logic (Wrapper)
