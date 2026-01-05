@@ -1,5 +1,6 @@
 # ShellCheck configuration file
-# Disable SC2154: variables are assigned dynamically in config.sh via parse_config
-disable=SC2154
+# SC2154: variables are assigned dynamically in config.sh via parse_config
+# SC2034: variables might appear unused in source modules but are used in main.sh
+disable=SC2154,SC2034
 # Enable some optional checks
 enable=add-default-case,avoid-nullary-conditions,quote-safe-variables

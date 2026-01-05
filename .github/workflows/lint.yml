@@ -2,42 +2,26 @@
 name: Lint & Validation
 
 on:
-
   push:
-
     branches: [main, feature/**]
-
   pull_request:
-
     branches: [main]
 
 permissions:
-
   contents: read
 
 jobs:
-
-  shellcheck:
-    name: ShellCheck
+  validate:
+    name: Validation Suite
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install ShellCheck
-        run: sudo apt-get install -y shellcheck
-      - name: Run ShellCheck
+      - name: Install Tools
         run: |
-          shellcheck *.sh src/*.sh
-
-
-
-  syntax:
-    name: Syntax Check
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Bash Syntax Check
+          sudo apt-get update
+          sudo apt-get install -y shellcheck yamllint shfmt
+      - name: Run Validation Script
         run: |
-          for file in *.sh src/*.sh; do
-            echo "Checking $file"
-            bash -n "$file"
-          done
+          chmod +x tools/*.sh
+          ./tools/validate.sh
+        shell: bash

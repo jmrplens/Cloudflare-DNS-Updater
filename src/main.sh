@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# shellcheck disable=SC1091
+# shellcheck disable=SC1091,SC2154,SC2034
 
 # Global Reference for Analyzers
 domains_names=()
@@ -8,6 +8,11 @@ domains_ipv4=()
 domains_ipv6=()
 domains_ttl=()
 DOMAIN_COUNT=0
+CF_ZONE_ID=""
+CF_API_TOKEN=""
+DEBUG="false"
+FORCE="false"
+SILENT="false"
 
 # Load Modules
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
