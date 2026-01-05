@@ -131,7 +131,9 @@ To run the updater every 5 minutes:
 
 ## Development
 
-To build the binaries locally:
+For detailed instructions on building, testing, and understanding the project structure, please see [CONTRIBUTING.md](CONTRIBUTING.md).
+
+Quick start for building binaries:
 
 1.  **Validate Code**:
     ```bash
