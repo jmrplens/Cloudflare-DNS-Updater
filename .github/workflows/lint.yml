@@ -22,8 +22,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Install ShellCheck
+        run: sudo apt-get install -y shellcheck
       - name: Run ShellCheck
-        uses: koalaman/shellcheck-action@v2
+        run: |
+          shellcheck *.sh src/*.sh
+
 
 
   syntax:
