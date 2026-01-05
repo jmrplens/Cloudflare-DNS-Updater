@@ -16,6 +16,7 @@
 #ifdef __APPLE__
 #include <mach-o/dyld.h>
 #else
+// Headers for modern Linux path resolution
 #include <sys/auxv.h>
 #include <elf.h>
 #endif
@@ -34,10 +35,8 @@ void get_self_path(char *buffer, size_t size) {
 	uint32_t bsize = (uint32_t)size;
 	_NSGetExecutablePath(buffer, &bsize);
 #else
-	// Modern Linux approach using auxiliary vector to avoid readlink race conditions
 	const char *exec_path = (const char *)getauxval(AT_EXECFN);
 	if (exec_path) {
-		// Use snprintf for safe copying
 		snprintf(buffer, size, "%s", exec_path);
 	} else {
 		buffer[0] = '\0';
@@ -50,7 +49,7 @@ int main(int argc, char *argv[]) {
 #ifdef _WIN32
 	char *tmp = getenv("TEMP");
 	snprintf(temp_dir, sizeof(temp_dir), "%s\\cf-updater-%%d", tmp ? tmp : "C:\\Windows\\Temp", getpid());
-	_mkdir(temp_dir);
+	mkdir(temp_dir, 0700);
 #else
 	strncpy(temp_dir, "/tmp/cf-updater-XXXXXX", sizeof(temp_dir) - 1);
 	temp_dir[sizeof(temp_dir) - 1] = '\0';
@@ -83,7 +82,7 @@ int main(int argc, char *argv[]) {
 	}
 	fclose(f);
 
-	char cmd[2048];
+	char cmd[PATH_MAX];
 #ifdef _WIN32
 	snprintf(cmd, sizeof(cmd), "powershell -Command \"$f = [System.IO.File]::OpenRead('%s'); $f.Seek(%ld, [System.IO.SeekOrigin]::Begin); $out = [System.IO.File]::Create('%s\\payload.tar.gz'); $f.CopyTo($out); $f.Close(); $out.Close(); tar -xzf '%s\\payload.tar.gz' -C '%s'\"", self_path, payload_offset, temp_dir, temp_dir, temp_dir);
 #else
@@ -95,17 +94,16 @@ int main(int argc, char *argv[]) {
 		return 1;
 	}
 
-	char run_cmd[4096];
+	char run_cmd[8192];
+	int offset = 0;
 #ifdef _WIN32
-	snprintf(run_cmd, sizeof(run_cmd), "set \"MAKESELF_PWD=%%CD%%\" && \"%s\\bin\\bash.exe\" \"%s\\main.sh\"", temp_dir, temp_dir);
+	offset = snprintf(run_cmd, sizeof(run_cmd), "set \"MAKESELF_PWD=%%CD%%\" && \"%s\\bin\\bash.exe\" \"%s\\main.sh\"", temp_dir, temp_dir);
 #else
-	snprintf(run_cmd, sizeof(run_cmd), "export MAKESELF_PWD=\"$PWD\"; \"%s/bin/bash\" \"%s/main.sh\"", temp_dir, temp_dir);
+	offset = snprintf(run_cmd, sizeof(run_cmd), "export MAKESELF_PWD=\"$PWD\"; \"%s/bin/bash\" \"%s/main.sh\"", temp_dir, temp_dir);
 #endif
 
-	for (int i = 1; i < argc; i++) {
-		strncat(run_cmd, " \"", sizeof(run_cmd) - strlen(run_cmd) - 1);
-		strncat(run_cmd, argv[i], sizeof(run_cmd) - strlen(run_cmd) - 1);
-		strncat(run_cmd, "\"", sizeof(run_cmd) - strlen(run_cmd) - 1);
+	for (int i = 1; i < argc && offset < (int)sizeof(run_cmd); i++) {
+		offset += snprintf(run_cmd + offset, sizeof(run_cmd) - offset, " \"%s\"", argv[i]);
 	}
 
 	int ret = system(run_cmd);
