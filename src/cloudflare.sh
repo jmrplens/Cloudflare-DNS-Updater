@@ -47,7 +47,8 @@ cf_parse_records_to_lines() {
 	# Parse
 	if [[ -n "$jq_cmd" ]]; then
 		log_debug "Using JSON parser: $jq_cmd"
-		echo "$json" | "$jq_cmd" -r '.result[] | "\(.id)|\(.name)|\(.type)|\(.content)|\(.proxied)"'
+		# Filter for A and AAAA records only
+		echo "$json" | "$jq_cmd" -r '.result[] | select(.type == "A" or .type == "AAAA") | "\(.id)|\(.name)|\(.type)|\(.content)|\(.proxied)"'
 	else
 		log_warn "jq not found. Using sed parser fallback."
 
@@ -62,8 +63,11 @@ cf_parse_records_to_lines() {
 				content=$(echo "$line" | grep -o '"content":"[^"]*"' | head -n1 | cut -d'"' -f4)
 				proxied=$(echo "$line" | grep -o '"proxied":[^,}]*' | head -n1 | cut -d':' -f2 | tr -d ' ')
 
-				if [[ -n "$id" && -n "$name" ]]; then
-					echo "$id|$name|$type|$content|$proxied"
+				# Local filter for A and AAAA
+				if [[ "$type" == "A" || "$type" == "AAAA" ]]; then
+					if [[ -n "$id" && -n "$name" ]]; then
+						echo "$id|$name|$type|$content|$proxied"
+					fi
 				fi
 			done
 	fi
