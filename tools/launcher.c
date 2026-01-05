@@ -15,10 +15,15 @@
 #define PATH_SEP "/"
 #ifdef __APPLE__
 #include <mach-o/dyld.h>
+#else
+#include <sys/auxv.h>
+#include <elf.h>
 #endif
 #endif
 
-#include <limits.h>
+#ifndef PATH_MAX
+#define PATH_MAX 4096
+#endif
 
 #define PAYLOAD_MARKER "---PAYLOAD_START---"
 
@@ -29,11 +34,11 @@ void get_self_path(char *buffer, size_t size) {
 	uint32_t bsize = (uint32_t)size;
 	_NSGetExecutablePath(buffer, &bsize);
 #else
-	// Using readlink on /proc/self/exe is the standard safe way on Linux.
-	// We use size-1 to ensure space for null terminator.
-	ssize_t len = readlink("/proc/self/exe", buffer, size - 1);
-	if (len != -1) {
-		buffer[len] = '\0';
+	// Modern Linux approach using auxiliary vector to avoid readlink race conditions
+	const char *exec_path = (const char *)getauxval(AT_EXECFN);
+	if (exec_path) {
+		// Use snprintf for safe copying
+		snprintf(buffer, size, "%s", exec_path);
 	} else {
 		buffer[0] = '\0';
 	}
@@ -44,10 +49,11 @@ int main(int argc, char *argv[]) {
 	char temp_dir[PATH_MAX];
 #ifdef _WIN32
 	char *tmp = getenv("TEMP");
-	snprintf(temp_dir, sizeof(temp_dir), "%s\\cf-updater-%d", tmp ? tmp : "C:\\Windows\\Temp", getpid());
+	snprintf(temp_dir, sizeof(temp_dir), "%s\\cf-updater-%%d", tmp ? tmp : "C:\\Windows\\Temp", getpid());
 	_mkdir(temp_dir);
 #else
 	strncpy(temp_dir, "/tmp/cf-updater-XXXXXX", sizeof(temp_dir) - 1);
+	temp_dir[sizeof(temp_dir) - 1] = '\0';
 	if (mkdtemp(temp_dir) == NULL) {
 		perror("mkdtemp");
 		return 1;
@@ -79,10 +85,9 @@ int main(int argc, char *argv[]) {
 
 	char cmd[2048];
 #ifdef _WIN32
-	// On Windows, we assume the payload is a ZIP and we use powershell to extract
-	sprintf(cmd, "powershell -Command \"$f = [System.IO.File]::OpenRead('%s'); $f.Seek(%ld, [System.IO.SeekOrigin]::Begin); $out = [System.IO.File]::Create('%s\\payload.tar.gz'); $f.CopyTo($out); $f.Close(); $out.Close(); tar -xzf '%s\\payload.tar.gz' -C '%s'\"", self_path, payload_offset, temp_dir, temp_dir, temp_dir);
+	snprintf(cmd, sizeof(cmd), "powershell -Command \"$f = [System.IO.File]::OpenRead('%s'); $f.Seek(%ld, [System.IO.SeekOrigin]::Begin); $out = [System.IO.File]::Create('%s\\payload.tar.gz'); $f.CopyTo($out); $f.Close(); $out.Close(); tar -xzf '%s\\payload.tar.gz' -C '%s'\"", self_path, payload_offset, temp_dir, temp_dir, temp_dir);
 #else
-	sprintf(cmd, "tail -c +%ld \"%s\" | tar -xz -C \"%s\"", payload_offset + 1, self_path, temp_dir);
+	snprintf(cmd, sizeof(cmd), "tail -c +%ld \"%s\" | tar -xz -C \"%s\"", payload_offset + 1, self_path, temp_dir);
 #endif
 
 	if (system(cmd) != 0) {
@@ -92,23 +97,23 @@ int main(int argc, char *argv[]) {
 
 	char run_cmd[4096];
 #ifdef _WIN32
-	ssprintf(run_cmd, "set \"MAKESELF_PWD=%%CD%%\" && \"%s\\bin\\bash.exe\" \"%s\\main.sh\"", temp_dir, temp_dir);
+	snprintf(run_cmd, sizeof(run_cmd), "set \"MAKESELF_PWD=%%CD%%\" && \"%s\\bin\\bash.exe\" \"%s\\main.sh\"", temp_dir, temp_dir);
 #else
-	sprintf(run_cmd, "export MAKESELF_PWD=\"$PWD\"; \"%s/bin/bash\" \"%s/main.sh\"", temp_dir, temp_dir);
+	snprintf(run_cmd, sizeof(run_cmd), "export MAKESELF_PWD=\"$PWD\"; \"%s/bin/bash\" \"%s/main.sh\"", temp_dir, temp_dir);
 #endif
 
 	for (int i = 1; i < argc; i++) {
-		strcat(run_cmd, " \"");
-		strcat(run_cmd, argv[i]);
-		strcat(run_cmd, "\"");
+		strncat(run_cmd, " \"", sizeof(run_cmd) - strlen(run_cmd) - 1);
+		strncat(run_cmd, argv[i], sizeof(run_cmd) - strlen(run_cmd) - 1);
+		strncat(run_cmd, "\"", sizeof(run_cmd) - strlen(run_cmd) - 1);
 	}
 
 	int ret = system(run_cmd);
 
 #ifdef _WIN32
-	ssprintf(cmd, "rd /s /q \"%s\"", temp_dir);
+	snprintf(cmd, sizeof(cmd), "rd /s /q \"%s\"", temp_dir);
 #else
-	ssprintf(cmd, "rm -rf \"%s\"", temp_dir);
+	snprintf(cmd, sizeof(cmd), "rm -rf \"%s\"", temp_dir);
 #endif
 	system(cmd);
 
