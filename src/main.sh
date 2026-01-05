@@ -23,6 +23,24 @@ updates_json_list=""
 update_count=0
 verification_list=()
 
+show_help() {
+	cat <<EOF
+Cloudflare DNS Updater - Automate your Dynamic DNS updates.
+
+Usage:
+  $(basename "$0") [options] [config_file.yaml]
+
+Options:
+  -h, --help     Show this help message
+  -s, --silent   No console output (errors only)
+  -d, --debug    Enable verbose output and API confirmation
+  -f, --force    Update records even if they match current IP
+
+Config:
+  By default, it looks for 'cloudflare-dns.yaml' in the current directory.
+EOF
+}
+
 # Helper to check and queue updates
 queue_if_changed() {
 	local type="$1"
@@ -70,6 +88,11 @@ queue_if_changed() {
 
 main() {
 	local config="$1"
+
+	if [[ "$config" == "--help" ]] || [[ "$config" == "-h" ]]; then
+		show_help
+		return 0
+	fi
 
 	log_info "Starting Cloudflare DNS Updater..."
 

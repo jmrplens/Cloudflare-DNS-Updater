@@ -29,247 +29,117 @@ cat <<'EOF' >>"$OUTPUT"
 
 # --- Wrapper Logic ---
 
-
-
 # Resolve directory (Monolith is self-contained)
-
-
 
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 
-
-
 # For makeself bundles, we need the original launching directory
-
-
 
 ORIGINAL_PWD="${MAKESELF_PWD:-$PWD}"
 
-
-
-
-
-
-
 # Initialize defaults
-
-
 
 export SILENT="false"
 
-
-
 export DEBUG="false"
-
-
 
 export FORCE="false"
 
-
-
 CONFIG_FILE=""
-
-
-
-
-
-
 
 # Parse Arguments
 
-
-
 for arg in "$@"; do
-
-
 
 	case $arg in
 
+	-h | --help)
 
+		# Call main directly with help and exit
+
+		main --help
+
+		exit 0
+
+		;;
 
 	-s | --silent)
 
-
-
 		export SILENT="true"
 
-
-
 		;;
-
-
 
 	-d | --debug)
 
-
-
 		export DEBUG="true"
 
-
-
 		;;
-
-
 
 	-f | --force)
 
-
-
 		export FORCE="true"
 
-
-
 		;;
-
-
 
 	*)
 
+		if [[ "$arg" == *.yaml ]]; then
 
+			if [[ -f "$arg" ]]; then
 
-		# Check if it's a file, either absolute or relative to ORIGINAL_PWD
+				CONFIG_FILE="$arg"
 
+			elif [[ -f "$ORIGINAL_PWD/$arg" ]]; then
 
+				CONFIG_FILE="$ORIGINAL_PWD/$arg"
 
-		if [[ -f "$arg" ]] && [[ "$arg" == *.yaml ]]; then
+			else
 
+				echo "Error: Configuration file '$arg' not found!"
 
+				exit 1
 
-			CONFIG_FILE="$arg"
-
-
-
-		elif [[ -f "$ORIGINAL_PWD/$arg" ]] && [[ "$arg" == *.yaml ]]; then
-
-
-
-			CONFIG_FILE="$ORIGINAL_PWD/$arg"
-
-
+			fi
 
 		fi
 
-
-
 		;;
-
-
 
 	esac
 
-
-
 done
-
-
-
-
-
-
 
 # Debug info
 
-
-
 if [[ "$DEBUG" == "true" ]]; then
-
-
 
 	echo "Debug: Bundle Directory (DIR): $DIR"
 
-
-
 	echo "Debug: Original Directory (ORIGINAL_PWD): $ORIGINAL_PWD"
-
-
 
 	echo "Debug: Config File (Resolved): $CONFIG_FILE"
 
-
-
 fi
-
-
-
-
-
-
 
 # Fallback config lookup
 
-
-
-
-
-
-
 if [[ -z "$CONFIG_FILE" ]]; then
-
-
-
-
-
-
 
 	if [[ -f "$PWD/cloudflare-dns.yaml" ]]; then
 
-
-
-
-
-
-
 		CONFIG_FILE="$PWD/cloudflare-dns.yaml"
-
-
-
-
-
-
 
 	elif [[ -f "$(pwd)/cloudflare-dns.yaml" ]]; then
 
-
-
-
-
-
-
 		CONFIG_FILE="$(pwd)/cloudflare-dns.yaml"
-
-
-
-
-
-
 
 	elif [[ -f "$DIR/cloudflare-dns.yaml" ]]; then
 
-
-
-
-
-
-
 		CONFIG_FILE="$DIR/cloudflare-dns.yaml"
-
-
-
-
-
-
 
 	fi
 
-
-
-
-
-
-
 fi
-
-
 
 # --- LOCK MECHANISM ---
 
@@ -280,8 +150,6 @@ if [[ ! -d "/tmp" ]]; then
 	LOCKFILE="$DIR/cloudflare-dns-updater.lock"
 
 fi
-
-
 
 if [[ -f "$LOCKFILE" ]]; then
 
@@ -301,15 +169,11 @@ if [[ -f "$LOCKFILE" ]]; then
 
 fi
 
-
-
 echo $ >"$LOCKFILE"
 
 trap 'rm -f "$LOCKFILE"' EXIT
 
 # ----------------------
-
-
 
 if [[ ! -f "$CONFIG_FILE" ]]; then
 
@@ -320,8 +184,6 @@ if [[ ! -f "$CONFIG_FILE" ]]; then
 	exit 1
 
 fi
-
-
 
 # Run Main
 

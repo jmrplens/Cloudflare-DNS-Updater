@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-# Professional Standalone Bash Builder (SFX)
-# Bundles: bash + busybox (all-in-one utils) + curl + jq + script
+# Ultimate C-Powered Standalone Binary Builder
+# Bundles: launcher(C) + bash + busybox + curl + jq + script
 # Targets: Linux (x64/ARM), Windows (x64)
 
 set -e
@@ -15,40 +15,18 @@ DIST_DIR="$PROJECT_ROOT/dist"
 JQ_VERSION="1.7.1"
 BASH_STATIC_URL="https://github.com/robxu9/bash-static/releases/latest/download"
 CURL_STATIC_URL="https://github.com/moparisthebest/static-curl/releases/latest/download"
-BUSYBOX_W32_URL="https://github.com/rmayo/busybox-w32/releases/latest/download/busybox64.exe"
 
 # Colors
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
 NC='\033[0m'
 
-echo -e "${BLUE}Building Standalone Bash Bundles...${NC}"
+echo -e "${BLUE}Building Professional C-Wrapped Bundles...${NC}"
 mkdir -p "$BUILD_DIR" "$DIST_DIR"
 
 # 1. Generate the Monolith
-echo "Generating monolith script..."
 "$DIR/bundle.sh"
 MONOLITH="$DIST_DIR/cloudflare-dns-updater-monolith.sh"
-
-create_entrypoint() {
-	local target_dir=$1
-	cat <<'EOF' >"$target_dir/entrypoint.sh"
-#!/bin/sh
-# Professional SFX Entrypoint
-SELF_DIR="$(cd "$(dirname "$0")" >/dev/null 2>&1 && pwd)"
-
-# Identify the host original PWD (provided by makeself)
-ORIGINAL_PWD="${MAKESELF_PWD:-$PWD}"
-export MAKESELF_PWD="$ORIGINAL_PWD"
-
-# Internal PATH setup
-export PATH="$SELF_DIR/bin:$PATH"
-
-# Execute using bundled bash
-exec "$SELF_DIR/bin/bash" "$SELF_DIR/main.sh" "$@"
-EOF
-	chmod +x "$target_dir/entrypoint.sh"
-}
 
 build_linux() {
 	local arch=$1 # x86_64, aarch64
@@ -68,62 +46,31 @@ build_linux() {
 	curl -L -s -o "$bin_dir/jq" "https://github.com/jqlang/jq/releases/download/jq-${JQ_VERSION}/jq-linux-${jq_arch}"
 	curl -L -s -o "$bin_dir/curl" "${CURL_STATIC_URL}/curl-$curl_arch"
 
-	# BusyBox for coreutils (sed, grep, etc)
 	local bb_url="https://busybox.net/downloads/binaries/1.37.0-x86_64-linux-musl/busybox"
 	[[ "$arch" == "aarch64" ]] && bb_url="https://busybox.net/downloads/binaries/1.37.0-armv8l/busybox"
 	curl -L -s -o "$bin_dir/busybox" "$bb_url"
 
 	chmod +x "$bin_dir/"*
-
-	# Setup symlinks
 	for tool in sed grep awk cat sleep date mktemp head tail cut tr wc ps; do
 		ln -sf busybox "$bin_dir/$tool"
 	done
 
 	cp "$MONOLITH" "$work_dir/main.sh"
-	create_entrypoint "$work_dir"
 
-	echo "  - Creating SFX binary..."
-	if command -v makeself >/dev/null 2>&1; then
-		# --quiet: hide extraction msgs
-		# --noprogress: hide progress bar
-		# --nox11: no xterm
-		makeself --quiet --noprogress --nox11 "$work_dir" "$DIST_DIR/cf-updater-linux-$arch.run" "Cloudflare DNS Updater" "./entrypoint.sh"
-		echo -e "${GREEN}  ✔ Created $DIST_DIR/cf-updater-linux-$arch.run${NC}"
-	else
-		tar -czf "$DIST_DIR/cf-updater-linux-$arch.tar.gz" -C "$work_dir" .
-	fi
+	echo "  - Compiling C Launcher..."
+	gcc -O2 "$DIR/launcher.c" -o "$BUILD_DIR/launcher-$arch"
+
+	echo "  - Assembling final binary..."
+	local final_bin="$DIST_DIR/cf-updater-linux-$arch"
+	cp "$BUILD_DIR/launcher-$arch" "$final_bin"
+	echo -e "\n---PAYLOAD_START---" >>"$final_bin"
+	tar -cz -C "$work_dir" . >>"$final_bin"
+
+	chmod +x "$final_bin"
+	echo -e "${GREEN}  ✔ Created $final_bin${NC}"
 }
 
-build_windows() {
-	echo -e "${BLUE}Building bundle for Windows x64...${NC}"
-	local work_dir="$BUILD_DIR/windows-x64"
-	mkdir -p "$work_dir"
+# Run local build
+build_linux "x86_64"
 
-	echo "  - Downloading BusyBox-w32 engine..."
-	curl -L -s -o "$work_dir/busybox.exe" "$BUSYBOX_W32_URL"
-	cp "$MONOLITH" "$work_dir/main.sh"
-
-	cat <<'EOF' >"$work_dir/cf-updater.bat"
-@echo off
-set "DIR=%~dp0"
-"%DIR%busybox.exe" bash "%DIR%main.sh" %*
-EOF
-
-	echo "  - Packaging ZIP..."
-	(cd "$work_dir" && tar -acf "$DIST_DIR/cf-updater-windows-x64.zip" *)
-	echo -e "${GREEN}  ✔ Created $DIST_DIR/cf-updater-windows-x64.zip${NC}"
-}
-
-# Run
-if [[ "$1" == "--linux-amd64" ]]; then
-	build_linux "x86_64"
-elif [[ "$1" == "--windows" ]]; then
-	build_windows
-else
-	build_linux "x86_64"
-	build_linux "aarch64"
-	build_windows
-fi
-
-echo -e "${GREEN}Build process finished.${NC}"
+echo -e "${GREEN}Build complete.${NC}"
