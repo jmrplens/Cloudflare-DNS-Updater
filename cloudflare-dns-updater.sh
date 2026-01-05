@@ -33,10 +33,14 @@ trap 'rm -f "$LOCKFILE"' EXIT
 
 # Parse Arguments
 export SILENT="false"
+export DEBUG="false"
 for arg in "$@"; do
     case $arg in
         -s|--silent)
             export SILENT="true"
+            ;;
+        -d|--debug)
+            export DEBUG="true"
             ;;
     esac
 done

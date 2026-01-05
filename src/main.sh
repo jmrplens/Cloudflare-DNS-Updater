@@ -67,6 +67,7 @@ main() {
     
     updates_json_list=""
     update_count=0
+    verification_list=()
     
     # Iterate over configured domains
     for (( i=0; i<DOMAIN_COUNT; i++ )); do
@@ -93,6 +94,10 @@ main() {
                     if [[ -n "$updates_json_list" ]]; then updates_json_list+=","; fi
                     updates_json_list+="$obj"
                     ((update_count++))
+                    
+                    if [[ "$target_proxied" == "false" ]]; then
+                        verification_list+=("$domain|4|$CURRENT_IPV4")
+                    fi
                 fi
             fi
         fi
@@ -113,6 +118,10 @@ main() {
                     if [[ -n "$updates_json_list" ]]; then updates_json_list+=","; fi
                     updates_json_list+="$obj"
                     ((update_count++))
+
+                    if [[ "$target_proxied" == "false" ]]; then
+                        verification_list+=("$domain|6|$CURRENT_IPV6")
+                    fi
                 fi
             fi
         fi
@@ -128,6 +137,38 @@ main() {
         
         if cf_batch_update "$final_payload"; then
             log_success "Successfully updated $update_count records!"
+            send_notification "Cloudflare DNS: Updated $update_count records to IP(s) $CURRENT_IPV4 $CURRENT_IPV6"
+            
+            # --- Verification (Debug Mode) ---
+            if [[ "${DEBUG:-false}" == "true" ]]; then
+                log_info "Debug: Verifying DNS updates (Non-proxied only)..."
+                if [[ ${#verification_list[@]} -eq 0 ]]; then
+                    log_debug "No non-proxied records updated. Skipping DNS verification."
+                else
+                    # Small delay to allow partial propagation/local cache flush attempts
+                    sleep 2
+                    for item in "${verification_list[@]}"; do
+                        IFS='|' read -r v_domain v_proto v_expected <<< "$item"
+                        log_debug "Verifying $v_domain (IPv$v_proto)..."
+                        
+                        resolved_ip=""
+                        if [[ "$v_proto" == "4" ]]; then
+                            resolved_ip=$(curl -4 -s -o /dev/null -w "%{remote_ip}" --max-time 5 "http://$v_domain" 2>/dev/null)
+                        else
+                            resolved_ip=$(curl -6 -s -o /dev/null -w "%{remote_ip}" --max-time 5 "http://$v_domain" 2>/dev/null)
+                        fi
+                        
+                        if [[ "$resolved_ip" == "$v_expected" ]]; then
+                            log_success "Verification passed: $v_domain resolved to $resolved_ip"
+                        else
+                            log_warn "Verification warning: $v_domain resolved to '$resolved_ip' (Expected: $v_expected). DNS might lag."
+                        fi
+                    done
+                fi
+            fi
+            
+        else
+            log_error "Batch update failed."
             send_notification "Cloudflare DNS: Updated $update_count records to IP(s) $CURRENT_IPV4 $CURRENT_IPV6"
         else
             log_error "Batch update failed."
