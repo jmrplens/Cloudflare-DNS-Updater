@@ -134,6 +134,7 @@ int main(int argc, char *argv[]) {
 		}
 
 		// Use the absolute path to our bundled bash for maximum security
+		// flawfinder: ignore
 		execv(bash_path, new_argv);
 		perror("execv");
 		free(new_argv);
