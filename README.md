@@ -1,131 +1,146 @@
 # Cloudflare DNS Updater
 
-A high-performance, **100% Bash** script to automatically update Cloudflare DNS records with your dynamic public IP address. Designed for maximum efficiency, robustness, and universal compatibility across **Linux**, **macOS**, and **Windows**.
+A Bash-based script to automatically update Cloudflare DNS records with your dynamic public IP address. Designed for efficiency and compatibility across **Linux**, **macOS**, and **Windows**.
 
-![CI Build](https://github.com/jmrplens/Cloudflare-DNS-Updater/actions/workflows/binaries.yml/badge.svg)
+![Binaries Build](https://github.com/jmrplens/Cloudflare-DNS-Updater/actions/workflows/binaries.yml/badge.svg)
+![Lint Check](https://github.com/jmrplens/Cloudflare-DNS-Updater/actions/workflows/lint.yml/badge.svg)
 
-## 🚀 Key Features
+## Key Features
 
--   **⚡ Batch Updates**: Updates multiple DNS records in a **single API call**, minimizing latency.
--   **📡 Advanced IP Detection**:
-    -   **Local Preference**: Detects global IPv6 addresses directly from your network interface.
-    -   **Redundant Fallbacks**: Multi-service external detection (`icanhazip`, `ifconfig.co`, `ipify`).
--   **🛡️ Universal Compatibility**: Uses `curl`, `wget`, or **Windows PowerShell** depending on availability.
--   **📊 Enterprise-Grade Logging**: Rotation-aware logs with a `--debug` mode and credential masking.
--   **🔒 Secure by Design**: Lockfile mechanism and automated API confirmation.
+-   **Batch Updates**: Updates multiple DNS records in a single API call to minimize latency.
+-   **IP Detection**:
+    -   **Local**: Detects global IPv6 addresses directly from the network interface.
+    -   **External**: Uses multiple fallback services (`icanhazip`, `ifconfig.co`, `ipify`) for redundancy.
+-   **Cross-Platform**: Runs on Linux, macOS, and Windows (via bundled binaries or Bash).
+-   **Notifications**: Support for Telegram and Discord alerts upon IP changes.
+-   **Logging**: Rotation-aware logs with optional debug mode.
+-   **Safety**: Lockfile mechanism to prevent concurrent executions.
 
 ---
 
-## 📥 Installation & Usage
+## Installation
 
-### Option A: Standalone Binaries (Recommended)
-Our binaries are **Zero-Dependency** and include everything needed (Bash, Curl, JQ).
+### Option A: Standalone Binaries
+Pre-compiled binaries are available that bundle all necessary dependencies (Bash, Curl, JQ).
 
-1.  **Download** the version for your OS from [Releases](../../releases):
-    *   `cf-updater-linux-x86_64` (Intel/AMD) or `aarch64` (ARM/Raspberry Pi)
-    *   `cf-updater-macos-x86_64` (Intel) or `aarch64` (Apple Silicon)
-    *   `cf-updater-windows-x86_64.exe` (Windows 10/11)
-2.  **Run**:
+1.  **Download** the latest release for your OS from the [Releases Page](../../releases).
+    *   **Linux**: `cf-updater-linux-x86_64` (Intel/AMD) or `cf-updater-linux-aarch64` (ARM/Raspberry Pi)
+    *   **macOS**: `cf-updater-macos-x86_64` (Intel) or `cf-updater-macos-aarch64` (Apple Silicon)
+    *   **Windows**: `cf-updater-windows-x86_64.exe`
+2.  **Make Executable** (Linux/macOS only):
     ```bash
     chmod +x cf-updater-linux-x86_64
-    ./cf-updater-linux-x86_64 [options] [config.yaml]
     ```
 
 ### Option B: Run from Source
-1.  **Clone**: `git clone https://github.com/jmrplens/Cloudflare-DNS-Updater.git`
-2.  **Execute**: `./cloudflare-dns-updater.sh`
+If you prefer to run the script directly, ensure you have the required dependencies installed.
+
+**Dependencies:**
+*   [Bash](https://www.gnu.org/software/bash/) (4.0+)
+*   [Curl](https://curl.se/)
+*   [JQ](https://jqlang.github.io/jq/)
+
+**Setup:**
+1.  Clone the repository:
+    ```bash
+    git clone https://github.com/jmrplens/Cloudflare-DNS-Updater.git
+    cd Cloudflare-DNS-Updater
+    ```
+2.  Run the script:
+    ```bash
+    ./cloudflare-dns-updater.sh
+    ```
 
 ---
 
-## ⚙️ Configuration
+## Configuration
 
-Create `cloudflare-dns.yaml` in the tool's directory:
+Copy the example configuration file and edit it with your details.
+
+```bash
+cp config.example.yaml cloudflare-dns.yaml
+```
+
+**Example `cloudflare-dns.yaml`:**
 
 ```yaml
 ---
 cloudflare:
-  zone_id: "your_zone_id"
-  api_token: "your_api_token"
+  zone_id: "your_zone_id_here"
+  api_token: "your_api_token_here"
 
 options:
-  proxied: true    # Global default: Orange Cloud (true) or Grey Cloud (false)
-  ttl: 1           # 1 for Auto, or 60-3600 seconds
-  interface: ""    # Optional: Force a specific interface (e.g., "eth0")
+  proxied: true   # true for Orange Cloud (Proxy), false for DNS only
+  ttl: 1          # 1 for Auto, or value in seconds (60-3600)
+  interface: ""   # Optional: Force specific interface (e.g., "eth0")
 
 domains:
-  - name: "example.com"         # Updates both IPv4 & IPv6 by default
+  # Update both IPv4 and IPv6 (default)
+  - name: "example.com"
+
+  # Update only IPv4
   - name: "ipv4.example.com"
-    ip_type: "ipv4"             # Force IPv4 only
+    ip_type: "ipv4"
+
+  # Update only IPv6
+  - name: "ipv6.example.com"
+    ip_type: "ipv6"
+
+  # Override global proxy setting
   - name: "direct.example.com"
-    proxied: false              # Override global proxy setting
-```
+    proxied: false
 
-### Options Reference:
-| Parameter | Description | Default |
-| :--- | :--- | :--- |
-| `ip_type` | `ipv4`, `ipv6`, or `both` | `both` |
-| `proxied` | Enable Cloudflare Proxy (Orange Cloud) | `true` |
-| `interface` | Local network interface for IP detection | Auto-detect |
+notifications:
+  telegram:
+    enabled: false
+    bot_token: ""
+    chat_id: ""
+
+  discord:
+    enabled: false
+    webhook_url: ""
+```
 
 ---
 
-## 🏃 CLI Options
+## Usage Examples
 
--   `-h, --help`: Show help screen and version.
--   `-s, --silent`: No console output (perfect for Cron).
--   `-d, --debug`: Show API requests/responses and detailed checks.
--   `-f, --force`: Force update records even if IPs match.
+### CLI Options
+*   `-s, --silent`: Run without console output (ideal for Cron).
+*   `-d, --debug`: Enable verbose logging and API response output.
+*   `-f, --force`: Force an update even if the IP has not changed.
 
----
+### Linux / macOS Automation (Cron)
+To run the updater every 5 minutes:
 
-## 🕒 Automation Guide
-
-### Linux / macOS (Cron)
-```bash
-# Run every 5 minutes silently
-*/5 * * * * /path/to/cf-updater-linux-x86_64 --silent
-```
-
-### Windows (Task Scheduler)
-1.  **Create Basic Task** -> Name it "Cloudflare DNS".
-2.  **Trigger**: Daily -> Repeat every 10 minutes.
-3.  **Action**: Start a Program -> Browse to `cf-updater-windows-x86_64.exe`.
-4.  **Arguments**: `--silent`.
-
----
-
-## 🛠️ Developer Guide
-
-Want to contribute? Here is how to test and build the project locally.
-
-### 1. Prerequisites
--   `bash`, `curl`, `jq`
--   `shellcheck`, `shfmt` (for validation)
--   `gcc` (for building standalone binaries)
--   `makeself` (for Linux .run bundles)
-
-### 2. Validation
-Before committing, run the validation suite to ensure code quality:
-```bash
-./tools/validate.sh
-```
-
-### 3. Local Testing
-You can test changes without building binaries:
-```bash
-./cloudflare-dns-updater.sh --debug
-```
-
-### 4. Building
-*   **Generate Monolith**: Merges all `src/` files into one.
+1.  Open crontab: `crontab -e`
+2.  Add the line:
     ```bash
-    ./tools/bundle.sh
-    ```
-*   **Build Standalone Bundles**: Generates the C-wrapped binaries in `dist/`.
-    ```bash
-    ./tools/build-all.sh --linux-amd64
+    */5 * * * * /path/to/cf-updater-linux-x86_64 --silent
     ```
 
+### Windows Automation (Task Scheduler)
+1.  Open **Task Scheduler** and "Create Basic Task".
+2.  Name it "Cloudflare DNS Updater".
+3.  Set Trigger to **Daily**, then in properties set "Repeat task every X minutes" (e.g., 5 or 10).
+4.  Action: **Start a Program**.
+5.  Program/script: Browse to `cf-updater-windows-x86_64.exe`.
+6.  Add arguments: `--silent`.
+
 ---
 
-Built with ❤️ by [jmrplens](https://github.com/jmrplens).
+## Development
+
+For detailed instructions on building, testing, and understanding the project structure, please see [CONTRIBUTING.md](CONTRIBUTING.md).
+
+Quick start for building binaries:
+
+1.  **Validate Code**:
+    ```bash
+    ./tools/validate.sh
+    ```
+2.  **Build All Binaries**:
+    ```bash
+    ./tools/build-all.sh --all
+    ```
+    Artifacts will be created in the `dist/` directory.
