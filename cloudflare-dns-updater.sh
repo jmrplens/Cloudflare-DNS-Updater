@@ -4,13 +4,12 @@
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 CONFIG_FILE="$DIR/cloudflare-dns.yaml"
 
-# Add MSYS2/MinGW64 to PATH for better tools (jq, curl, etc) if available
-# Also add standard Linux/macOS paths to ensure tools are found
+# Ensure tools are found by adding standard paths (including Windows/MSYS2)
 export PATH="/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/opt/homebrew/bin:/c/msys64/mingw64/bin:/mnt/c/msys64/mingw64/bin:$PATH"
 
 # --- LOCK MECHANISM ---
 LOCKFILE="/tmp/cloudflare-dns-updater.lock"
-# Fallback for Windows/MSYS2 if /tmp is tricky (though MSYS2 usually maps /tmp)
+# Fallback if /tmp is not available
 if [[ ! -d "/tmp" ]]; then
     LOCKFILE="$DIR/cloudflare-dns-updater.lock"
 fi

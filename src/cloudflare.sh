@@ -7,13 +7,8 @@ cf_headers() {
     echo "-H \"Authorization: Bearer $CF_API_TOKEN\" -H \"Content-Type: application/json\""
 }
 
-# Fetch ALL records (limit 500 for safety, usually enough for personal zones)
+# Fetch all records (limit 500)
 cf_get_all_records() {
-    # Get all A and AAAA records
-    # We filter by type to reduce noise, or just get all.
-    # Cloudflare allows filtering by type, but only one type at a time usually? 
-    # Actually, we can just get everything and filter locally.
-    
     response=$(curl -s -X GET "$CF_API_URL/zones/$CF_ZONE_ID/dns_records?per_page=500" \
         -H "Authorization: Bearer $CF_API_TOKEN" \
         -H "Content-Type: application/json")
@@ -32,8 +27,7 @@ cf_get_all_records() {
 cf_parse_records_to_lines() {
     local json="$1"
     
-    # If jq is available, use it (robust)
-    # Find JQ (support .exe for WSL/Windows mixed envs)
+    # Determine JSON parser
     local jq_cmd="jq"
     if command -v jq &> /dev/null; then
         jq_cmd="jq"
@@ -47,16 +41,12 @@ cf_parse_records_to_lines() {
         jq_cmd=""
     fi
 
-    # Use jq if found
+    # Parse
     if [[ -n "$jq_cmd" ]]; then
         log_debug "Using JSON parser: $jq_cmd"
         echo "$json" | "$jq_cmd" -r '.result[] | "\(.id)|\(.name)|\(.type)|\(.content)|\(.proxied)"'
     else
-        log_warn "jq not found. Using sed parser fallback (limited reliability)."
-        # Fallback pure bash/sed/awk (fragile but functional for standard CF output)
-        # We assume standard formatting. 
-        # Strategy: split by "}," to separate objects (roughly)
-        # This is a bit "hacky" but works for simple flat lists without nested arrays in fields.
+        log_warn "jq not found. Using sed parser fallback."
         
         echo "$json" | \
         sed -e 's/},{"/}\n{/g' | \
@@ -78,7 +68,6 @@ cf_parse_records_to_lines() {
 
 
 # Batch Update
-# Expects a JSON payload string: { "puts": [ ... ] }
 cf_batch_update() {
     local payload="$1"
     
@@ -87,8 +76,6 @@ cf_batch_update() {
         -H "Content-Type: application/json" \
         --data "$payload")
 
-    # Cloudflare Batch API returns 200 OK even on partial failures sometimes, 
-    # but usually "success": true/false
     if [[ "$response" == *"\"success\":true"* ]]; then
         return 0
     else

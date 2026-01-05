@@ -49,30 +49,26 @@ main() {
         exit 1
     fi
 
-    # 3. Fetch All Cloudflare Records (Bulk Read)
+    # 3. Fetch All Cloudflare Records
     log_info "Fetching all DNS records from Cloudflare..."
     if ! raw_records=$(cf_get_all_records); then
         log_error "Critical: Unable to fetch DNS records."
         exit 1
     fi
     
-    # Parse into temporary file or memory
-    # We use a temp file for safely reading lines multiple times if needed, or just memory
-    # Format: ID|NAME|TYPE|CONTENT|PROXIED
+    # Parse records
     parsed_records=$(cf_parse_records_to_lines "$raw_records")
     local record_lines
     record_lines=$(echo "$parsed_records" | wc -l)
     log_info "Parsed $record_lines records from Cloudflare."
     
-    # 4. Local Diff Engine
+    # 4. Analyze Records
     log_info "Analyzing records..."
     
     updates_json_list=""
     update_count=0
     
-    # Create associative array-like simulation is hard in bash 3 (macOS default/old bash). 
-    # We will just grep the parsed_records variable. It's fast enough for <5000 lines.
-
+    # Iterate over configured domains
     for (( i=0; i<DOMAIN_COUNT; i++ )); do
         domain="${domains_names[i]}"
         target_proxied="${domains_proxied[i]}"
@@ -82,15 +78,11 @@ main() {
         
         # --- IPv4 Check ---
         if [[ "$do_ipv4" == "true" && -n "$CURRENT_IPV4" ]]; then
-            # Find in cache
-            # Grep for exact domain and type set 'A'
-            # Format: ID|NAME|TYPE|CONTENT|PROXIED
+            # Find in current records
             match=$(echo "$parsed_records" | grep -F "|$domain|A|")
             
             if [[ -z "$match" ]]; then
-                log_warn "Record A for $domain not found. (Batch Create not fully implemented, skipping)"
-                # To implement create, we'd need to add to a separate 'creates' list for a POST batch or individual creates.
-                # For this optimization task, we focus on updates as per request "PUT de multiple records".
+                log_warn "Record A for $domain not found. Creation not implemented."
             else
                 IFS='|' read -r r_id _ _ r_content r_proxied <<< "$match"
                 
