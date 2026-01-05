@@ -67,7 +67,7 @@ build_linux() {
 	curl -L -s -o "$bin_dir/bash" "${BASH_STATIC_URL}/bash-linux-$arch"
 	curl -L -s -o "$bin_dir/jq" "https://github.com/jqlang/jq/releases/download/jq-${JQ_VERSION}/jq-linux-${jq_arch}"
 	curl -L -s -o "$bin_dir/curl" "${CURL_STATIC_URL}/curl-$curl_arch"
-	
+
 	# BusyBox for coreutils (sed, grep, etc)
 	local bb_url="https://busybox.net/downloads/binaries/1.37.0-x86_64-linux-musl/busybox"
 	[[ "$arch" == "aarch64" ]] && bb_url="https://busybox.net/downloads/binaries/1.37.0-armv8l/busybox"
@@ -116,8 +116,14 @@ EOF
 }
 
 # Run
-if [[ "$1" == "--linux-amd64" ]]; then build_linux "x86_64"
-elif [[ "$1" == "--windows" ]]; then build_windows
-else build_linux "x86_64"; build_linux "aarch64"; build_windows; fi
+if [[ "$1" == "--linux-amd64" ]]; then
+	build_linux "x86_64"
+elif [[ "$1" == "--windows" ]]; then
+	build_windows
+else
+	build_linux "x86_64"
+	build_linux "aarch64"
+	build_windows
+fi
 
 echo -e "${GREEN}Build process finished.${NC}"

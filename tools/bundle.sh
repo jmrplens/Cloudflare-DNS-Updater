@@ -199,15 +199,47 @@ fi
 
 
 
+
+
+
+
 if [[ -z "$CONFIG_FILE" ]]; then
 
 
 
-	if [[ -f "$ORIGINAL_PWD/cloudflare-dns.yaml" ]]; then
 
 
 
-		CONFIG_FILE="$ORIGINAL_PWD/cloudflare-dns.yaml"
+
+	if [[ -f "$PWD/cloudflare-dns.yaml" ]]; then
+
+
+
+
+
+
+
+		CONFIG_FILE="$PWD/cloudflare-dns.yaml"
+
+
+
+
+
+
+
+	elif [[ -f "$(pwd)/cloudflare-dns.yaml" ]]; then
+
+
+
+
+
+
+
+		CONFIG_FILE="$(pwd)/cloudflare-dns.yaml"
+
+
+
+
 
 
 
@@ -215,11 +247,23 @@ if [[ -z "$CONFIG_FILE" ]]; then
 
 
 
+
+
+
+
 		CONFIG_FILE="$DIR/cloudflare-dns.yaml"
 
 
 
+
+
+
+
 	fi
+
+
+
+
 
 
 
