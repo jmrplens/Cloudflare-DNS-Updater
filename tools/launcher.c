@@ -12,6 +12,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <limits.h>
+#include <sys/wait.h>
 #define PATH_SEP "/"
 #ifdef __APPLE__
 #include <mach-o/dyld.h>
@@ -82,7 +83,7 @@ int main(int argc, char *argv[]) {
 	}
 	fclose(f);
 
-	char cmd[PATH_MAX];
+	char cmd[PATH_MAX * 2];
 #ifdef _WIN32
 	snprintf(cmd, sizeof(cmd), "powershell -Command \"$f = [System.IO.File]::OpenRead('%s'); $f.Seek(%ld, [System.IO.SeekOrigin]::Begin); $out = [System.IO.File]::Create('%s\\payload.tar.gz'); $f.CopyTo($out); $f.Close(); $out.Close(); tar -xzf '%s\\payload.tar.gz' -C '%s'\"", self_path, payload_offset, temp_dir, temp_dir, temp_dir);
 #else
@@ -94,26 +95,60 @@ int main(int argc, char *argv[]) {
 		return 1;
 	}
 
-	char run_cmd[8192];
-	int offset = 0;
 #ifdef _WIN32
-	offset = snprintf(run_cmd, sizeof(run_cmd), "set \"MAKESELF_PWD=%%CD%%\" && \"%s\\bin\\bash.exe\" \"%s\\main.sh\"", temp_dir, temp_dir);
-#else
-	offset = snprintf(run_cmd, sizeof(run_cmd), "export MAKESELF_PWD=\"$PWD\"; \"%s/bin/bash\" \"%s/main.sh\"", temp_dir, temp_dir);
-#endif
-
-	for (int i = 1; i < argc && offset < (int)sizeof(run_cmd); i++) {
-		offset += snprintf(run_cmd + offset, sizeof(run_cmd) - offset, " \"%s\"", argv[i]);
+	// For Windows, we still use system for simplicity but with better quoting
+	char run_cmd[PATH_MAX * 3];
+	snprintf(run_cmd, sizeof(run_cmd), "set \"MAKESELF_PWD=%s\" && \"%s\\bin\\bash.exe\" \"%s\\main.sh\"", getcwd(NULL, 0), temp_dir, temp_dir);
+	for (int i = 1; i < argc; i++) {
+		strncat(run_cmd, " \"", sizeof(run_cmd) - strlen(run_cmd) - 1);
+		strncat(run_cmd, argv[i], sizeof(run_cmd) - strlen(run_cmd) - 1);
+		strncat(run_cmd, "\"", sizeof(run_cmd) - strlen(run_cmd) - 1);
 	}
-
 	int ret = system(run_cmd);
-
-#ifdef _WIN32
-	snprintf(cmd, sizeof(cmd), "rd /s /q \"%s\"", temp_dir);
-#else
-	snprintf(cmd, sizeof(cmd), "rm -rf \"%s\"", temp_dir);
-#endif
+	sprintf(cmd, "rd /s /q \"%s\"", temp_dir);
 	system(cmd);
-
 	return (ret >> 8) & 0xff;
+#else
+	pid_t pid = fork();
+	if (pid == 0) {
+		// Child: Execute the script safely
+		char bash_path[PATH_MAX];
+		char script_path[PATH_MAX];
+		snprintf(bash_path, sizeof(bash_path), "%s/bin/bash", temp_dir);
+		snprintf(script_path, sizeof(script_path), "%s/main.sh", temp_dir);
+
+		char **new_argv = malloc((argc + 2) * sizeof(char *));
+		if (!new_argv) exit(1);
+
+		new_argv[0] = bash_path;
+		new_argv[1] = script_path;
+		for (int i = 1; i < argc; i++) {
+			new_argv[i + 1] = argv[i];
+		}
+		new_argv[argc + 1] = NULL;
+
+		char *cwd = getcwd(NULL, 0);
+		if (cwd) {
+			setenv("MAKESELF_PWD", cwd, 1);
+			free(cwd);
+		}
+
+		// Use the absolute path to our bundled bash for maximum security
+		// flawfinder: ignore
+		execv(bash_path, new_argv);
+		perror("execv");
+		free(new_argv);
+		exit(1);
+	} else if (pid > 0) {
+		// Parent: Wait for child and cleanup
+		int status;
+		waitpid(pid, &status, 0);
+		snprintf(cmd, sizeof(cmd), "rm -rf \"%s\"", temp_dir);
+		system(cmd);
+		return WEXITSTATUS(status);
+	} else {
+		perror("fork");
+		return 1;
+	}
+#endif
 }

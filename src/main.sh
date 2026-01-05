@@ -32,7 +32,7 @@ logger_init "$LOG_PATH"
 # shellcheck source=src/cloudflare.sh
 
 # Project metadata
-VERSION="1.1.0"
+VERSION="1.1.1"
 updates_json_list=""
 update_count=0
 verification_list=()
