@@ -18,6 +18,14 @@ logger_init "$LOG_PATH"
 # shellcheck source=src/ip.sh
 # shellcheck source=src/cloudflare.sh
 
+# Global Reference for Analyzers
+domains_names=()
+domains_proxied=()
+domains_ipv4=()
+domains_ipv6=()
+domains_ttl=()
+DOMAIN_COUNT=0
+
 # Global State
 VERSION="1.1.0"
 updates_json_list=""

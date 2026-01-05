@@ -23,10 +23,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Run ShellCheck
-        uses: ludeeus/shellcheck-action@master
-        with:
-          scandir: './src'
-          additional_files: 'cloudflare-dns-updater.sh'
+        uses: koalaman/shellcheck-action@v2
+
 
   syntax:
     name: Syntax Check
