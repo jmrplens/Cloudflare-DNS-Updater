@@ -31,6 +31,16 @@ echo $$ > "$LOCKFILE"
 trap 'rm -f "$LOCKFILE"' EXIT
 # ----------------------
 
+# Parse Arguments
+export SILENT="false"
+for arg in "$@"; do
+    case $arg in
+        -s|--silent)
+            export SILENT="true"
+            ;;
+    esac
+done
+
 if [[ ! -f "$CONFIG_FILE" ]]; then
     # Try alternate or example
     if [[ -f "$DIR/config.example.yaml" ]]; then

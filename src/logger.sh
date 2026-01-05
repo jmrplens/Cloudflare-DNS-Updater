@@ -57,10 +57,12 @@ _log() {
     
     # Console Output (Colored)
     # Output to stderr if it's an error
-    if [[ "$is_error" == "true" ]]; then
-        echo -e "${color}[${label}]${NC} ${msg}" >&2
-    else
-        echo -e "${color}[${label}]${NC} ${msg}"
+    if [[ "${SILENT:-false}" != "true" || "$is_error" == "true" ]]; then
+        if [[ "$is_error" == "true" ]]; then
+            echo -e "${color}[${label}]${NC} ${msg}" >&2
+        else
+            echo -e "${color}[${label}]${NC} ${msg}"
+        fi
     fi
     
     # File Output (Plain, if init)
