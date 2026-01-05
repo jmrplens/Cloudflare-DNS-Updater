@@ -57,7 +57,7 @@ _log() {
     
     # Console Output (Colored)
     # Output to stderr (always, to avoid corrupting stdout when used in subshells)
-    if [[ "${SILENT:-false}" != "true" || "$is_error" == "true" ]]; then
+    if ! is_silent || [[ "$is_error" == "true" ]]; then
         echo -e "${color}[${label}]${NC} ${msg}" >&2
     fi
     
@@ -84,9 +84,18 @@ log_error() {
 }
 
 log_debug() {
-    if [[ "${DEBUG:-false}" == "true" ]]; then
+    if is_debug; then
         _log "$dGRAY" "DEBUG" "$1" "false"
     fi
+}
+
+# Boolean Helpers
+is_debug() {
+    [[ "${DEBUG:-false}" == "true" ]]
+}
+
+is_silent() {
+    [[ "${SILENT:-false}" == "true" ]]
 }
 
 # Helper to sanitize logs
@@ -104,7 +113,7 @@ sanitize_log() {
 }
 
 log_debug_redacted() {
-    if [[ "${DEBUG:-false}" == "true" ]]; then
+    if is_debug; then
         local clean_msg
         clean_msg=$(sanitize_log "$1")
         _log "$dGRAY" "DEBUG" "$clean_msg" "false"

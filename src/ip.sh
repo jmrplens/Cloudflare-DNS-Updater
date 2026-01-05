@@ -43,6 +43,15 @@ get_ipv6_from_interface() {
     echo "$ip"
 }
 
+# IP Validation Helpers
+is_valid_ipv4() {
+    [[ "$1" =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]
+}
+
+is_valid_ipv6() {
+    [[ "$1" =~ ^[0-9a-fA-F:]+$ ]] && [[ "$1" == *":"* ]]
+}
+
 # Get Public IPv4
 get_public_ipv4() {
     local ip=""
@@ -59,7 +68,7 @@ get_public_ipv4() {
     fi
 
     # Validate IP format
-    if [[ "$ip" =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
+    if is_valid_ipv4 "$ip"; then
         echo "$ip"
         return 0
     else
@@ -104,10 +113,9 @@ get_public_ipv6() {
         # Try ifconfig.co
         ip=$(http_get "https://ifconfig.co" 6)
     fi
-    # api6.ipify.org is also an option but often same as icanhazip backend
 
-    # Validate IP format (simple regex for IPv6)
-    if [[ "$ip" =~ ^[0-9a-fA-F:]+$ ]]; then
+    # Validate IP format
+    if is_valid_ipv6 "$ip"; then
         echo "$ip"
         return 0
     else

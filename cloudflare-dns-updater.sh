@@ -2,6 +2,7 @@
 
 # Resolve directory
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
+source "$DIR/src/logger.sh"
 CONFIG_FILE="$DIR/cloudflare-dns.yaml"
 
 # Ensure tools are found by adding standard paths (including Windows/MSYS2)
@@ -53,7 +54,7 @@ if ! command -v curl &> /dev/null; then
 fi
 
 if ! command -v jq &> /dev/null && ! command -v jq.exe &> /dev/null; then
-    if [[ "$SILENT" != "true" ]]; then
+    if ! is_silent; then
         echo "Warning: 'jq' not found. Using slower/limited sed-based parser." >&2
     fi
 fi

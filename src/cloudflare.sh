@@ -94,6 +94,26 @@ cf_batch_update() {
     fi
 }
 
+# Cache Helper
+# Args: parsed_records domain type
+cf_get_record_from_cache() {
+    local cache="$1"
+    local domain="$2"
+    local type="$3"
+    echo "$cache" | grep -F "|$domain|$type|" | head -n1
+}
+
+# Comparison Helper
+# Args: current_ip target_ip current_proxied target_proxied
+cf_needs_update() {
+    local cur_ip="$1"
+    local tar_ip="$2"
+    local cur_proxied="$3"
+    local tar_proxied="$4"
+    
+    [[ "$cur_ip" != "$tar_ip" ]] || [[ "$cur_proxied" != "$tar_proxied" ]]
+}
+
 # Helper to build a single update object JSON
 cf_build_put_object() {
     local id="$1"
