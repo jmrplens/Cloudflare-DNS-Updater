@@ -104,6 +104,8 @@ main() {
                     log_debug "  - A record OK ($r_content)"
                 fi
             fi
+        else
+            log_debug "  - IPv4 Check skipped: Config=$do_ipv4, PublicIP=${CURRENT_IPV4:-none}"
         fi
 
         # --- IPv6 Check ---
@@ -130,6 +132,8 @@ main() {
                     log_debug "  - AAAA record OK ($r_content)"
                 fi
             fi
+        else
+             log_debug "  - IPv6 Check skipped: Config=$do_ipv6, PublicIP=${CURRENT_IPV6:-none}"
         fi
         
     done
