@@ -84,6 +84,9 @@ cf_batch_update() {
         
     log_debug_redacted "API Response: $response"
 
+    # Echo response for caller to capture
+    echo "$response"
+
     if [[ "$response" == *"\"success\":true"* ]]; then
         return 0
     else

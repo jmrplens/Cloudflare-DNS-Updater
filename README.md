@@ -78,6 +78,7 @@ cloudflare:
 options:
   proxied: true    # Default: Proxy traffic through Cloudflare (Orange Cloud)
   ttl: 1           # Default: 1 (Auto)
+  interface: ""    # Optional: Network interface to use (e.g., "eth0"). Auto-detected if empty.
 
 domains:
   # 1. Update both IPv4 (A) and IPv6 (AAAA) automatically
@@ -111,10 +112,12 @@ Run the script manually to test it.
 
 **Linux / macOS:**
 ```bash
-./cf-updater-linux
-# OR if using source:
 ./cloudflare-dns-updater.sh
 ```
+
+**Options:**
+-   `--silent` (`-s`): Suppress console output (useful for Cron). Errors are still printed.
+-   `--debug` (`-d`): Enable verbose logging (API requests, detailed IP checks, verification).
 
 **Windows (PowerShell / CMD):**
 ```powershell
@@ -143,7 +146,7 @@ Run every 5 minutes.
     ```
 2.  Add the line:
     ```bash
-    */5 * * * * /opt/cf-updater/cf-updater-linux >/dev/null 2>&1
+    */5 * * * * /opt/cf-updater/cloudflare-dns-updater.sh --silent
     ```
 
 ### Windows (Task Scheduler)

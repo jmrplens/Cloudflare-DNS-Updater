@@ -145,36 +145,41 @@ main() {
         # Construct Payload: { "puts": [ ... ] }
         final_payload="{\"puts\":[$updates_json_list]}"
         
-        if cf_batch_update "$final_payload"; then
+        # Capture response and status
+        # We need to capture stdout to variable, but also preserve exit code.
+        # Use separate declaration to avoid masking return value.
+        local batch_response
+        if batch_response=$(cf_batch_update "$final_payload"); then
             log_success "Successfully updated $update_count records!"
             send_notification "Cloudflare DNS: Updated $update_count records to IP(s) $CURRENT_IPV4 $CURRENT_IPV6"
             
-            # --- Verification (Debug Mode) ---
+            # --- Verification (API Confirmation) ---
             if [[ "${DEBUG:-false}" == "true" ]]; then
-                log_info "Debug: Verifying DNS updates (Non-proxied only)..."
-                if [[ ${#verification_list[@]} -eq 0 ]]; then
-                    log_debug "No non-proxied records updated. Skipping DNS verification."
-                else
-                    # Small delay to allow partial propagation/local cache flush attempts
-                    sleep 2
-                    for item in "${verification_list[@]}"; do
-                        IFS='|' read -r v_domain v_proto v_expected <<< "$item"
-                        log_debug "Verifying $v_domain (IPv$v_proto)..."
-                        
-                        resolved_ip=""
-                        if [[ "$v_proto" == "4" ]]; then
-                            resolved_ip=$(curl -4 -s -o /dev/null -w "%{remote_ip}" --max-time 5 "http://$v_domain" 2>/dev/null)
-                        else
-                            resolved_ip=$(curl -6 -s -o /dev/null -w "%{remote_ip}" --max-time 5 "http://$v_domain" 2>/dev/null)
-                        fi
-                        
-                        if [[ "$resolved_ip" == "$v_expected" ]]; then
-                            log_success "Verification passed: $v_domain resolved to $resolved_ip"
-                        else
-                            log_warn "Verification warning: $v_domain resolved to '$resolved_ip' (Expected: $v_expected). DNS might lag."
-                        fi
-                    done
-                fi
+                log_info "Debug: Verifying updates via API response..."
+                
+                for item in "${verification_list[@]}"; do
+                    IFS='|' read -r v_domain v_proto v_expected <<< "$item"
+                    
+                    # Check if response contains the domain and the expected IP
+                    # Simple grep check is usually sufficient and faster than complex jq for this specific confirmation
+                    # We look for the IP literal.
+                    
+                    if echo "$batch_response" | grep -Fq "\"name\":\"$v_domain\"" && echo "$batch_response" | grep -Fq "\"content\":\"$v_expected\""; then
+                         log_success "API Verified: $v_domain (IPv$v_proto) confirmed updated to $v_expected"
+                         
+                         # Attempt to extract modified_on if possible (best effort with sed/grep)
+                         # Pattern: "modified_on":"2024-..."
+                         # We narrow down to the specific object if possible, but global grep is okay for debug log
+                         local mod_time
+                         mod_time=$(echo "$batch_response" | grep -o "\"modified_on\":\"[^\"]*\"" | head -n1 | cut -d'"' -f4)
+                         if [[ -n "$mod_time" ]]; then
+                             log_debug "  - Timestamp: $mod_time"
+                         fi
+                    else
+                         log_warn "API Verification Warning: Could not confirm update for $v_domain in response."
+                         log_debug "  - Expected: $v_expected"
+                    fi
+                done
             fi
             
         else
