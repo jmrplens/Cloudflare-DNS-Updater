@@ -18,6 +18,9 @@ parse_config() {
     CF_ZONE_ID=$(grep "zone_id:" "$yaml_file" | head -n1 | awk -F': ' '{print $2}' | tr -d ' "')
     CF_API_TOKEN=$(grep "api_token:" "$yaml_file" | head -n1 | awk -F': ' '{print $2}' | tr -d ' "')
     
+    # Parse Options
+    NET_INTERFACE=$(grep "interface:" "$yaml_file" | head -n1 | awk -F': ' '{print $2}' | tr -d ' "')
+
     TG_ENABLED=$(grep -A 5 "telegram:" "$yaml_file" | grep "enabled:" | head -n1 | awk -F': ' '{print $2}' | tr -d ' "')
     TG_BOT_TOKEN=$(grep -A 5 "telegram:" "$yaml_file" | grep "bot_token:" | head -n1 | awk -F': ' '{print $2}' | tr -d ' "')
     TG_CHAT_ID=$(grep -A 5 "telegram:" "$yaml_file" | grep "chat_id:" | head -n1 | awk -F': ' '{print $2}' | tr -d ' "')
@@ -25,7 +28,7 @@ parse_config() {
     DISCORD_ENABLED=$(grep -A 5 "discord:" "$yaml_file" | grep "enabled:" | head -n1 | awk -F': ' '{print $2}' | tr -d ' "')
     DISCORD_WEBHOOK=$(grep -A 5 "discord:" "$yaml_file" | grep "webhook_url:" | head -n1 | awk -F': ' '{print $2}' | tr -d ' "')
 
-    export CF_ZONE_ID CF_API_TOKEN TG_ENABLED TG_BOT_TOKEN TG_CHAT_ID DISCORD_ENABLED DISCORD_WEBHOOK
+    export CF_ZONE_ID CF_API_TOKEN NET_INTERFACE TG_ENABLED TG_BOT_TOKEN TG_CHAT_ID DISCORD_ENABLED DISCORD_WEBHOOK
 
     # Parse Domains Block
     domains_names=()
