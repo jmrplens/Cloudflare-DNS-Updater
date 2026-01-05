@@ -100,18 +100,38 @@ main() {
 		exit 1
 	fi
 
-	# 3. Fetch All Cloudflare Records
-	log_info "Fetching all DNS records from Cloudflare..."
-	if ! raw_records=$(cf_get_all_records); then
-		log_error "Critical: Unable to fetch DNS records."
-		exit 1
-	fi
-
-	parsed_records=$(cf_parse_records_to_lines "$raw_records")
-	local record_lines
-	record_lines=$(echo "$parsed_records" | wc -l)
-	log_info "Parsed $record_lines records from Cloudflare (processing $DOMAIN_COUNT domains)."
-
+	    # 3. Fetch Required Cloudflare Records
+	    log_info "Fetching DNS records from Cloudflare..."
+	    local raw_records=""
+	    
+	    # Smart fetch: Only get what we need
+	    if [[ $total_v4 -gt 0 ]]; then
+	        log_debug "Fetching A records..."
+	        if res=$(cf_get_all_records "A"); then
+	            raw_records+="$res"
+	        else
+	            log_error "Critical: Unable to fetch A records."
+	            exit 1
+	        fi
+	    fi
+	    
+	    if [[ $total_v6 -gt 0 ]]; then
+	        log_debug "Fetching AAAA records..."
+	        if res=$(cf_get_all_records "AAAA"); then
+	            # If we already have A records, we'll parse both separately or concatenate
+	            # Parsing separately is cleaner for the parser function
+	            raw_records+="$res"
+	        else
+	            log_error "Critical: Unable to fetch AAAA records."
+	            exit 1
+	        fi
+	    fi
+	    
+	    # The parser handles multiple JSON objects if concatenated or passed correctly
+	    parsed_records=$(cf_parse_records_to_lines "$raw_records")
+	    local record_lines
+	    record_lines=$(echo "$parsed_records" | grep -c "^" || echo 0)
+	    log_info "Parsed $record_lines records from Cloudflare (processing $DOMAIN_COUNT domains)."
 	# 4. Analyze Records
 	log_info "Analyzing records..."
 
