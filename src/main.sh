@@ -4,6 +4,7 @@
 # Load Modules
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 source "$DIR/logger.sh"
+source "$DIR/network.sh"
 source "$DIR/config.sh"
 source "$DIR/ip.sh"
 source "$DIR/cloudflare.sh"

@@ -1,21 +1,5 @@
 #!/usr/bin/env bash
 
-# Helper: Generic HTTP Get with IPv4/IPv6 forcing
-http_get() {
-    local url="$1"
-    local proto="$2" # 4 or 6
-    local timeout="5"
-
-    if command -v curl >/dev/null 2>&1; then
-        curl "-${proto}" -s --max-time "$timeout" "$url" 2>/dev/null
-    elif command -v wget >/dev/null 2>&1; then
-        # wget uses -4 or -6. -q=quiet, -O-=output to stdout, --tries=1
-        wget "-${proto}" -qO- --timeout="$timeout" --tries=1 "$url" 2>/dev/null
-    else
-        return 1
-    fi
-}
-
 # Detect Default Interface (Linux/macOS)
 get_default_interface() {
     if command -v ip >/dev/null 2>&1; then

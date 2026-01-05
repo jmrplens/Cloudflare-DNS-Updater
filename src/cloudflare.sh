@@ -2,18 +2,15 @@
 
 CF_API_URL="https://api.cloudflare.com/client/v4"
 
-# Headers
-cf_headers() {
-    echo "-H \"Authorization: Bearer $CF_API_TOKEN\" -H \"Content-Type: application/json\""
-}
-
 # Fetch all records (limit 500)
 cf_get_all_records() {
     log_debug "API: GET $CF_API_URL/zones/$CF_ZONE_ID/dns_records?per_page=500"
     
-    response=$(curl -s -X GET "$CF_API_URL/zones/$CF_ZONE_ID/dns_records?per_page=500" \
-        -H "Authorization: Bearer $CF_API_TOKEN" \
-        -H "Content-Type: application/json")
+    response=$(http_request "GET" \
+        "$CF_API_URL/zones/$CF_ZONE_ID/dns_records?per_page=500" \
+        "" \
+        "Authorization: Bearer $CF_API_TOKEN" \
+        "Content-Type: application/json")
 
     log_debug_redacted "API Response: $response"
 
@@ -77,10 +74,11 @@ cf_batch_update() {
     log_debug "API: POST batch update..."
     log_debug_redacted "API Payload: $payload"
     
-    response=$(curl -s -X POST "$CF_API_URL/zones/$CF_ZONE_ID/dns_records/batch" \
-        -H "Authorization: Bearer $CF_API_TOKEN" \
-        -H "Content-Type: application/json" \
-        --data "$payload")
+    response=$(http_request "POST" \
+        "$CF_API_URL/zones/$CF_ZONE_ID/dns_records/batch" \
+        "$payload" \
+        "Authorization: Bearer $CF_API_TOKEN" \
+        "Content-Type: application/json")
         
     log_debug_redacted "API Response: $response"
 
