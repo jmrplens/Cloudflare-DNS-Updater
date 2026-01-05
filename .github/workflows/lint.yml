@@ -1,0 +1,27 @@
+---
+name: Lint & Validation
+
+on:
+  push:
+    branches: [main, feature/**]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validation Suite
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y shellcheck yamllint shfmt
+      - name: Run Validation Script
+        run: |
+          chmod +x tools/*.sh
+          ./tools/validate.sh
+        shell: bash

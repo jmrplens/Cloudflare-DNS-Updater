@@ -1,0 +1,11 @@
+---
+extends: default
+
+rules:
+  line-length:
+    max: 120
+    allow-non-breakable-words: true
+  truthy: disable
+  brackets:
+    min-spaces-inside: 0
+    max-spaces-inside: 1
