@@ -73,22 +73,22 @@ main() {
 
 	log_info "Starting Cloudflare DNS Updater..."
 
-	    # 1. Parse Config
-	    log_info "Loading configuration from $config..."
-	    if ! parse_config "$config"; then
-	        exit 1
-	    fi
-	
-	    # Calculate task summary
-	    local total_v4=0
-	    local total_v6=0
-	    for (( i=0; i<DOMAIN_COUNT; i++ )); do
-	        [[ "${domains_ipv4[i]}" == "true" ]] && ((total_v4++))
-	        [[ "${domains_ipv6[i]}" == "true" ]] && ((total_v6++))
-	    done
-	    log_success "Loaded $DOMAIN_COUNT domains (Tasks: $total_v4 IPv4, $total_v6 IPv6)."
-	
-	    # 2. Get Current Public IPs	log_info "Detecting Public IPs..."
+	# 1. Parse Config
+	log_info "Loading configuration from $config..."
+	if ! parse_config "$config"; then
+		exit 1
+	fi
+
+	# Calculate task summary
+	local total_v4=0
+	local total_v6=0
+	for ((i = 0; i < DOMAIN_COUNT; i++)); do
+		[[ "${domains_ipv4[i]}" == "true" ]] && ((total_v4++))
+		[[ "${domains_ipv6[i]}" == "true" ]] && ((total_v6++))
+	done
+	log_success "Loaded $DOMAIN_COUNT domains (Tasks: $total_v4 IPv4, $total_v6 IPv6)."
+
+	# 2. Get Current Public IPs	log_info "Detecting Public IPs..."
 	CURRENT_IPV4=$(get_public_ipv4)
 	CURRENT_IPV6=$(get_public_ipv6)
 
@@ -100,27 +100,27 @@ main() {
 		exit 1
 	fi
 
-	        # 3. Fetch Cloudflare Records (Single Request)
-	        log_info "Fetching DNS records from Cloudflare..."
-	        local fetch_type=""
-	        
-	        # Logic: If we only need one type, filter at API level. 
-	        # If we need both, fetch all in 1 call to minimize RTT.
-	        if [[ $total_v4 -gt 0 && $total_v6 -eq 0 ]]; then
-	            fetch_type="A"
-	        elif [[ $total_v4 -eq 0 && $total_v6 -gt 0 ]]; then
-	            fetch_type="AAAA"
-	        fi
-	    
-	        if ! raw_records=$(cf_get_all_records "$fetch_type"); then
-	            log_error "Critical: Unable to fetch DNS records."
-	            exit 1
-	        fi
-	        
-	        parsed_records=$(cf_parse_records_to_lines "$raw_records")
-	        local record_lines
-	        record_lines=$(echo "$parsed_records" | grep -c "^" || echo 0)
-	        log_info "Parsed $record_lines records from Cloudflare (processing $DOMAIN_COUNT domains)."	# 4. Analyze Records
+	# 3. Fetch Cloudflare Records (Single Request)
+	log_info "Fetching DNS records from Cloudflare..."
+	local fetch_type=""
+
+	# Logic: If we only need one type, filter at API level.
+	# If we need both, fetch all in 1 call to minimize RTT.
+	if [[ $total_v4 -gt 0 && $total_v6 -eq 0 ]]; then
+		fetch_type="A"
+	elif [[ $total_v4 -eq 0 && $total_v6 -gt 0 ]]; then
+		fetch_type="AAAA"
+	fi
+
+	if ! raw_records=$(cf_get_all_records "$fetch_type"); then
+		log_error "Critical: Unable to fetch DNS records."
+		exit 1
+	fi
+
+	parsed_records=$(cf_parse_records_to_lines "$raw_records")
+	local record_lines
+	record_lines=$(echo "$parsed_records" | grep -c "^" || echo 0)
+	log_info "Parsed $record_lines records from Cloudflare (processing $DOMAIN_COUNT domains)." # 4. Analyze Records
 	log_info "Analyzing records..."
 
 	for ((i = 0; i < DOMAIN_COUNT; i++)); do

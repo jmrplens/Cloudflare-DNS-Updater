@@ -29,36 +29,36 @@ echo "Generating monolith script..."
 MONOLITH="$PROJECT_ROOT/cloudflare-dns-updater.sh" # Assumed output of bundle.sh
 
 build_linux() {
-    local arch=$1 # x86_64, aarch64
-    local target_name="cf-updater-linux-$arch"
-    
-    echo -e "${BLUE}Building for Linux $arch...${NC}"
-    local work_dir="$BUILD_DIR/linux-$arch"
-    mkdir -p "$work_dir/bin"
-    
-    # Download static jq
-    echo "  - Downloading static jq..."
-    local jq_arch=$arch
-    [[ "$arch" == "aarch64" ]] && jq_arch="arm64"
-    curl -L -s -o "$work_dir/bin/jq" "https://github.com/jqlang/jq/releases/download/jq-${JQ_VERSION}/jq-linux-${jq_arch}"
-    
-    # Download static curl
-    echo "  - Downloading static curl..."
-    curl -L -s -o "$work_dir/bin/curl" "${CURL_STATIC_URL}/curl-$arch"
-    
-    chmod +x "$work_dir/bin/"*
-    
-    # Copy script
-    cp "$MONOLITH" "$work_dir/main.sh"
-    chmod +x "$work_dir/main.sh"
-    
-    # Package with makeself (if installed) or simple tar-based SFX
-    if command -v makeself >/dev/null 2>&1; then
-        makeself "$work_dir" "$OUT_DIR/$target_name" "Cloudflare DNS Updater" "./main.sh"
-    else
-        echo "Warning: makeself not found. Creating a simple tarball instead."
-        tar -czf "$OUT_DIR/${target_name}.tar.gz" -C "$work_dir" .
-    fi
+	local arch=$1 # x86_64, aarch64
+	local target_name="cf-updater-linux-$arch"
+
+	echo -e "${BLUE}Building for Linux $arch...${NC}"
+	local work_dir="$BUILD_DIR/linux-$arch"
+	mkdir -p "$work_dir/bin"
+
+	# Download static jq
+	echo "  - Downloading static jq..."
+	local jq_arch=$arch
+	[[ "$arch" == "aarch64" ]] && jq_arch="arm64"
+	curl -L -s -o "$work_dir/bin/jq" "https://github.com/jqlang/jq/releases/download/jq-${JQ_VERSION}/jq-linux-${jq_arch}"
+
+	# Download static curl
+	echo "  - Downloading static curl..."
+	curl -L -s -o "$work_dir/bin/curl" "${CURL_STATIC_URL}/curl-$arch"
+
+	chmod +x "$work_dir/bin/"*
+
+	# Copy script
+	cp "$MONOLITH" "$work_dir/main.sh"
+	chmod +x "$work_dir/main.sh"
+
+	# Package with makeself (if installed) or simple tar-based SFX
+	if command -v makeself >/dev/null 2>&1; then
+		makeself "$work_dir" "$OUT_DIR/$target_name" "Cloudflare DNS Updater" "./main.sh"
+	else
+		echo "Warning: makeself not found. Creating a simple tarball instead."
+		tar -czf "$OUT_DIR/${target_name}.tar.gz" -C "$work_dir" .
+	fi
 }
 
 # Execute builds
