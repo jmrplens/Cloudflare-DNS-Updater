@@ -100,39 +100,27 @@ main() {
 		exit 1
 	fi
 
-	    # 3. Fetch Required Cloudflare Records
-	    log_info "Fetching DNS records from Cloudflare..."
-	    local raw_records=""
+	        # 3. Fetch Cloudflare Records (Single Request)
+	        log_info "Fetching DNS records from Cloudflare..."
+	        local fetch_type=""
+	        
+	        # Logic: If we only need one type, filter at API level. 
+	        # If we need both, fetch all in 1 call to minimize RTT.
+	        if [[ $total_v4 -gt 0 && $total_v6 -eq 0 ]]; then
+	            fetch_type="A"
+	        elif [[ $total_v4 -eq 0 && $total_v6 -gt 0 ]]; then
+	            fetch_type="AAAA"
+	        fi
 	    
-	    # Smart fetch: Only get what we need
-	    if [[ $total_v4 -gt 0 ]]; then
-	        log_debug "Fetching A records..."
-	        if res=$(cf_get_all_records "A"); then
-	            raw_records+="$res"
-	        else
-	            log_error "Critical: Unable to fetch A records."
+	        if ! raw_records=$(cf_get_all_records "$fetch_type"); then
+	            log_error "Critical: Unable to fetch DNS records."
 	            exit 1
 	        fi
-	    fi
-	    
-	    if [[ $total_v6 -gt 0 ]]; then
-	        log_debug "Fetching AAAA records..."
-	        if res=$(cf_get_all_records "AAAA"); then
-	            # If we already have A records, we'll parse both separately or concatenate
-	            # Parsing separately is cleaner for the parser function
-	            raw_records+="$res"
-	        else
-	            log_error "Critical: Unable to fetch AAAA records."
-	            exit 1
-	        fi
-	    fi
-	    
-	    # The parser handles multiple JSON objects if concatenated or passed correctly
-	    parsed_records=$(cf_parse_records_to_lines "$raw_records")
-	    local record_lines
-	    record_lines=$(echo "$parsed_records" | grep -c "^" || echo 0)
-	    log_info "Parsed $record_lines records from Cloudflare (processing $DOMAIN_COUNT domains)."
-	# 4. Analyze Records
+	        
+	        parsed_records=$(cf_parse_records_to_lines "$raw_records")
+	        local record_lines
+	        record_lines=$(echo "$parsed_records" | grep -c "^" || echo 0)
+	        log_info "Parsed $record_lines records from Cloudflare (processing $DOMAIN_COUNT domains)."	# 4. Analyze Records
 	log_info "Analyzing records..."
 
 	for ((i = 0; i < DOMAIN_COUNT; i++)); do
