@@ -1,6 +1,14 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC1091
 
+# Global Reference for Analyzers
+domains_names=()
+domains_proxied=()
+domains_ipv4=()
+domains_ipv6=()
+domains_ttl=()
+DOMAIN_COUNT=0
+
 # Load Modules
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 source "$DIR/logger.sh"
@@ -17,14 +25,6 @@ logger_init "$LOG_PATH"
 # shellcheck source=src/config.sh
 # shellcheck source=src/ip.sh
 # shellcheck source=src/cloudflare.sh
-
-# Global Reference for Analyzers
-domains_names=()
-domains_proxied=()
-domains_ipv4=()
-domains_ipv6=()
-domains_ttl=()
-DOMAIN_COUNT=0
 
 # Global State
 VERSION="1.1.0"
