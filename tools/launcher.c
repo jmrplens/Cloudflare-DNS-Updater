@@ -118,6 +118,8 @@ int main(int argc, char *argv[]) {
 		snprintf(script_path, sizeof(script_path), "%s/main.sh", temp_dir);
 
 		char **new_argv = malloc((argc + 2) * sizeof(char *));
+		if (!new_argv) exit(1);
+
 		new_argv[0] = bash_path;
 		new_argv[1] = script_path;
 		for (int i = 1; i < argc; i++) {
@@ -125,9 +127,16 @@ int main(int argc, char *argv[]) {
 		}
 		new_argv[argc + 1] = NULL;
 
-		setenv("MAKESELF_PWD", getcwd(NULL, 0), 1);
+		char *cwd = getcwd(NULL, 0);
+		if (cwd) {
+			setenv("MAKESELF_PWD", cwd, 1);
+			free(cwd);
+		}
+
+		// Use the absolute path to our bundled bash for maximum security
 		execv(bash_path, new_argv);
 		perror("execv");
+		free(new_argv);
 		exit(1);
 	} else if (pid > 0) {
 		// Parent: Wait for child and cleanup
