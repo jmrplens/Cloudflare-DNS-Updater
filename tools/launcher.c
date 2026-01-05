@@ -35,6 +35,7 @@ void get_self_path(char *buffer, size_t size) {
 	uint32_t bsize = (uint32_t)size;
 	_NSGetExecutablePath(buffer, &bsize);
 #else
+	// Modern Linux approach using auxiliary vector to avoid readlink race conditions
 	const char *exec_path = (const char *)getauxval(AT_EXECFN);
 	if (exec_path) {
 		snprintf(buffer, size, "%s", exec_path);
@@ -82,19 +83,23 @@ int main(int argc, char *argv[]) {
 	}
 	fclose(f);
 
-	char cmd[PATH_MAX];
+	// Large enough buffer for commands
+	char cmd[PATH_MAX * 2];
+	int ret;
+
 #ifdef _WIN32
 	snprintf(cmd, sizeof(cmd), "powershell -Command \"$f = [System.IO.File]::OpenRead('%s'); $f.Seek(%ld, [System.IO.SeekOrigin]::Begin); $out = [System.IO.File]::Create('%s\\payload.tar.gz'); $f.CopyTo($out); $f.Close(); $out.Close(); tar -xzf '%s\\payload.tar.gz' -C '%s'\"", self_path, payload_offset, temp_dir, temp_dir, temp_dir);
 #else
 	snprintf(cmd, sizeof(cmd), "tail -c +%ld \"%s\" | tar -xz -C \"%s\"", payload_offset + 1, self_path, temp_dir);
 #endif
 
-	if (system(cmd) != 0) {
-		fprintf(stderr, "Extraction failed\n");
+	ret = system(cmd);
+	if (ret != 0) {
+		fprintf(stderr, "Extraction failed with code %d\n", ret);
 		return 1;
 	}
 
-	char run_cmd[8192];
+	char run_cmd[PATH_MAX * 3];
 	int offset = 0;
 #ifdef _WIN32
 	offset = snprintf(run_cmd, sizeof(run_cmd), "set \"MAKESELF_PWD=%%CD%%\" && \"%s\\bin\\bash.exe\" \"%s\\main.sh\"", temp_dir, temp_dir);
@@ -106,14 +111,17 @@ int main(int argc, char *argv[]) {
 		offset += snprintf(run_cmd + offset, sizeof(run_cmd) - offset, " \"%s\"", argv[i]);
 	}
 
-	int ret = system(run_cmd);
+	ret = system(run_cmd);
 
 #ifdef _WIN32
 	snprintf(cmd, sizeof(cmd), "rd /s /q \"%s\"", temp_dir);
 #else
 	snprintf(cmd, sizeof(cmd), "rm -rf \"%s\"", temp_dir);
 #endif
-	system(cmd);
+	
+	// We ignore cleanup return value as we are already exiting
+	int cleanup_ret = system(cmd);
+	(void)cleanup_ret;
 
 	return (ret >> 8) & 0xff;
 }

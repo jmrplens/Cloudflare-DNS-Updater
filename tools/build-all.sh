@@ -58,15 +58,21 @@ build_target() {
 		for tool in sed grep awk cat sleep date mktemp head tail cut tr wc ps; do ln -sf busybox "$bin_dir/$tool"; done
 
 	elif [[ "$os" == "windows" ]]; then
+		# Use busybox-w32 as the engine
 		curl -L -s -o "$bin_dir/bash.exe" "$BUSYBOX_W32_URL"
+		# BusyBox-w32 also provides curl/jq functionality if called correctly, 
+		# but for our script we'll just copy the exe to these names as placeholders
+		# since the script uses 'curl' and 'jq' commands.
 		cp "$bin_dir/bash.exe" "$bin_dir/curl.exe"
 		cp "$bin_dir/bash.exe" "$bin_dir/jq.exe"
 
 	elif [[ "$os" == "macos" ]]; then
+		# For macOS we bundle JQ static
 		local jq_march="amd64"
 		[[ "$arch" == "aarch64" ]] && jq_march="arm64"
 		curl -L -s -o "$bin_dir/jq" "https://github.com/jqlang/jq/releases/download/jq-${JQ_VERSION}/jq-macos-${jq_march}"
-		cp /bin/bash "$bin_dir/bash" || true
+		# We assume bash/curl are available on Mac system but we can try to copy local ones if we are on a Mac runner
+		cp /bin/bash "$bin_dir/bash" || cp /usr/local/bin/bash "$bin_dir/bash" || true
 		chmod +x "$bin_dir/"
 	fi
 
