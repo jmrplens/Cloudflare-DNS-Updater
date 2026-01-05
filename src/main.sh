@@ -44,8 +44,12 @@ queue_if_changed() {
 
     IFS='|' read -r r_id _ _ r_content r_proxied <<< "$match"
 
-    if cf_needs_update "$r_content" "$target_ip" "$r_proxied" "$target_proxied"; then
-        log_info "Change detected for $domain ($type): $r_content -> $target_ip"
+    if is_force || cf_needs_update "$r_content" "$target_ip" "$r_proxied" "$target_proxied"; then
+        if is_force && ! cf_needs_update "$r_content" "$target_ip" "$r_proxied" "$target_proxied"; then
+            log_info "Force update: $domain ($type) [Matches current: $target_ip]"
+        else
+            log_info "Change detected for $domain ($type): $r_content -> $target_ip"
+        fi
         
         local obj
         obj=$(cf_build_put_object "$r_id" "$type" "$domain" "$target_ip" "$target_proxied" "$ttl")

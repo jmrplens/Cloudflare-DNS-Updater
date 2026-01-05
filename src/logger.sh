@@ -98,6 +98,10 @@ is_silent() {
     [[ "${SILENT:-false}" == "true" ]]
 }
 
+is_force() {
+    [[ "${FORCE:-false}" == "true" ]]
+}
+
 # Helper to sanitize logs
 sanitize_log() {
     local msg="$1"

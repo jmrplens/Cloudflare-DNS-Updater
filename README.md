@@ -118,6 +118,7 @@ Run the script manually to test it.
 **Options:**
 -   `--silent` (`-s`): Suppress console output (useful for Cron). Errors are still printed.
 -   `--debug` (`-d`): Enable verbose logging (API requests, detailed IP checks, verification).
+-   `--force` (`-f`): Force update records even if they already match the current IP.
 
 **Windows (PowerShell / CMD):**
 ```powershell
