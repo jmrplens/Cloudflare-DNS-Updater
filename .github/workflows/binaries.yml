@@ -1,55 +1,95 @@
 ---
-name: Build Binaries
+name: Build & Release Binaries
 
 on:
   push:
-    branches: ["main", "master"]
+    branches: [main]
     tags: ["v*"]
-  pull_request:
-    branches: ["main", "master"]
   workflow_dispatch:
 
 jobs:
-  build:
+  build-linux:
+    name: Build Linux
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        arch: [x86_64, aarch64]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build Standalone
+        run: |
+          chmod +x tools/*.sh
+          ./tools/build-all.sh linux ${{ matrix.arch }}
+        shell: bash
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-${{ matrix.arch }}
+          path: dist/cf-updater-linux-*
+
+  build-windows:
+    name: Build Windows
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Install dependencies
+      - name: Install MinGW
+        run: sudo apt-get update && sudo apt-get install -y gcc-mingw-w64
+      - name: Build Standalone
         run: |
-          sudo apt-get update
-          sudo apt-get install -y makeself
-
-      - name: Extract version
-        id: get_version
-        run: |
-          VERSION=$(grep '^VERSION=' src/main.sh | cut -d'"' -f2)
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-
-      - name: Build All Standalone Bundles
-        run: bash tools/build-all.sh
-
-      - name: Upload Artifacts
-        uses: actions/upload-artifact@v4
+          chmod +x tools/*.sh
+          # Build target windows x86_64
+          # (Logic inside build-all.sh needs to be called correctly)
+          source ./tools/build-all.sh
+          build_target windows x86_64
+        shell: bash
+      - uses: actions/upload-artifact@v4
         with:
-          name: cloudflare-dns-updater-bundles
-          path: dist/*
+          name: windows-x64
+          path: dist/*.exe
+
+  build-macos:
+    name: Build macOS
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        arch: [x86_64, aarch64]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build Standalone
+        run: |
+          chmod +x tools/*.sh
+          # Manual call since bash on mac is different
+          ./tools/build-all.sh macos ${{ matrix.arch }}
+        shell: bash
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos-${{ matrix.arch }}
+          path: dist/cf-updater-macos-*
 
   release:
-    needs: [build]
+    name: Create Release
+    needs: [build-linux, build-windows, build-macos]
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/')
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
+    permissions:
+      contents: write
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/checkout@v4
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
         with:
-          name: cloudflare-dns-updater-bundles
           path: artifacts
-
+          merge-multiple: true
+      - name: Get Version
+        id: vars
+        run: |
+          VERSION=$(grep '^VERSION=' src/main.sh | cut -d'"' -f2)
+          echo "version=v$VERSION" >> $GITHUB_OUTPUT
       - name: Release
         uses: softprops/action-gh-release@v2
         with:
-          files: |
-            artifacts/cf-updater-linux-x86_64.run
-            artifacts/cf-updater-linux-aarch64.run
-            artifacts/cf-updater-windows-x64.zip
+          tag_name: ${{ steps.vars.outputs.version }}
+          name: Release ${{ steps.vars.outputs.version }}
+          draft: false
+          prerelease: false
+          files: artifacts/*
+          generate_release_notes: true
