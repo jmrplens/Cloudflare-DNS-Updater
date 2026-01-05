@@ -60,7 +60,7 @@ build_target() {
 	elif [[ "$os" == "windows" ]]; then
 		# Use busybox-w32 as the engine
 		curl -L -s -o "$bin_dir/bash.exe" "$BUSYBOX_W32_URL"
-		# BusyBox-w32 also provides curl/jq functionality if called correctly, 
+		# BusyBox-w32 also provides curl/jq functionality if called correctly,
 		# but for our script we'll just copy the exe to these names as placeholders
 		# since the script uses 'curl' and 'jq' commands.
 		cp "$bin_dir/bash.exe" "$bin_dir/curl.exe"

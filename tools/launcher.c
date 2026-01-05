@@ -12,6 +12,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <limits.h>
+#include <sys/wait.h>
 #define PATH_SEP "/"
 #ifdef __APPLE__
 #include <mach-o/dyld.h>
@@ -35,7 +36,6 @@ void get_self_path(char *buffer, size_t size) {
 	uint32_t bsize = (uint32_t)size;
 	_NSGetExecutablePath(buffer, &bsize);
 #else
-	// Modern Linux approach using auxiliary vector to avoid readlink race conditions
 	const char *exec_path = (const char *)getauxval(AT_EXECFN);
 	if (exec_path) {
 		snprintf(buffer, size, "%s", exec_path);
@@ -83,45 +83,62 @@ int main(int argc, char *argv[]) {
 	}
 	fclose(f);
 
-	// Large enough buffer for commands
 	char cmd[PATH_MAX * 2];
-	int ret;
-
 #ifdef _WIN32
 	snprintf(cmd, sizeof(cmd), "powershell -Command \"$f = [System.IO.File]::OpenRead('%s'); $f.Seek(%ld, [System.IO.SeekOrigin]::Begin); $out = [System.IO.File]::Create('%s\\payload.tar.gz'); $f.CopyTo($out); $f.Close(); $out.Close(); tar -xzf '%s\\payload.tar.gz' -C '%s'\"", self_path, payload_offset, temp_dir, temp_dir, temp_dir);
 #else
 	snprintf(cmd, sizeof(cmd), "tail -c +%ld \"%s\" | tar -xz -C \"%s\"", payload_offset + 1, self_path, temp_dir);
 #endif
 
-	ret = system(cmd);
-	if (ret != 0) {
-		fprintf(stderr, "Extraction failed with code %d\n", ret);
+	if (system(cmd) != 0) {
+		fprintf(stderr, "Extraction failed\n");
 		return 1;
 	}
 
+#ifdef _WIN32
+	// For Windows, we still use system for simplicity but with better quoting
 	char run_cmd[PATH_MAX * 3];
-	int offset = 0;
-#ifdef _WIN32
-	offset = snprintf(run_cmd, sizeof(run_cmd), "set \"MAKESELF_PWD=%%CD%%\" && \"%s\\bin\\bash.exe\" \"%s\\main.sh\"", temp_dir, temp_dir);
-#else
-	offset = snprintf(run_cmd, sizeof(run_cmd), "export MAKESELF_PWD=\"$PWD\"; \"%s/bin/bash\" \"%s/main.sh\"", temp_dir, temp_dir);
-#endif
-
-	for (int i = 1; i < argc && offset < (int)sizeof(run_cmd); i++) {
-		offset += snprintf(run_cmd + offset, sizeof(run_cmd) - offset, " \"%s\"", argv[i]);
+	snprintf(run_cmd, sizeof(run_cmd), "set \"MAKESELF_PWD=%s\" && \"%s\\bin\\bash.exe\" \"%s\\main.sh\"", getcwd(NULL, 0), temp_dir, temp_dir);
+	for (int i = 1; i < argc; i++) {
+		strncat(run_cmd, " \"", sizeof(run_cmd) - strlen(run_cmd) - 1);
+		strncat(run_cmd, argv[i], sizeof(run_cmd) - strlen(run_cmd) - 1);
+		strncat(run_cmd, "\"", sizeof(run_cmd) - strlen(run_cmd) - 1);
 	}
-
-	ret = system(run_cmd);
-
-#ifdef _WIN32
-	snprintf(cmd, sizeof(cmd), "rd /s /q \"%s\"", temp_dir);
-#else
-	snprintf(cmd, sizeof(cmd), "rm -rf \"%s\"", temp_dir);
-#endif
-	
-	// We ignore cleanup return value as we are already exiting
-	int cleanup_ret = system(cmd);
-	(void)cleanup_ret;
-
+	int ret = system(run_cmd);
+	sprintf(cmd, "rd /s /q \"%s\"", temp_dir);
+	system(cmd);
 	return (ret >> 8) & 0xff;
+#else
+	pid_t pid = fork();
+	if (pid == 0) {
+		// Child: Execute the script safely
+		char bash_path[PATH_MAX];
+		char script_path[PATH_MAX];
+		snprintf(bash_path, sizeof(bash_path), "%s/bin/bash", temp_dir);
+		snprintf(script_path, sizeof(script_path), "%s/main.sh", temp_dir);
+
+		char **new_argv = malloc((argc + 2) * sizeof(char *));
+		new_argv[0] = bash_path;
+		new_argv[1] = script_path;
+		for (int i = 1; i < argc; i++) {
+			new_argv[i + 1] = argv[i];
+		}
+		new_argv[argc + 1] = NULL;
+
+		setenv("MAKESELF_PWD", getcwd(NULL, 0), 1);
+		execv(bash_path, new_argv);
+		perror("execv");
+		exit(1);
+	} else if (pid > 0) {
+		// Parent: Wait for child and cleanup
+		int status;
+		waitpid(pid, &status, 0);
+		snprintf(cmd, sizeof(cmd), "rm -rf \"%s\"", temp_dir);
+		system(cmd);
+		return WEXITSTATUS(status);
+	} else {
+		perror("fork");
+		return 1;
+	}
+#endif
 }

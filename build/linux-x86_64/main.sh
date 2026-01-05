@@ -687,7 +687,6 @@ SILENT="false"
 LOG_PATH="$DIR/../logs/updater.log"
 logger_init "$LOG_PATH"
 
-
 # Project metadata
 VERSION="1.1.0"
 updates_json_list=""
@@ -1037,4 +1036,3 @@ fi
 # Run Main
 
 main "$CONFIG_FILE"
-
