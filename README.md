@@ -1,174 +1,138 @@
 # Cloudflare DNS Updater
 
-A high-performance, **100% Bash** script to automatically update Cloudflare DNS records with your dynamic public IP address. Designed for efficiency, robustness, and ease of use across all major platforms.
+A high-performance, **100% Bash** script to automatically update Cloudflare DNS records with your dynamic public IP address. Designed for maximum efficiency, robustness, and universal compatibility across **Linux**, **macOS**, and **Windows**.
 
 ![CI Build](https://github.com/jmrplens/Cloudflare-DNS-Updater/actions/workflows/binaries.yml/badge.svg)
 
-## 🚀 Features
+## 🚀 Key Features
 
--   **⚡ Batch Updates**: Efficiently updates multiple records in a **single API call** using Cloudflare's Batch API.
--   **🛡️ Robustness**:
-    -   **Zero Dependencies**: No Python or Node.js required. Runs on standard tools (`curl` or `wget`, `jq`).
-    -   **Redundant IP Detection**: Checks multiple services (`icanhazip`, `ifconfig.co`, `ipify`) and falls back to `wget` if `curl` is missing.
-    -   **Lockfile Protection**: Prevents multiple instances from running simultaneously.
--   **📊 Observability**:
-    -   **Logging**: Detailed logs saved to `logs/updater.log` with auto-rotation (1MB max).
-    -   **Notifications**: Instant alerts via **Telegram** and **Discord**.
--   **📦 Cross-Platform**: Runs natively on **Linux**, **macOS**, and **Windows**.
+-   **⚡ Batch Updates**: Updates multiple DNS records in a **single API call** using Cloudflare's Batch API, minimizing latency and API overhead.
+-   **📡 Advanced IP Detection**:
+    -   **Local Preference**: Intelligently detects global IPv6 addresses directly from your network interface (ideal for avoiding gateway/NAT masking).
+    -   **Redundant Fallbacks**: Multi-service external detection (`icanhazip`, `ifconfig.co`, `ipify`) if local detection is unavailable.
+-   **🛡️ Universal Compatibility**:
+    -   **Multi-Client Support**: Uses `curl`, `wget`, or **Windows PowerShell** (`Invoke-RestMethod`) depending on what's available.
+    -   **Zero Heavy Dependencies**: No Python, Node.js, or complex runtimes required.
+-   **📊 Enterprise-Grade Logging**:
+    -   **Detailed Observability**: Rotation-aware logs with a `--debug` mode that redacts sensitive API tokens automatically.
+    -   **Instant Notifications**: Native support for **Telegram** and **Discord** alerts.
+-   **🔒 Secure by Design**:
+    -   **Lockfile Mechanism**: Prevents race conditions and duplicate executions.
+    -   **Credential Masking**: Debug logs never leak your API tokens.
 
 ---
 
 ## 📥 Installation
 
-You can run this tool using pre-compiled binaries (recommended) or directly from the source code.
+### Option A: Use Compiled Binaries (Recommended)
 
-### Option A: Uses Binaries (Recommended)
-
-1.  **Download** the latest release for your OS from the **[GitHub Releases Page](../../releases)**.
-    *   🐧 **Linux**: `cf-updater-linux`
-    *   🍎 **macOS**: `cf-updater-mac`
-    *   🪟 **Windows**: `cf-updater.exe`
-
-2.  **Prepare**:
-    Place the binary in a permanent folder (e.g., `/opt/cf-updater/` or `C:\Program Files\CF-Updater\`).
-
-3.  **Config**:
-    Create a `cloudflare-dns.yaml` file in the same directory (see [Configuration](#-configuration)).
+1.  **Download** the latest version for your platform from the **[GitHub Releases Page](../../releases)**.
+2.  **Deploy**: Place the binary in a permanent location (e.g., `/usr/local/bin/` or `/opt/cf-updater/`).
+3.  **Configure**: Create your `cloudflare-dns.yaml` (see [Configuration](#-configuration)).
 
 ### Option B: Run from Source
 
-1.  **Clone the repository**:
+1.  **Clone**:
     ```bash
     git clone https://github.com/jmrplens/Cloudflare-DNS-Updater.git
     cd Cloudflare-DNS-Updater
     ```
+2.  **Execute**: Use `./cloudflare-dns-updater.sh`.
 
 ---
 
-## 🛠️ Requirements (Binaries & Source)
+## 🛠️ Requirements
 
-Both the **Binaries** and **Source Code** require the following system tools installed:
+The script is designed to run on minimal environments. It requires at least **one** of the following:
+-   `curl` (Preferred)
+-   `wget`
+-   `PowerShell` (Windows native)
 
-1.  **curl**: Required for API communication.
-    *   *Most systems have this pre-installed.*
-2.  **jq** (Recommended): For robust JSON parsing.
-    *   *The script has a fallback parser, but `jq` is faster and safer.*
-
-**Installation Commands:**
-*   **Debian/Ubuntu**: `sudo apt install curl jq`
-*   **RHEL/CentOS**: `sudo yum install curl jq`
-*   **macOS**: `brew install jq` (curl is built-in)
-*   **Windows**:
-    *   **Chocolatey**: `choco install jq curl`
-    *   **Winget**: `winget install jqlang.jq` (curl is built-in on Windows 10/11)
+**Optional but Recommended:**
+-   `jq`: For faster and more robust JSON processing. If missing, the script uses an internal `sed`-based parser.
 
 ---
 
 ## ⚙️ Configuration
 
-Copy `config.example.yaml` to `cloudflare-dns.yaml` and edit it with your details.
-
-### Example Configuration
+Create a `cloudflare-dns.yaml` file. Use the template below:
 
 ```yaml
 cloudflare:
-  zone_id: "your_zone_id_here"      # Found in Cloudflare Dashboard -> Overview
-  api_token: "your_api_token_here"  # Create at My Profile -> API Tokens (Template: Edit Zone DNS)
+  zone_id: "your_zone_id"
+  api_token: "your_api_token" # Requires DNS:Edit permissions
 
 options:
-  proxied: true    # Default: Proxy traffic through Cloudflare (Orange Cloud)
-  ttl: 1           # Default: 1 (Auto)
-  interface: ""    # Optional: Network interface to use (e.g., "eth0"). Auto-detected if empty.
+  proxied: true    # Default for all: Orange Cloud (true) or Grey Cloud (false)
+  ttl: 1           # 1 for Auto, or 60-3600 for specific seconds
+  interface: ""    # Optional: Force a specific network interface (e.g., "eth0")
 
 domains:
-  # 1. Update both IPv4 (A) and IPv6 (AAAA) automatically
+  # 1. Automatic: Updates both IPv4 (A) and IPv6 (AAAA)
   - name: "example.com"
 
-  # 2. Update IPv4 ONLY (A Record)
+  # 2. IPv4 Only
   - name: "ipv4.example.com"
     ip_type: "ipv4"
 
-  # 3. Update IPv6 ONLY (AAAA Record)
-  - name: "ipv6.example.com"
-    ip_type: "ipv6"
-
-  # 4. DNS Only (Grey Cloud - No Proxy)
+  # 3. Custom Proxy setting
   - name: "direct.example.com"
     proxied: false
 
 notifications:
   telegram:
-    enabled: true
-    bot_token: "123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11"
-    chat_id: "123456789"
+    enabled: false
+    bot_token: ""
+    chat_id: ""
+  discord:
+    enabled: false
+    webhook_url: ""
 ```
 
 ---
 
-## 🏃 Usage Guide
+## 🏃 Usage & Options
 
-### Basic Execution
-Run the script manually to test it.
-
-**Linux / macOS:**
+### Basic Run
 ```bash
 ./cloudflare-dns-updater.sh
 ```
 
-**Options:**
--   `--silent` (`-s`): Suppress console output (useful for Cron). Errors are still printed.
--   `--debug` (`-d`): Enable verbose logging (API requests, detailed IP checks, verification).
--   `--force` (`-f`): Force update records even if they already match the current IP.
+### CLI Arguments
+-   `-s, --silent`: No console output (perfect for Cron).
+-   `-d, --debug`: Show API payloads, full responses, and redaction logic.
+-   `-f, --force`: Force update Cloudflare even if IPs already match.
 
-**Windows (PowerShell / CMD):**
+### Windows (PowerShell)
 ```powershell
-.\cf-updater.exe
-```
-
-### Custom Config File
-You can specify a different configuration file path as an argument.
-
-```bash
-./cf-updater-linux /path/to/my-custom-config.yaml
+.\cf-updater.exe --debug
 ```
 
 ---
 
-## 🕒 Automation (Cron / Task Scheduler)
-
-To keep your DNS up-to-date, schedule the script to run automatically.
+## 🕒 Automation
 
 ### Linux / macOS (Cron)
-Run every 5 minutes.
-
-1.  Open crontab:
-    ```bash
-    crontab -e
-    ```
-2.  Add the line:
-    ```bash
-    */5 * * * * /opt/cf-updater/cloudflare-dns-updater.sh --silent
-    ```
+```bash
+# Run every 5 minutes silently
+*/5 * * * * /opt/cf-updater/cloudflare-dns-updater.sh --silent
+```
 
 ### Windows (Task Scheduler)
-Run every 10 minutes.
-
-1.  Open **Task Scheduler**.
-2.  Select **Create Basic Task** -> Name: "Cloudflare Update".
-3.  Trigger: **Daily** -> Repeat task every **10 minutes**.
-4.  Action: **Start a Program**.
-    *   Program/script: `C:\Path\To\cf-updater.exe`
-    *   Start in (Optional): `C:\Path\To\` (directory containing config file).
-5.  Finish.
+1.  Create a **Basic Task**.
+2.  Trigger: **Daily** -> Repeat every **10 minutes**.
+3.  Action: **Start a Program** -> Path to `cf-updater.exe`.
+4.  Arguments: `--silent`.
 
 ---
 
-## 🏗️ CI/CD & Security
+## 🏗️ Technical Architecture
 
-### Automated Builds
-We use **GitHub Actions** to guarantee safe, reproducible builds.
--   **Source**: The `tools/bundle.sh` script compiles all source modules into a temporary bundle.
--   **Compiler**: Uses `shc` to convert the Bash scripts into standalone binaries for Linux, Mac, and Windows (Cross-compiled).
--   **Versioning**: Every release tag (e.g., `v1.0.0`) triggers a build and upload of authenticated assets.
+This project follows a modular Bash architecture:
+-   `network.sh`: Abstracted HTTP layer (Curl/Wget/PS).
+-   `ip.sh`: Advanced IP resolution engine.
+-   `cloudflare.sh`: Cloudflare API bindings and diff engine.
+-   `logger.sh`: Unified logging and Boolean state management.
+-   `config.sh`: YAML parsing logic.
 
-
+Built with ❤️ by [jmrplens](https://github.com/jmrplens).
