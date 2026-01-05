@@ -27,7 +27,11 @@ void get_self_path(char *buffer, size_t size) {
 	uint32_t bsize = (uint32_t)size;
 	_NSGetExecutablePath(buffer, &bsize);
 #else
-	if (realpath("/proc/self/exe", buffer) == NULL) {
+	char *res = realpath("/proc/self/exe", NULL);
+	if (res) {
+		snprintf(buffer, size, "%s", res);
+		free(res);
+	} else {
 		buffer[0] = '\0';
 	}
 #endif
