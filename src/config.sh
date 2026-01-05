@@ -64,7 +64,7 @@ parse_config() {
                 # Set defaults
                 domains_proxied[current_idx]="true"
                 domains_ipv4[current_idx]="true"
-                domains_ipv6[current_idx]="false"
+                domains_ipv6[current_idx]="true"
                 domains_ttl[current_idx]="auto"
             fi
             
