@@ -1,5 +1,23 @@
 #!/usr/bin/env bash
 
+# Global configuration variables
+CF_ZONE_ID=""
+CF_API_TOKEN=""
+NET_INTERFACE=""
+TG_ENABLED="false"
+TG_BOT_TOKEN=""
+TG_CHAT_ID=""
+DISCORD_ENABLED="false"
+DISCORD_WEBHOOK=""
+
+# Domain arrays
+domains_names=()
+domains_proxied=()
+domains_ipv4=()
+domains_ipv6=()
+domains_ttl=()
+DOMAIN_COUNT=0
+
 # Parse YAML config file
 parse_config() {
     local yaml_file="$1"

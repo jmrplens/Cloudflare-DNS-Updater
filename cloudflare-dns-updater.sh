@@ -47,6 +47,9 @@ for arg in "$@"; do
         -f|--force)
             export FORCE="true"
             ;;
+        *)
+            # Ignore unknown arguments
+            ;;
     esac
 done
 

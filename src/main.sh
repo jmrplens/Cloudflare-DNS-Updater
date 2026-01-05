@@ -14,7 +14,9 @@ source "$DIR/notifications.sh"
 LOG_PATH="$DIR/../logs/updater.log"
 logger_init "$LOG_PATH"
 
-# shellcheck disable=SC2154
+# shellcheck source=src/config.sh
+# shellcheck source=src/ip.sh
+# shellcheck source=src/cloudflare.sh
 
 # Global State for updates
 updates_json_list=""

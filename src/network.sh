@@ -116,9 +116,9 @@ http_get() {
     fi
     
     if [[ "$HTTP_CLIENT" == "curl" || "$HTTP_CLIENT" == "curl.exe" ]]; then
-        $HTTP_CLIENT -s $ip_flag --max-time 10 "$url"
+        $HTTP_CLIENT -s "$ip_flag" --max-time 10 "$url"
     elif [[ "$HTTP_CLIENT" == "wget" ]]; then
-        wget -q -O - $ip_flag --timeout=10 --tries=1 "$url"
+        wget -q -O - "$ip_flag" --timeout=10 --tries=1 "$url"
     elif [[ "$HTTP_CLIENT" == "powershell" ]]; then
         # PowerShell doesn't have a simple flag for -4/-6 in Invoke-RestMethod easily for all versions
         # but usually it respects the OS preference. 
