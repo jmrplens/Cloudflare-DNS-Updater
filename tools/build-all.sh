@@ -24,6 +24,10 @@ NC='\033[0m'
 echo -e "${BLUE}Building Professional C-Wrapped Bundles...${NC}"
 mkdir -p "$BUILD_DIR" "$DIST_DIR"
 
+# 0. Extract Version
+VERSION=$(grep '^VERSION=' "$PROJECT_ROOT/src/main.sh" | cut -d'"' -f2)
+echo "Building version $VERSION..."
+
 # 1. Generate the Monolith
 "$DIR/bundle.sh"
 MONOLITH="$DIST_DIR/cloudflare-dns-updater-monolith.sh"

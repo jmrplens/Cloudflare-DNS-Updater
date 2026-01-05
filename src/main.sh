@@ -18,17 +18,22 @@ logger_init "$LOG_PATH"
 # shellcheck source=src/ip.sh
 # shellcheck source=src/cloudflare.sh
 
-# Global State for updates
+# Global State
+VERSION="1.1.0"
 updates_json_list=""
 update_count=0
 verification_list=()
 
 show_help() {
+	local cmd_name
+	cmd_name=$(basename "$0")
+	[[ "$cmd_name" == "main.sh" ]] && cmd_name="cf-updater"
+
 	cat <<EOF
-Cloudflare DNS Updater - Automate your Dynamic DNS updates.
+Cloudflare DNS Updater v$VERSION - Automate your Dynamic DNS updates.
 
 Usage:
-  $(basename "$0") [options] [config_file.yaml]
+  $cmd_name [options] [config_file.yaml]
 
 Options:
   -h, --help     Show this help message

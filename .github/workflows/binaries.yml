@@ -20,6 +20,13 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y makeself
 
+      - name: Extract version
+        id: get_version
+        run: |
+          VERSION=$(grep '^VERSION=' src/main.sh | cut -d'"' -f2)
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
       - name: Build All Standalone Bundles
         run: bash tools/build-all.sh
 
