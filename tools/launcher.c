@@ -28,8 +28,11 @@ void get_self_path(char *buffer, size_t size) {
 	_NSGetExecutablePath(buffer, &bsize);
 #else
 	ssize_t len = readlink("/proc/self/exe", buffer, size - 1);
-	if (len != -1)
+	if (len != -1) {
 		buffer[len] = '\0';
+	} else {
+		buffer[0] = '\0';
+	}
 #endif
 }
 
