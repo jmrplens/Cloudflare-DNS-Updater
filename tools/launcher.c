@@ -18,6 +18,8 @@
 #endif
 #endif
 
+#include <limits.h>
+
 #define PAYLOAD_MARKER "---PAYLOAD_START---"
 
 void get_self_path(char *buffer, size_t size) {
@@ -27,10 +29,11 @@ void get_self_path(char *buffer, size_t size) {
 	uint32_t bsize = (uint32_t)size;
 	_NSGetExecutablePath(buffer, &bsize);
 #else
-	char *res = realpath("/proc/self/exe", NULL);
-	if (res) {
-		snprintf(buffer, size, "%s", res);
-		free(res);
+	// Using readlink on /proc/self/exe is the standard safe way on Linux.
+	// We use size-1 to ensure space for null terminator.
+	ssize_t len = readlink("/proc/self/exe", buffer, size - 1);
+	if (len != -1) {
+		buffer[len] = '\0';
 	} else {
 		buffer[0] = '\0';
 	}
@@ -38,13 +41,13 @@ void get_self_path(char *buffer, size_t size) {
 }
 
 int main(int argc, char *argv[]) {
-	char temp_dir[512];
+	char temp_dir[PATH_MAX];
 #ifdef _WIN32
 	char *tmp = getenv("TEMP");
-	sprintf(temp_dir, "%s\\cf-updater-%d", tmp ? tmp : "C:\\Windows\\Temp", getpid());
+	snprintf(temp_dir, sizeof(temp_dir), "%s\\cf-updater-%d", tmp ? tmp : "C:\\Windows\\Temp", getpid());
 	_mkdir(temp_dir);
 #else
-	strcpy(temp_dir, "/tmp/cf-updater-XXXXXX");
+	strncpy(temp_dir, "/tmp/cf-updater-XXXXXX", sizeof(temp_dir) - 1);
 	if (mkdtemp(temp_dir) == NULL) {
 		perror("mkdtemp");
 		return 1;
