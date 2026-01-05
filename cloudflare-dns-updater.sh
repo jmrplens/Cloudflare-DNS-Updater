@@ -5,7 +5,8 @@ DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 CONFIG_FILE="$DIR/cloudflare-dns.yaml"
 
 # Add MSYS2/MinGW64 to PATH for better tools (jq, curl, etc) if available
-export PATH="/c/msys64/mingw64/bin:/mnt/c/msys64/mingw64/bin:$PATH"
+# Also add standard Linux/macOS paths to ensure tools are found
+export PATH="/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/opt/homebrew/bin:/c/msys64/mingw64/bin:/mnt/c/msys64/mingw64/bin:$PATH"
 
 # --- LOCK MECHANISM ---
 LOCKFILE="/tmp/cloudflare-dns-updater.lock"
@@ -40,6 +41,19 @@ for arg in "$@"; do
             ;;
     esac
 done
+
+# Check Dependencies
+if ! command -v curl &> /dev/null; then
+    echo "Error: 'curl' is required but not found in PATH." >&2
+    echo "Please install curl (e.g., apt install curl, brew install curl)." >&2
+    exit 1
+fi
+
+if ! command -v jq &> /dev/null && ! command -v jq.exe &> /dev/null; then
+    if [[ "$SILENT" != "true" ]]; then
+        echo "Warning: 'jq' not found. Using slower/limited sed-based parser." >&2
+    fi
+fi
 
 if [[ ! -f "$CONFIG_FILE" ]]; then
     # Try alternate or example
