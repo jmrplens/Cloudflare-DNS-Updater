@@ -1,11 +1,12 @@
+---
 name: Build Binaries
 
 on:
   push:
-    branches: [ "main", "master" ]
-    tags: [ "v*" ]
+    branches: ["main", "master"]
+    tags: ["v*"]
   pull_request:
-    branches: [ "main", "master" ]
+    branches: ["main", "master"]
   workflow_dispatch:
 
 jobs:

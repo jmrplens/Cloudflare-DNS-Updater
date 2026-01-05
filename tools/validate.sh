@@ -56,7 +56,28 @@ if check_tool "shfmt" "Formatting"; then
 		echo -e "${GREEN}✔ Formatting is correct!${NC}"
 	else
 		echo -e "${YELLOW}⚠ Formatting issues found. Run 'shfmt -w .' to fix.${NC}"
-		# We don't fail the build for formatting locally unless preferred
+	fi
+fi
+
+# 4. yamllint (YAML validation)
+if check_tool "yamllint" "YAML Validation"; then
+	echo "Running yamllint..."
+	if yamllint "$PROJECT_ROOT"/*.yaml "$PROJECT_ROOT"/.github/workflows/*.yml; then
+		echo -e "${GREEN}✔ YAML validation passed!${NC}"
+	else
+		echo -e "${RED}✘ YAML issues found.${NC}"
+		EXIT_CODE=1
+	fi
+fi
+
+# 5. actionlint (GitHub Actions validation)
+if check_tool "actionlint" "GitHub Actions Validation"; then
+	echo "Running actionlint..."
+	if actionlint -shellcheck=shellcheck; then
+		echo -e "${GREEN}✔ GitHub Actions validation passed!${NC}"
+	else
+		echo -e "${RED}✘ GitHub Actions issues found.${NC}"
+		EXIT_CODE=1
 	fi
 fi
 

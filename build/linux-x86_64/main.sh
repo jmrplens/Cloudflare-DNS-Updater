@@ -674,7 +674,6 @@ send_notification() {
 LOG_PATH="$DIR/../logs/updater.log"
 logger_init "$LOG_PATH"
 
-
 # Global State for updates
 updates_json_list=""
 update_count=0
@@ -1016,4 +1015,3 @@ fi
 # Run Main
 
 main "$CONFIG_FILE"
-

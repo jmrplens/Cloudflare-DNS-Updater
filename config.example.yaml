@@ -1,3 +1,4 @@
+---
 # Cloudflare DNS Updater Configuration
 
 cloudflare:
@@ -5,8 +6,8 @@ cloudflare:
   api_token: "YOUR_API_TOKEN"
 
 options:
-  proxied: true   # Default: true (Orange Cloud). Set to false for Grey Cloud (DNS Only).
-  ttl: 1          # Default: 1 (Auto). Set to 60-3600 for specific TTL.
+  proxied: true   # Default: true (Orange Cloud). to false for Grey Cloud (DNS Only).
+  ttl: 1          # Default: 1 (Auto). to 60-3600 for specific TTL.
 
 domains:
   # Example 1: Update both IPv4 (A) and IPv6 (AAAA) if detected (Default behavior)
@@ -33,7 +34,7 @@ notifications:
     enabled: false
     bot_token: ""
     chat_id: ""
-  
+
   discord:
     enabled: false
     webhook_url: ""

@@ -38,6 +38,9 @@ Options:
 
 Config:
   By default, it looks for 'cloudflare-dns.yaml' in the current directory.
+
+Project:
+  https://github.com/jmrplens/Cloudflare-DNS-Updater
 EOF
 }
 
