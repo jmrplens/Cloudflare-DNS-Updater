@@ -77,6 +77,8 @@ main() {
         do_ipv6="${domains_ipv6[i]}"
         ttl="${domains_ttl[i]}"
         
+        log_debug "Checking domain: $domain (IPv4: $do_ipv4, IPv6: $do_ipv6, Proxy: $target_proxied)"
+        
         # --- IPv4 Check ---
         if [[ "$do_ipv4" == "true" && -n "$CURRENT_IPV4" ]]; then
             # Find in current records
@@ -98,6 +100,8 @@ main() {
                     if [[ "$target_proxied" == "false" ]]; then
                         verification_list+=("$domain|4|$CURRENT_IPV4")
                     fi
+                else
+                    log_debug "  - A record OK ($r_content)"
                 fi
             fi
         fi
@@ -122,6 +126,8 @@ main() {
                     if [[ "$target_proxied" == "false" ]]; then
                         verification_list+=("$domain|6|$CURRENT_IPV6")
                     fi
+                else
+                    log_debug "  - AAAA record OK ($r_content)"
                 fi
             fi
         fi
@@ -173,6 +179,7 @@ main() {
         fi
     else
         log_success "No changes needed. All records are up to date."
+        log_debug "Debug: Verification skipped because no records were updated."
     fi
 }
 

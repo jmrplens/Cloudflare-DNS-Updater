@@ -92,3 +92,25 @@ log_debug() {
         _log "$dGRAY" "DEBUG" "$1" "false"
     fi
 }
+
+# Helper to sanitize logs
+sanitize_log() {
+    local msg="$1"
+    # Redact API Token
+    if [[ -n "$CF_API_TOKEN" ]]; then
+        msg="${msg//$CF_API_TOKEN/********}"
+    fi
+    # Redact Zone ID (optional, but good practice if requested)
+    if [[ -n "$CF_ZONE_ID" ]]; then
+        msg="${msg//$CF_ZONE_ID/********}"
+    fi
+    echo "$msg"
+}
+
+log_debug_redacted() {
+    if [[ "${DEBUG:-false}" == "true" ]]; then
+        local clean_msg
+        clean_msg=$(sanitize_log "$1")
+        _log "$dGRAY" "DEBUG" "$clean_msg" "false"
+    fi
+}
