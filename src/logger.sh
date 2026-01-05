@@ -56,13 +56,9 @@ _log() {
     timestamp=$(date '+%Y-%m-%d %H:%M:%S')
     
     # Console Output (Colored)
-    # Output to stderr if it's an error
+    # Output to stderr (always, to avoid corrupting stdout when used in subshells)
     if [[ "${SILENT:-false}" != "true" || "$is_error" == "true" ]]; then
-        if [[ "$is_error" == "true" ]]; then
-            echo -e "${color}[${label}]${NC} ${msg}" >&2
-        else
-            echo -e "${color}[${label}]${NC} ${msg}"
-        fi
+        echo -e "${color}[${label}]${NC} ${msg}" >&2
     fi
     
     # File Output (Plain, if init)

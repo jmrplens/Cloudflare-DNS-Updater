@@ -26,7 +26,49 @@ cf_get_all_records() {
     echo "$response"
 }
 
-# ... (skip to cf_batch_update) ...
+# Parse JSON response into flat readable lines:
+# ID|NAME|TYPE|CONTENT|PROXIED
+cf_parse_records_to_lines() {
+    local json="$1"
+    
+    # Determine JSON parser
+    local jq_cmd="jq"
+    if command -v jq &> /dev/null; then
+        jq_cmd="jq"
+    elif command -v jq.exe &> /dev/null; then
+        jq_cmd="jq.exe"
+    elif [[ -f "/mnt/c/msys64/mingw64/bin/jq.exe" ]]; then
+        jq_cmd="/mnt/c/msys64/mingw64/bin/jq.exe"
+    elif [[ -f "/c/msys64/mingw64/bin/jq.exe" ]]; then
+        jq_cmd="/c/msys64/mingw64/bin/jq.exe"
+    else
+        jq_cmd=""
+    fi
+
+    # Parse
+    if [[ -n "$jq_cmd" ]]; then
+        log_debug "Using JSON parser: $jq_cmd"
+        echo "$json" | "$jq_cmd" -r '.result[] | "\(.id)|\(.name)|\(.type)|\(.content)|\(.proxied)"'
+    else
+        log_warn "jq not found. Using sed parser fallback."
+        
+        echo "$json" | \
+        sed -e 's/},{"/}\n{/g' | \
+        sed -e 's/\[{/{/g' | \
+        sed -e 's/}\]//g' | \
+        while read -r line; do
+            id=$(echo "$line" | grep -o '"id":"[^"]*"' | head -n1 | cut -d'"' -f4)
+            name=$(echo "$line" | grep -o '"name":"[^"]*"' | head -n1 | cut -d'"' -f4)
+            type=$(echo "$line" | grep -o '"type":"[^"]*"' | head -n1 | cut -d'"' -f4)
+            content=$(echo "$line" | grep -o '"content":"[^"]*"' | head -n1 | cut -d'"' -f4)
+            proxied=$(echo "$line" | grep -o '"proxied":[^,}]*' | head -n1 | cut -d':' -f2 | tr -d ' ')
+            
+            if [[ -n "$id" && -n "$name" ]]; then
+                echo "$id|$name|$type|$content|$proxied"
+            fi
+        done
+    fi
+}
 
 # Batch Update
 cf_batch_update() {
