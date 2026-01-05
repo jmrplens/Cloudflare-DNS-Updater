@@ -169,9 +169,6 @@ main() {
             
         else
             log_error "Batch update failed."
-            send_notification "Cloudflare DNS: Updated $update_count records to IP(s) $CURRENT_IPV4 $CURRENT_IPV6"
-        else
-            log_error "Batch update failed."
             send_notification "Cloudflare DNS: Batch update failed."
         fi
     else
