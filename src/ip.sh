@@ -21,11 +21,11 @@ get_ipv6_from_interface() {
 	if command -v ip >/dev/null 2>&1; then
 		# Linux: Get global scope addresses, exclude ULA (fc00::/7 = fc/fd prefix)
 		# which have scope global in the kernel but are not publicly routable.
-		ip=$(ip -6 addr show dev "$iface" scope global | grep "inet6" | awk '{print $2}' | cut -d'/' -f1 | grep -v -i "^f[cd]" | head -n1)
+		ip=$(ip -6 addr show dev "$iface" scope global | awk '/inet6 / { split($2, a, "/"); if (a[1] !~ /^[Ff][CcDd]/) { print a[1]; exit } }')
 
 	elif command -v ifconfig >/dev/null 2>&1; then
 		# macOS / BSD: exclude link-local (fe80) and ULA (fc/fd prefix)
-		ip=$(ifconfig "$iface" | grep "inet6 " | grep -v "fe80::" | awk '{print $2}' | cut -d'/' -f1 | grep -v -i "^f[cd]" | head -n1)
+		ip=$(ifconfig "$iface" | awk '/inet6 / && $2 !~ /^fe80/ && $2 !~ /^[Ff][CcDd]/ { split($2, a, "/"); print a[1]; exit }')
 	fi
 
 	# Windows (via ipconfig in git bash/wsl? hard to parse reliable without powershell)
