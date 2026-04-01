@@ -19,22 +19,13 @@ get_ipv6_from_interface() {
 	if [[ -z "$iface" ]]; then return 1; fi
 
 	if command -v ip >/dev/null 2>&1; then
-		# Linux: Prefer 'global' scope, exclude 'deprecated' or 'temporary' if possible,
-		# but Cloudflare usually wants the permanent global address.
-		# We take the first 'scope global' address.
-		# 'ip -6 addr show dev eth0 scope global'
-		# Output format: "inet6 2001:db8::1/64 scope global ..."
-
-		# Try to find one that is NOT temporary (mngtmpaddr/dynamic) if possible,
-		# or just the first global one.
-		# User example: 2a0c:5a84:b906:6300:7a55:36ff:fe04:bb9a (looks like EUI-64 or random privacy, but global)
-
-		ip=$(ip -6 addr show dev "$iface" scope global | grep "inet6" | head -n1 | awk '{print $2}' | cut -d'/' -f1)
+		# Linux: Get global scope addresses, exclude ULA (fc00::/7 = fc/fd prefix)
+		# which have scope global in the kernel but are not publicly routable.
+		ip=$(ip -6 addr show dev "$iface" scope global | grep "inet6" | awk '{print $2}' | cut -d'/' -f1 | grep -v -i "^f[cd]" | head -n1)
 
 	elif command -v ifconfig >/dev/null 2>&1; then
-		# macOS / BSD
-		# Look for 'inet6', exclude 'fe80', take first.
-		ip=$(ifconfig "$iface" | grep "inet6 " | grep -v "fe80::" | head -n1 | awk '{print $2}' | cut -d'/' -f1)
+		# macOS / BSD: exclude link-local (fe80) and ULA (fc/fd prefix)
+		ip=$(ifconfig "$iface" | grep "inet6 " | grep -v "fe80::" | awk '{print $2}' | cut -d'/' -f1 | grep -v -i "^f[cd]" | head -n1)
 	fi
 
 	# Windows (via ipconfig in git bash/wsl? hard to parse reliable without powershell)
