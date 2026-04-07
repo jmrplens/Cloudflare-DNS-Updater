@@ -20,10 +20,10 @@ get_ipv6_from_interface() {
 
 	if command -v ip >/dev/null 2>&1; then
 		# Linux: Get global scope addresses, exclude ULA (fc00::/7 = fc/fd prefix).
-		# Prefer non-deprecated addresses; fall back to deprecated if none available.
+		# Filter out deprecated addresses — they should not be published in DNS.
 		ip=$(ip -6 addr show dev "$iface" scope global | grep -v deprecated | awk '/inet6 / { split($2, a, "/"); if (a[1] !~ /^[Ff][CcDd]/) { print a[1]; exit } }')
 		if [[ -z "$ip" ]]; then
-			ip=$(ip -6 addr show dev "$iface" scope global | awk '/inet6 / { split($2, a, "/"); if (a[1] !~ /^[Ff][CcDd]/) { print a[1]; exit } }')
+			echo "[WARNING] No valid (non-deprecated) IPv6 address found on interface '$iface'. AAAA records will not be updated." >&2
 		fi
 
 	elif command -v ifconfig >/dev/null 2>&1; then
