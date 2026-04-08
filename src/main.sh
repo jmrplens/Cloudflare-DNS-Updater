@@ -10,9 +10,9 @@ domains_ttl=()
 DOMAIN_COUNT=0
 CF_ZONE_ID=""
 CF_API_TOKEN=""
-DEBUG="false"
-FORCE="false"
-SILENT="false"
+DEBUG="${DEBUG:-false}"
+FORCE="${FORCE:-false}"
+SILENT="${SILENT:-false}"
 
 # Load Modules
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
@@ -32,7 +32,7 @@ logger_init "$LOG_PATH"
 # shellcheck source=src/cloudflare.sh
 
 # Project metadata
-VERSION="1.1.2"
+VERSION="1.1.3"
 updates_json_list=""
 update_count=0
 verification_list=()

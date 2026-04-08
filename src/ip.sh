@@ -19,9 +19,25 @@ get_ipv6_from_interface() {
 	if [[ -z "$iface" ]]; then return 1; fi
 
 	if command -v ip >/dev/null 2>&1; then
-		# Linux: Get global scope addresses, exclude ULA (fc00::/7 = fc/fd prefix)
-		# which have scope global in the kernel but are not publicly routable.
-		ip=$(ip -6 addr show dev "$iface" scope global | awk '/inet6 / { split($2, a, "/"); if (a[1] !~ /^[Ff][CcDd]/) { print a[1]; exit } }')
+		# Linux: Get first global-scope, non-ULA IPv6 with preferred_lft > 0.
+		# Addresses with preferred_lft 0 are deprecated and must not be published in DNS.
+		ip=$(ip -6 addr show dev "$iface" scope global | awk '
+			/inet6 / {
+				split($2, a, "/")
+				if (a[1] !~ /^[Ff][CcDd]/) {
+					addr = a[1]
+					getline
+					for (i = 1; i <= NF; i++) {
+						if ($i == "preferred_lft") {
+							gsub(/sec$/, "", $(i+1))
+							if ($(i+1) + 0 > 0) { print addr; exit }
+						}
+					}
+				}
+			}')
+		if [[ -z "$ip" ]]; then
+			log_warn "No valid (non-deprecated) IPv6 found on '$iface'. AAAA records will not be updated."
+		fi
 
 	elif command -v ifconfig >/dev/null 2>&1; then
 		# macOS / BSD: exclude link-local (fe80) and ULA (fc/fd prefix)
