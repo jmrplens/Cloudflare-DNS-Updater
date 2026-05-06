@@ -5,7 +5,8 @@ CF_API_URL="https://api.cloudflare.com/client/v4"
 # Fetch all records (optional filter by type)
 cf_get_all_records() {
 	local type="$1"
-	local url="$CF_API_URL/zones/$CF_ZONE_ID/dns_records?per_page=5000000&match=any&type=$type"
+	local url="$CF_API_URL/zones/$CF_ZONE_ID/dns_records?per_page=500"
+	[[ -n "$type" ]] && url="${url}&type=${type}"
 
 	log_debug "API: GET $url"
 
@@ -46,8 +47,8 @@ cf_parse_records_to_lines() {
 	# Parse
 	if [[ -n "$jq_cmd" ]]; then
 		log_debug "Using JSON parser: $jq_cmd"
-		# Filter for A and AAAA records only
-		echo "$json" | "$jq_cmd" -r '.result[] | select(.type == "A" or .type == "AAAA") | "\(.id)|\(.name)|\(.type)|\(.content)|\(.proxied)"'
+
+		echo "$json" | "$jq_cmd" -r '.result[] | "\(.id)|\(.name)|\(.type)|\(.content)|\(.proxied)"'
 	else
 		log_warn "jq not found. Using sed parser fallback."
 
@@ -62,11 +63,8 @@ cf_parse_records_to_lines() {
 				content=$(echo "$line" | grep -o '"content":"[^"]*"' | head -n1 | cut -d'"' -f4)
 				proxied=$(echo "$line" | grep -o '"proxied":[^,}]*' | head -n1 | cut -d':' -f2 | tr -d ' ')
 
-				# Local filter for A and AAAA
-				if [[ "$type" == "A" || "$type" == "AAAA" ]]; then
-					if [[ -n "$id" && -n "$name" ]]; then
-						echo "$id|$name|$type|$content|$proxied"
-					fi
+				if [[ -n "$id" && -n "$name" ]]; then
+					echo "$id|$name|$type|$content|$proxied"
 				fi
 			done
 	fi
