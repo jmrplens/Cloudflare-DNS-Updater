@@ -146,7 +146,7 @@ main() {
 
 	# 3. Fetch Cloudflare Records (Single Request)
 	log_info "Fetching DNS records from Cloudflare..."
-	local fetch_type=""
+	local fetch_type="A%2CAAAA"
 
 	# Logic: If we only need one type, filter at API level.
 	# If we need both, fetch all in 1 call to minimize RTT.
