@@ -148,7 +148,7 @@ main() {
 	log_info "Fetching DNS records from Cloudflare..."
 	local fetch_type="A,AAAA"
 
-	# Logic: If we only need one type
+	# Logic: If we only need one type, filter at API level
 	if [[ $total_v4 -gt 0 && $total_v6 -eq 0 ]]; then
 		fetch_type="A"
 	elif [[ $total_v4 -eq 0 && $total_v6 -gt 0 ]]; then
