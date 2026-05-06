@@ -5,7 +5,7 @@ CF_API_URL="https://api.cloudflare.com/client/v4"
 # Fetch all records (optional filter by type)
 cf_get_all_records() {
 	local type="$1"
-	local url="$CF_API_URL/zones/$CF_ZONE_ID/dns_records?per_page=500"
+	local url="$CF_API_URL/zones/$CF_ZONE_ID/dns_records?per_page=5000"
 	[[ -n "$type" ]] && url="${url}&type=${type}"
 
 	log_debug "API: GET $url"
