@@ -11,12 +11,54 @@ get_default_interface() {
 	fi
 }
 
+get_ipv6_prefix64() {
+	local addr="${1%%/*}"
+
+	printf '%s\n' "$addr" | awk '
+		function count_parts(value, parts) {
+			return value == "" ? 0 : split(value, parts, ":")
+		}
+		function normalize(part) {
+			part = tolower(part)
+			sub(/^0+/, "", part)
+			return part == "" ? "0" : part
+		}
+
+		{
+			addr = tolower($0)
+			sub(/%.*/, "", addr)
+			if (addr == "") next
+
+			split(addr, halves, "::")
+			left_count = count_parts(halves[1], left)
+			right_count = index(addr, "::") ? count_parts(halves[2], right) : 0
+			missing = index(addr, "::") ? 8 - left_count - right_count : 0
+
+			idx = 0
+			for (i = 1; i <= left_count; i++) hextets[++idx] = normalize(left[i])
+			for (i = 1; i <= missing; i++) hextets[++idx] = "0"
+			for (i = 1; i <= right_count; i++) hextets[++idx] = normalize(right[i])
+
+			if (idx >= 4) print hextets[1] ":" hextets[2] ":" hextets[3] ":" hextets[4]
+		}'
+}
+
 get_ipv6_route_prefix() {
 	local route_src
+	local route_target
 
-	route_src=$(ip -6 route get 2001:4860:4860::8888 2>/dev/null | sed -n 's/.* src \([^ ]*\).*/\1/p' | head -n1)
+	route_src=$(ip -6 route show default 2>/dev/null | sed -n 's/.* src \([^ ]*\).*/\1/p' | head -n1)
+	if [[ -z "$route_src" ]]; then
+		route_src=$(ip -6 route show ::/0 2>/dev/null | sed -n 's/.* src \([^ ]*\).*/\1/p' | head -n1)
+	fi
+	if [[ -z "$route_src" ]]; then
+		route_target="${IPV6_ROUTE_TARGET:-2001:4860:4860::8888}"
+		if [[ -n "$route_target" ]]; then
+			route_src=$(ip -6 route get "$route_target" 2>/dev/null | sed -n 's/.* src \([^ ]*\).*/\1/p' | head -n1)
+		fi
+	fi
 	if [[ -n "$route_src" ]]; then
-		echo "$route_src" | awk -F: 'NF >= 4 { print tolower($1 ":" $2 ":" $3 ":" $4) }'
+		get_ipv6_prefix64 "$route_src"
 	fi
 }
 
@@ -34,9 +76,28 @@ get_ipv6_from_interface() {
 		local preferred_prefix selected deprecated
 		preferred_prefix=$(get_ipv6_route_prefix)
 		selected=$(ip -6 addr show dev "$iface" scope global | awk -v preferred_prefix="$preferred_prefix" '
-			function prefix64(addr, parts) {
-				split(tolower(addr), parts, ":")
-				return parts[1] ":" parts[2] ":" parts[3] ":" parts[4]
+			function count_parts(value, parts) {
+				return value == "" ? 0 : split(value, parts, ":")
+			}
+			function normalize(part) {
+				part = tolower(part)
+				sub(/^0+/, "", part)
+				return part == "" ? "0" : part
+			}
+			function prefix64(addr, halves, left, right, hextets, left_count, right_count, missing, i, idx) {
+				addr = tolower(addr)
+				sub(/%.*/, "", addr)
+				split(addr, halves, "::")
+				left_count = count_parts(halves[1], left)
+				right_count = index(addr, "::") ? count_parts(halves[2], right) : 0
+				missing = index(addr, "::") ? 8 - left_count - right_count : 0
+
+				idx = 0
+				for (i = 1; i <= left_count; i++) hextets[++idx] = normalize(left[i])
+				for (i = 1; i <= missing; i++) hextets[++idx] = "0"
+				for (i = 1; i <= right_count; i++) hextets[++idx] = normalize(right[i])
+
+				return idx >= 4 ? hextets[1] ":" hextets[2] ":" hextets[3] ":" hextets[4] : ""
 			}
 			function has_flag(text, name) {
 				return text ~ "(^|[[:space:]])" name "([[:space:]]|$)"
@@ -66,13 +127,12 @@ get_ipv6_from_interface() {
 				valid_lft = lifetime_value("valid_lft", 0)
 				preferred_lft = lifetime_value("preferred_lft", 0)
 				deprecated = (has_flag(flags, "deprecated") || preferred_lft == 0)
-				stable = (flags ~ /(^|[[:space:]])proto[[:space:]]+kernel_ra([[:space:]]|$)/)
+				stable = (has_flag(flags, "mngtmpaddr") || has_flag(flags, "dynamic") || flags ~ /(^|[[:space:]])proto[[:space:]]+(kernel|ra)([[:space:]]|$)/)
 				score = valid_lft
 
-				if (preferred_prefix != "" && prefix64(addr) == preferred_prefix) score += 1000000000
-				if (stable) score += 2000000000
+				if (stable) score += 1000
+				if (preferred_prefix != "" && prefix64(addr) == preferred_prefix) score += 2000000000
 				if (!deprecated) score += 4000000000
-				if (has_flag(flags, "mngtmpaddr") && !stable) score -= 50
 
 				if (!found || score > best_score) {
 					found = 1
