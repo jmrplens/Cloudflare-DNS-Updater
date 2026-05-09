@@ -11,6 +11,57 @@ get_default_interface() {
 	fi
 }
 
+get_ipv6_prefix64() {
+	local addr="${1%%/*}"
+
+	printf '%s\n' "$addr" | awk '
+		function count_parts(value, parts) {
+			return value == "" ? 0 : split(value, parts, ":")
+		}
+		function normalize(part) {
+			part = tolower(part)
+			sub(/^0+/, "", part)
+			return part == "" ? "0" : part
+		}
+
+		{
+			addr = tolower($0)
+			sub(/%.*/, "", addr)
+			if (addr == "") next
+
+			split(addr, halves, "::")
+			left_count = count_parts(halves[1], left)
+			right_count = index(addr, "::") ? count_parts(halves[2], right) : 0
+			missing = index(addr, "::") ? 8 - left_count - right_count : 0
+
+			idx = 0
+			for (i = 1; i <= left_count; i++) hextets[++idx] = normalize(left[i])
+			for (i = 1; i <= missing; i++) hextets[++idx] = "0"
+			for (i = 1; i <= right_count; i++) hextets[++idx] = normalize(right[i])
+
+			if (idx >= 4) print hextets[1] ":" hextets[2] ":" hextets[3] ":" hextets[4]
+		}'
+}
+
+get_ipv6_route_prefix() {
+	local route_src
+	local route_target
+
+	route_src=$(ip -6 route show default 2>/dev/null | sed -n 's/.* src \([^ ]*\).*/\1/p' | head -n1)
+	if [[ -z "$route_src" ]]; then
+		route_src=$(ip -6 route show ::/0 2>/dev/null | sed -n 's/.* src \([^ ]*\).*/\1/p' | head -n1)
+	fi
+	if [[ -z "$route_src" ]]; then
+		route_target="${IPV6_ROUTE_TARGET:-2001:4860:4860::8888}"
+		if [[ -n "$route_target" ]]; then
+			route_src=$(ip -6 route get "$route_target" 2>/dev/null | sed -n 's/.* src \([^ ]*\).*/\1/p' | head -n1)
+		fi
+	fi
+	if [[ -n "$route_src" ]]; then
+		get_ipv6_prefix64 "$route_src"
+	fi
+}
+
 # Get IPv6 from specific interface
 get_ipv6_from_interface() {
 	local iface="$1"
@@ -19,24 +70,89 @@ get_ipv6_from_interface() {
 	if [[ -z "$iface" ]]; then return 1; fi
 
 	if command -v ip >/dev/null 2>&1; then
-		# Linux: Get first global-scope, non-ULA IPv6 with preferred_lft > 0.
-		# Addresses with preferred_lft 0 are deprecated and must not be published in DNS.
-		ip=$(ip -6 addr show dev "$iface" scope global | awk '
-			/inet6 / {
-				split($2, a, "/")
-				if (a[1] !~ /^[Ff][CcDd]/) {
-					addr = a[1]
-					getline
-					for (i = 1; i <= NF; i++) {
-						if ($i == "preferred_lft") {
-							gsub(/sec$/, "", $(i+1))
-							if ($(i+1) + 0 > 0) { print addr; exit }
-						}
+		# Linux: prefer the stable address on the default IPv6 prefix.
+		# If the router advertises preferred_lft 0, still use the local
+		# server address instead of falling back to the router's public IPv6.
+		local preferred_prefix selected deprecated
+		preferred_prefix=$(get_ipv6_route_prefix)
+		selected=$(ip -6 addr show dev "$iface" scope global | awk -v preferred_prefix="$preferred_prefix" '
+			function count_parts(value, parts) {
+				return value == "" ? 0 : split(value, parts, ":")
+			}
+			function normalize(part) {
+				part = tolower(part)
+				sub(/^0+/, "", part)
+				return part == "" ? "0" : part
+			}
+			function prefix64(addr, halves, left, right, hextets, left_count, right_count, missing, i, idx) {
+				addr = tolower(addr)
+				sub(/%.*/, "", addr)
+				split(addr, halves, "::")
+				left_count = count_parts(halves[1], left)
+				right_count = index(addr, "::") ? count_parts(halves[2], right) : 0
+				missing = index(addr, "::") ? 8 - left_count - right_count : 0
+
+				idx = 0
+				for (i = 1; i <= left_count; i++) hextets[++idx] = normalize(left[i])
+				for (i = 1; i <= missing; i++) hextets[++idx] = "0"
+				for (i = 1; i <= right_count; i++) hextets[++idx] = normalize(right[i])
+
+				return idx >= 4 ? hextets[1] ":" hextets[2] ":" hextets[3] ":" hextets[4] : ""
+			}
+			function has_flag(text, name) {
+				return text ~ "(^|[[:space:]])" name "([[:space:]]|$)"
+			}
+			function lifetime_value(name, fallback, i, value) {
+				for (i = 1; i <= NF; i++) {
+					if ($i == name) {
+						value = $(i + 1)
+						gsub(/sec$/, "", value)
+						return value == "forever" ? 999999999 : value + 0
 					}
 				}
+				return fallback
+			}
+
+			/inet6 / {
+				split($2, a, "/")
+				addr = tolower(a[1])
+				flags = $0
+				if ((getline lifetime) <= 0) next
+
+				if (addr ~ /^f[cd]/ || has_flag(flags, "tentative") || has_flag(flags, "dadfailed") || has_flag(flags, "temporary")) {
+					next
+				}
+
+				$0 = lifetime
+				valid_lft = lifetime_value("valid_lft", 0)
+				preferred_lft = lifetime_value("preferred_lft", 0)
+				deprecated = (has_flag(flags, "deprecated") || preferred_lft == 0)
+				stable = (has_flag(flags, "mngtmpaddr") || has_flag(flags, "dynamic") || flags ~ /(^|[[:space:]])proto[[:space:]]+(kernel|ra)([[:space:]]|$)/)
+				score = valid_lft
+
+				if (stable) score += 1000
+				if (preferred_prefix != "" && prefix64(addr) == preferred_prefix) score += 2000000000
+				if (!deprecated) score += 4000000000
+
+				if (!found || score > best_score) {
+					found = 1
+					best_score = score
+					best_addr = addr
+					best_deprecated = deprecated
+				}
+			}
+
+			END {
+				if (found) print best_deprecated "|" best_addr
 			}')
+		if [[ -n "$selected" ]]; then
+			IFS='|' read -r deprecated ip <<<"$selected"
+			if [[ "$deprecated" == "1" ]]; then
+				log_warn "Using deprecated local IPv6 from '$iface' because no preferred stable IPv6 is available: $ip"
+			fi
+		fi
 		if [[ -z "$ip" ]]; then
-			log_warn "No valid (non-deprecated) IPv6 found on '$iface'. AAAA records will not be updated."
+			log_warn "No usable global IPv6 found on '$iface'. AAAA records will not be updated."
 		fi
 
 	elif command -v ifconfig >/dev/null 2>&1; then
