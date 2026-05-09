@@ -11,6 +11,15 @@ get_default_interface() {
 	fi
 }
 
+get_ipv6_route_prefix() {
+	local route_src
+
+	route_src=$(ip -6 route get 2001:4860:4860::8888 2>/dev/null | sed -n 's/.* src \([^ ]*\).*/\1/p' | head -n1)
+	if [[ -n "$route_src" ]]; then
+		echo "$route_src" | awk -F: 'NF >= 4 { print tolower($1 ":" $2 ":" $3 ":" $4) }'
+	fi
+}
+
 # Get IPv6 from specific interface
 get_ipv6_from_interface() {
 	local iface="$1"
@@ -19,24 +28,71 @@ get_ipv6_from_interface() {
 	if [[ -z "$iface" ]]; then return 1; fi
 
 	if command -v ip >/dev/null 2>&1; then
-		# Linux: Get first global-scope, non-ULA IPv6 with preferred_lft > 0.
-		# Addresses with preferred_lft 0 are deprecated and must not be published in DNS.
-		ip=$(ip -6 addr show dev "$iface" scope global | awk '
-			/inet6 / {
-				split($2, a, "/")
-				if (a[1] !~ /^[Ff][CcDd]/) {
-					addr = a[1]
-					getline
-					for (i = 1; i <= NF; i++) {
-						if ($i == "preferred_lft") {
-							gsub(/sec$/, "", $(i+1))
-							if ($(i+1) + 0 > 0) { print addr; exit }
-						}
+		# Linux: prefer the stable address on the default IPv6 prefix.
+		# If the router advertises preferred_lft 0, still use the local
+		# server address instead of falling back to the router's public IPv6.
+		local preferred_prefix selected deprecated
+		preferred_prefix=$(get_ipv6_route_prefix)
+		selected=$(ip -6 addr show dev "$iface" scope global | awk -v preferred_prefix="$preferred_prefix" '
+			function prefix64(addr, parts) {
+				split(tolower(addr), parts, ":")
+				return parts[1] ":" parts[2] ":" parts[3] ":" parts[4]
+			}
+			function has_flag(text, name) {
+				return text ~ "(^|[[:space:]])" name "([[:space:]]|$)"
+			}
+			function lifetime_value(name, fallback, i, value) {
+				for (i = 1; i <= NF; i++) {
+					if ($i == name) {
+						value = $(i + 1)
+						gsub(/sec$/, "", value)
+						return value == "forever" ? 999999999 : value + 0
 					}
 				}
+				return fallback
+			}
+
+			/inet6 / {
+				split($2, a, "/")
+				addr = tolower(a[1])
+				flags = $0
+				if ((getline lifetime) <= 0) next
+
+				if (addr ~ /^f[cd]/ || has_flag(flags, "tentative") || has_flag(flags, "dadfailed") || has_flag(flags, "temporary")) {
+					next
+				}
+
+				$0 = lifetime
+				valid_lft = lifetime_value("valid_lft", 0)
+				preferred_lft = lifetime_value("preferred_lft", 0)
+				deprecated = (has_flag(flags, "deprecated") || preferred_lft == 0)
+				stable = (flags ~ /(^|[[:space:]])proto[[:space:]]+kernel_ra([[:space:]]|$)/)
+				score = valid_lft
+
+				if (preferred_prefix != "" && prefix64(addr) == preferred_prefix) score += 1000000000
+				if (stable) score += 2000000000
+				if (!deprecated) score += 4000000000
+				if (has_flag(flags, "mngtmpaddr") && !stable) score -= 50
+
+				if (!found || score > best_score) {
+					found = 1
+					best_score = score
+					best_addr = addr
+					best_deprecated = deprecated
+				}
+			}
+
+			END {
+				if (found) print best_deprecated "|" best_addr
 			}')
+		if [[ -n "$selected" ]]; then
+			IFS='|' read -r deprecated ip <<<"$selected"
+			if [[ "$deprecated" == "1" ]]; then
+				log_warn "Using deprecated local IPv6 from '$iface' because no preferred stable IPv6 is available: $ip"
+			fi
+		fi
 		if [[ -z "$ip" ]]; then
-			log_warn "No valid (non-deprecated) IPv6 found on '$iface'. AAAA records will not be updated."
+			log_warn "No usable global IPv6 found on '$iface'. AAAA records will not be updated."
 		fi
 
 	elif command -v ifconfig >/dev/null 2>&1; then
