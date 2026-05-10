@@ -2,6 +2,7 @@
 
 # Resolve directory
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
+# shellcheck source=src/logger.sh
 source "$DIR/src/logger.sh"
 CONFIG_FILE="$DIR/cloudflare-dns.yaml"
 
