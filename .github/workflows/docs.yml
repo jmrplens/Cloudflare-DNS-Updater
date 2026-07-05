@@ -28,6 +28,8 @@ jobs:
         uses: withastro/action@v3
         with:
           path: ./docs
+          # pnpm 11 requires Node >= 22.13 (the action defaults to Node 20)
+          node-version: 24
           package-manager: pnpm@11.9.0
 
   deploy:
