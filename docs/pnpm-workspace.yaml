@@ -5,3 +5,7 @@ allowBuilds:
 
 # Install newly published releases immediately (no supply-chain delay)
 minimumReleaseAge: 0
+
+# Keep Node type definitions aligned with the runtime floor (engines >=24)
+overrides:
+  "@types/node": ^24.0.0
