@@ -36,8 +36,9 @@ http_request() {
 	fi
 
 	if [[ "$HTTP_CLIENT" == "curl" || "$HTTP_CLIENT" == "curl.exe" ]]; then
-		# Build curl command array
-		local cmd=("$HTTP_CLIENT" "-s" "-X" "$method")
+		# Build curl command array. Timeouts keep a hung API from blocking
+		# the whole run (this script usually runs unattended via cron).
+		local cmd=("$HTTP_CLIENT" "-s" "--connect-timeout" "10" "--max-time" "30" "-X" "$method")
 
 		# Add headers
 		for h in "${headers[@]}"; do

@@ -92,6 +92,12 @@ function test_parse_records_jq_extracts_wildcard_record() {
 	assert_contains "rec-a-wildcard|*.example.com|A|192.0.2.10|false" "$parsed"
 }
 
+function test_parse_records_jq_filters_out_other_types() {
+	local parsed
+	parsed=$(cf_parse_records_to_lines "$(cat "$FIXTURES/dns_records.json")")
+	assert_not_contains "rec-txt-root" "$parsed"
+}
+
 # --- cf_parse_records_to_lines (sed fallback path, no jq in PATH) ---
 
 function test_parse_records_sed_fallback_extracts_records() {
@@ -111,11 +117,10 @@ function test_parse_records_sed_fallback_extracts_records() {
 	' 2>/dev/null)
 	rm -rf "$shim"
 
-	# NOTE: the sed fallback currently only extracts the first record of a
-	# response: the '},{"' split eats the opening quote of the next record's
-	# "id" key, so every later record is dropped. Tracked for a fix; this
-	# test documents today's behavior.
 	assert_contains "rec-a-root|example.com|A|192.0.2.10|true" "$parsed"
+	assert_contains "rec-aaaa-root|example.com|AAAA|2001:db8::10|true" "$parsed"
+	assert_contains "rec-a-wildcard|*.example.com|A|192.0.2.10|false" "$parsed"
+	assert_not_contains "rec-txt-root" "$parsed"
 }
 
 # --- cf_get_all_records ---
@@ -139,6 +144,24 @@ function test_get_all_records_returns_response_on_success() {
 function test_get_all_records_fails_on_api_error() {
 	bashunit::mock http_request fake_http_request_failure
 	assert_general_error "$(cf_get_all_records "A,AAAA" 2>/dev/null)"
+}
+
+function fake_http_request_paginated() {
+	local url="$2"
+	if [[ "$url" == *"page=1"* ]]; then
+		echo '{"result":[{"id":"page1-rec","name":"p1.example.com","type":"A","content":"192.0.2.1","proxied":true,"ttl":1}],"result_info":{"page":1,"per_page":5000,"count":1,"total_count":2,"total_pages":2},"success":true,"errors":[]}'
+	else
+		echo '{"result":[{"id":"page2-rec","name":"p2.example.com","type":"AAAA","content":"2001:db8::2","proxied":false,"ttl":1}],"result_info":{"page":2,"per_page":5000,"count":1,"total_count":2,"total_pages":2},"success":true,"errors":[]}'
+	fi
+}
+
+function test_get_all_records_follows_pagination() {
+	bashunit::mock http_request fake_http_request_paginated
+	local response parsed
+	response=$(cf_get_all_records "A,AAAA")
+	parsed=$(cf_parse_records_to_lines "$response")
+	assert_contains "page1-rec|p1.example.com|A|192.0.2.1|true" "$parsed"
+	assert_contains "page2-rec|p2.example.com|AAAA|2001:db8::2|false" "$parsed"
 }
 
 # --- cf_batch_update ---

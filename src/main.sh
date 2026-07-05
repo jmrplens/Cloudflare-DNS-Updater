@@ -162,8 +162,14 @@ main() {
 
 	parsed_records=$(cf_parse_records_to_lines "$raw_records")
 	local record_lines
-	record_lines=$(echo "$parsed_records" | grep -c "^" || echo 0)
-	log_info "Parsed $record_lines records from Cloudflare (processing $DOMAIN_COUNT domains)." # 4. Analyze Records
+	# printf (no trailing newline) so an empty result counts 0, not 1
+	record_lines=$(printf '%s' "$parsed_records" | grep -c .)
+	log_info "Parsed $record_lines records from Cloudflare (processing $DOMAIN_COUNT domains)."
+	if [[ "$record_lines" -eq 0 ]]; then
+		log_warn "No A/AAAA records returned by Cloudflare for this zone."
+	fi
+
+	# 4. Analyze Records
 	log_info "Analyzing records..."
 
 	for ((i = 0; i < DOMAIN_COUNT; i++)); do

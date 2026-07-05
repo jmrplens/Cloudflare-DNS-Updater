@@ -2,27 +2,56 @@
 
 CF_API_URL="https://api.cloudflare.com/client/v4"
 
-# Fetch all records (optional filter by type)
+# Fetch all records (optional filter by type), following pagination.
+# NOTE: "type" accepts a comma-separated list (e.g. "A,AAAA"). This is
+# undocumented Cloudflare API behavior (the public schema models a single
+# enum value); it has been verified against the live API, and
+# cf_parse_records_to_lines keeps a defensive local A/AAAA filter in case
+# it ever changes.
+# Output: one JSON response document per page (newline-separated); both
+# the jq and sed parsers in cf_parse_records_to_lines handle the stream.
 cf_get_all_records() {
 	local type="$1"
-	local url="$CF_API_URL/zones/$CF_ZONE_ID/dns_records?per_page=5000"
-	[[ -n "$type" ]] && url="${url}&type=${type}"
+	local base_url="$CF_API_URL/zones/$CF_ZONE_ID/dns_records?per_page=5000"
+	[[ -n "$type" ]] && base_url="${base_url}&type=${type}"
 
-	log_debug "API: GET $url"
+	local page=1
+	local total_pages=1
+	local combined=""
 
-	response=$(http_request "GET" "$url" "" \
-		"Authorization: Bearer $CF_API_TOKEN" \
-		"Content-Type: application/json")
+	while true; do
+		local url="${base_url}&page=${page}"
+		log_debug_redacted "API: GET $url"
 
-	log_debug_redacted "API Response: $response"
+		response=$(http_request "GET" "$url" "" \
+			"Authorization: Bearer $CF_API_TOKEN" \
+			"Content-Type: application/json")
 
-	if [[ "$response" != *"\"success\":true"* ]]; then
-		log_error "Failed to fetch records"
-		log_debug_redacted "$response"
-		return 1
-	fi
+		log_debug_redacted "API Response: $response"
 
-	echo "$response"
+		if [[ "$response" != *"\"success\":true"* ]]; then
+			log_error "Failed to fetch records (page $page)"
+			log_debug_redacted "$response"
+			return 1
+		fi
+
+		if [[ -n "$combined" ]]; then
+			combined+=$'\n'"$response"
+		else
+			combined="$response"
+		fi
+
+		# total_pages extracted with grep so pagination also works without jq
+		total_pages=$(echo "$response" | grep -o '"total_pages":[0-9]*' | head -n1 | cut -d':' -f2)
+		total_pages=${total_pages:-1}
+
+		if [[ $page -ge $total_pages ]]; then
+			break
+		fi
+		page=$((page + 1))
+	done
+
+	echo "$combined"
 }
 
 # Parse JSON response into flat readable lines:
@@ -44,16 +73,21 @@ cf_parse_records_to_lines() {
 		jq_cmd=""
 	fi
 
-	# Parse
+	# Parse. Only A and AAAA records are emitted: the API request already
+	# filters by type, but that relies on undocumented multi-type support
+	# (see cf_get_all_records), so keep a defensive local filter too.
 	if [[ -n "$jq_cmd" ]]; then
 		log_debug "Using JSON parser: $jq_cmd"
 
-		echo "$json" | "$jq_cmd" -r '.result[] | "\(.id)|\(.name)|\(.type)|\(.content)|\(.proxied)"'
+		echo "$json" | "$jq_cmd" -r '.result[] | select(.type == "A" or .type == "AAAA") | "\(.id)|\(.name)|\(.type)|\(.content)|\(.proxied)"'
 	else
 		log_warn "jq not found. Using sed parser fallback."
 
+		# The first sed keeps the opening quote of the next record's "id"
+		# key in the replacement; dropping it silently discards every
+		# record after the first one.
 		echo "$json" |
-			sed -e 's/},{"/}\n{/g' |
+			sed -e 's/},{"/}\n{"/g' |
 			sed -e 's/\[{/{/g' |
 			sed -e 's/}\]//g' |
 			while read -r line; do
@@ -63,8 +97,10 @@ cf_parse_records_to_lines() {
 				content=$(echo "$line" | grep -o '"content":"[^"]*"' | head -n1 | cut -d'"' -f4)
 				proxied=$(echo "$line" | grep -o '"proxied":[^,}]*' | head -n1 | cut -d':' -f2 | tr -d ' ')
 
-				if [[ -n "$id" && -n "$name" ]]; then
-					echo "$id|$name|$type|$content|$proxied"
+				if [[ "$type" == "A" || "$type" == "AAAA" ]]; then
+					if [[ -n "$id" && -n "$name" ]]; then
+						echo "$id|$name|$type|$content|$proxied"
+					fi
 				fi
 			done
 	fi

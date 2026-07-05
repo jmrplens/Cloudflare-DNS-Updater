@@ -18,7 +18,8 @@ function test_http_request_get_builds_curl_command() {
 	http_request "GET" "https://api.example.com/records" "" \
 		"Authorization: Bearer tok" >/dev/null
 	assert_have_been_called_with curl \
-		-s -X GET -H "Authorization: Bearer tok" "https://api.example.com/records"
+		-s --connect-timeout 10 --max-time 30 -X GET \
+		-H "Authorization: Bearer tok" "https://api.example.com/records"
 }
 
 function test_http_request_post_includes_body() {
@@ -26,7 +27,8 @@ function test_http_request_post_includes_body() {
 	http_request "POST" "https://api.example.com/batch" '{"puts":[]}' \
 		"Authorization: Bearer tok" "Content-Type: application/json" >/dev/null
 	assert_have_been_called_with curl \
-		-s -X POST -H "Authorization: Bearer tok" -H "Content-Type: application/json" \
+		-s --connect-timeout 10 --max-time 30 -X POST \
+		-H "Authorization: Bearer tok" -H "Content-Type: application/json" \
 		-d '{"puts":[]}' "https://api.example.com/batch"
 }
 
