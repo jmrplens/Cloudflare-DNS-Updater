@@ -14,23 +14,29 @@ function set_up() {
 
 function test_is_debug_reads_env() {
 	DEBUG="true"
-	assert_successful_code "$(is_debug)"
+	is_debug
+	assert_successful_code
 	DEBUG="false"
-	assert_general_error "$(is_debug)"
+	is_debug
+	assert_general_error
 }
 
 function test_is_silent_reads_env() {
 	SILENT="true"
-	assert_successful_code "$(is_silent)"
+	is_silent
+	assert_successful_code
 	SILENT="false"
-	assert_general_error "$(is_silent)"
+	is_silent
+	assert_general_error
 }
 
 function test_is_force_reads_env() {
 	FORCE="true"
-	assert_successful_code "$(is_force)"
+	is_force
+	assert_successful_code
 	FORCE="false"
-	assert_general_error "$(is_force)"
+	is_force
+	assert_general_error
 }
 
 # --- sanitize_log ---
@@ -65,7 +71,30 @@ function test_logger_init_creates_log_file() {
 	local log_dir
 	log_dir=$(mktemp -d)
 	logger_init "$log_dir/nested/updater.log"
-	assert_successful_code "$(test -f "$log_dir/nested/updater.log")"
+	test -f "$log_dir/nested/updater.log"
+	assert_successful_code
+	rm -rf "$log_dir"
+}
+
+function test_logger_rotates_log_over_one_megabyte() {
+	local log_dir
+	log_dir=$(mktemp -d)
+	head -c $((1024 * 1024 + 16)) /dev/zero | tr '\0' 'x' >"$log_dir/updater.log"
+	logger_init "$log_dir/updater.log"
+	test -f "$log_dir/updater.log.old"
+	assert_successful_code
+	assert_contains "Log rotated" "$(cat "$log_dir/updater.log")"
+	rm -rf "$log_dir"
+}
+
+function test_logger_keeps_small_log_untouched() {
+	local log_dir
+	log_dir=$(mktemp -d)
+	echo "previous content" >"$log_dir/updater.log"
+	logger_init "$log_dir/updater.log"
+	test -f "$log_dir/updater.log.old"
+	assert_general_error
+	assert_contains "previous content" "$(cat "$log_dir/updater.log")"
 	rm -rf "$log_dir"
 }
 

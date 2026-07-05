@@ -14,3 +14,4 @@ dist/
 # Test tooling (installed via tools/install-bashunit.sh)
 lib/
 junit.xml
+coverage/

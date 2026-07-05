@@ -24,6 +24,13 @@ jobs:
         run: ./tools/install-bashunit.sh
       - name: Run unit tests
         run: ./lib/bashunit --parallel --log-junit junit.xml tests/
+      - name: Coverage report (informational)
+        # Serial run: line tracking is unreliable under --parallel. The
+        # reported % understates real coverage — the tracker cannot see
+        # into functions invoked via command substitution.
+        run: |
+          set -o pipefail
+          ./lib/bashunit --coverage --coverage-paths src tests/ | tail -12
       - name: Upload JUnit report
         if: always()
         uses: actions/upload-artifact@v7
