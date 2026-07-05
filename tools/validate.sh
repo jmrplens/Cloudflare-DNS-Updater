@@ -25,7 +25,7 @@ echo -e "${GREEN}Starting validation...${NC}"
 # 1. ShellCheck (Static Analysis & Security)
 if check_tool "shellcheck" "Static Analysis"; then
 	echo "Running ShellCheck..."
-	if shellcheck "$PROJECT_ROOT"/*.sh "$PROJECT_ROOT"/src/*.sh; then
+	if shellcheck "$PROJECT_ROOT"/*.sh "$PROJECT_ROOT"/src/*.sh "$PROJECT_ROOT"/tests/*.sh; then
 		echo -e "${GREEN}✔ ShellCheck passed!${NC}"
 	else
 		echo -e "${RED}✘ ShellCheck found issues.${NC}"
@@ -36,7 +36,7 @@ fi
 # 2. Syntax Check (Bash -n)
 echo "Running syntax check (bash -n)..."
 syntax_errors=0
-for file in "$PROJECT_ROOT"/*.sh "$PROJECT_ROOT"/src/*.sh; do
+for file in "$PROJECT_ROOT"/*.sh "$PROJECT_ROOT"/src/*.sh "$PROJECT_ROOT"/tests/*.sh; do
 	if ! bash -n "$file"; then
 		echo -e "${RED}✘ Syntax error in \"$file\"${NC}"
 		syntax_errors=$((syntax_errors + 1))
@@ -52,7 +52,8 @@ fi
 # 3. shfmt (Formatting check)
 if check_tool "shfmt" "Formatting"; then
 	echo "Running shfmt check..."
-	if shfmt -d "$PROJECT_ROOT"; then
+	# Explicit targets: keep shfmt away from lib/ (downloaded bashunit binary)
+	if shfmt -d "$PROJECT_ROOT"/*.sh "$PROJECT_ROOT/src" "$PROJECT_ROOT/tools" "$PROJECT_ROOT/tests"; then
 		echo -e "${GREEN}✔ Formatting is correct!${NC}"
 	else
 		echo -e "${YELLOW}⚠ Formatting issues found. Run 'shfmt -w .' to fix.${NC}"
@@ -79,6 +80,19 @@ if check_tool "actionlint" "GitHub Actions Validation"; then
 		echo -e "${RED}✘ GitHub Actions issues found.${NC}"
 		EXIT_CODE=1
 	fi
+fi
+
+# 6. Unit Tests (bashunit)
+if [[ -x "$PROJECT_ROOT/lib/bashunit" ]]; then
+	echo "Running unit tests (bashunit)..."
+	if "$PROJECT_ROOT/lib/bashunit" --parallel "$PROJECT_ROOT/tests"; then
+		echo -e "${GREEN}✔ Unit tests passed!${NC}"
+	else
+		echo -e "${RED}✘ Unit tests failed.${NC}"
+		EXIT_CODE=1
+	fi
+else
+	echo -e "${YELLOW}Warning: bashunit is not installed. Run ./tools/install-bashunit.sh to enable unit tests.${NC}"
 fi
 
 exit "${EXIT_CODE:-0}"

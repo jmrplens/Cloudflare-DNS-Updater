@@ -80,6 +80,26 @@ To create the dependency-free binaries (like `cf-updater-linux-x86_64`), we use 
 
 ## 🧪 Testing
 
+### Unit Tests
+
+Unit tests are written with [bashunit](https://bashunit.com) and live in `tests/` (one file per `src/` module, fixtures under `tests/fixtures/`).
+
+```bash
+# One-time setup: installs a pinned bashunit release into lib/ (gitignored)
+./tools/install-bashunit.sh
+
+# Run the whole suite
+./lib/bashunit --parallel tests/
+
+# Run a single file or filter by test name
+./lib/bashunit tests/config_test.sh
+./lib/bashunit tests/ --filter "cache_lookup"
+```
+
+Tests are plain Bash functions named `test_*`. External commands and functions (e.g. `curl`, `http_request`) are replaced with `bashunit::mock`/`bashunit::spy` — tests never hit the network. `./tools/validate.sh` also runs the suite when bashunit is installed, and CI runs it on every push/PR via `.github/workflows/test.yml`.
+
+### Manual Testing
+
 You can run the script directly from the source during development:
 
 ```bash

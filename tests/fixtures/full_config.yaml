@@ -1,0 +1,41 @@
+---
+# Test fixture: full configuration exercising all parser features
+
+cloudflare:
+  zone_id: "test-zone-123"
+  api_token: "test-token-abc"
+
+options:
+  proxied: true
+  ttl: 1
+  interface: "eth0"
+
+domains:
+  # Default domain: both IPs, proxied, auto TTL
+  - name: "example.com"
+
+  # IPv4 only via ip_type.
+  # NOTE: values must be unquoted; the parser currently keeps quotes
+  # in property values (tracked for a fix, see project plan).
+  - name: "v4.example.com"
+    ip_type: ipv4
+
+  # IPv6 only via ip_type
+  - name: "v6.example.com"
+    ip_type: ipv6
+
+  # Explicit both + custom ttl and proxy off
+  - name: "direct.example.com"
+    ip_type: both
+    proxied: false
+    ttl: 300
+
+notifications:
+  telegram:
+    enabled: true
+    bot_token: "tg-bot-token"
+    chat_id: "12345"
+
+  discord:
+    enabled: false
+    webhook_url: "https://discord.example.invalid/webhook"
