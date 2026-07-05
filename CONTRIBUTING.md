@@ -100,11 +100,24 @@ Tests are plain Bash functions named `test_*`. External commands and functions (
 
 ### Manual Testing
 
-You can run the script directly from the source during development:
+You can run the script directly from the source during development (it uses the `cloudflare-dns.yaml` next to the launcher):
 
 ```bash
-./cloudflare-dns-updater.sh --debug --config config.dev.yaml
+./cloudflare-dns-updater.sh --debug
 ```
 
 *   `--debug`: Enables verbose output (showing API calls).
 *   `--force`: Forces an update even if IP hasn't changed (useful for testing API logic).
+
+## 📖 Documentation Site
+
+The user documentation (English and Spanish) lives in `docs/` as an [Astro Starlight](https://starlight.astro.build/) site, deployed to GitHub Pages on every push to `main` that touches `docs/`.
+
+```bash
+cd docs
+pnpm install
+pnpm dev     # local dev server with live reload
+pnpm build   # production build (validates all content)
+```
+
+Content lives in `docs/src/content/docs/` (English at the root, Spanish under `es/`). When you change behavior, update both languages.
