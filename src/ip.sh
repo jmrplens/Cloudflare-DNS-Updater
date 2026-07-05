@@ -177,23 +177,29 @@ is_valid_ipv4() {
 }
 
 # Structural validation: hex+colons only, at most one '::', hextets of at
-# most 4 chars, and exactly 8 groups when there is no '::'.
+# most 4 chars, exactly 8 groups without '::' and at most 7 with it.
 is_valid_ipv6() {
 	local ip="$1"
 	[[ "$ip" =~ ^[0-9a-fA-F:]+$ ]] || return 1
 	[[ "$ip" == *":"* ]] || return 1
 	[[ "$ip" == *"::"*"::"* ]] && return 1
 
+	# Count non-empty groups (read -ra drops trailing empty fields, so
+	# counting array elements would wrongly accept e.g. 1:2:3:4:5:6:7:8::)
 	local -a parts
 	IFS=':' read -ra parts <<<"$ip"
-	((${#parts[@]} <= 8)) || return 1
-	local part
+	local part groups=0
 	for part in "${parts[@]}"; do
 		((${#part} <= 4)) || return 1
+		if [[ -n "$part" ]]; then
+			groups=$((groups + 1))
+		fi
 	done
 
-	if [[ "$ip" != *"::"* ]]; then
-		((${#parts[@]} == 8)) || return 1
+	if [[ "$ip" == *"::"* ]]; then
+		((groups <= 7)) || return 1
+	else
+		((groups == 8)) || return 1
 	fi
 	return 0
 }

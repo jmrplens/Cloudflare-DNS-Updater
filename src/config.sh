@@ -27,19 +27,22 @@ DOMAIN_COUNT=0
 clean_value() {
 	local val="$1"
 	val="${val%%$'\r'*}"
-	val=$(echo "$val" | sed 's/[[:space:]]#.*$//;s/^[[:space:]]*//;s/[[:space:]]*$//')
+	val=$(printf '%s' "$val" | sed 's/[[:space:]]#.*$//;s/^[[:space:]]*//;s/[[:space:]]*$//')
 	val="${val%\"}"
 	val="${val#\"}"
 	val="${val%\'}"
 	val="${val#\'}"
-	echo "$val"
+	printf '%s\n' "$val"
 }
 
-# Extract "key: value" from a block of lines (first match)
+# Extract "key: value" from a block of lines (first match). The key is
+# anchored to the start of the line so commented-out keys and keys that
+# merely end with the same text (e.g. my_ttl vs ttl) never match, and the
+# value keeps any colons it contains.
 _yaml_get() {
 	local block="$1"
 	local key="$2"
-	clean_value "$(echo "$block" | grep "$key:" | head -n1 | awk -F': ' '{print $2}')"
+	clean_value "$(printf '%s\n' "$block" | sed -n "s/^[[:space:]]*$key:[[:space:]]*//p" | head -n1)"
 }
 
 # Parse YAML config file
@@ -108,9 +111,9 @@ parse_config() {
 			continue
 		fi
 
-		# Any other top-level key (unindented, ends with ':') closes the
-		# domains block, not just a specific hardcoded section name.
-		if [[ "$in_domains_block" == "true" && "$line" =~ ^[A-Za-z_][A-Za-z0-9_]*:[[:space:]]*$ ]]; then
+		# Any other top-level key (unindented, with or without an inline
+		# value) closes the domains block, not just a hardcoded name.
+		if [[ "$in_domains_block" == "true" && "$line" =~ ^[A-Za-z_][A-Za-z0-9_-]*: ]]; then
 			in_domains_block=false
 		fi
 

@@ -25,13 +25,14 @@ fi
 
 if command -v flock >/dev/null 2>&1; then
 	# Atomic lock: held for the lifetime of this process, released by the
-	# kernel on exit (no stale-lock or check-then-write races).
-	exec 200>"$LOCKFILE"
+	# kernel on exit (no stale-lock or check-then-write races). Open in
+	# append mode so a losing instance never truncates the holder's PID.
+	exec 200>>"$LOCKFILE"
 	if ! flock -n 200; then
 		echo "Script is already running (lock: $LOCKFILE). Exiting."
 		exit 1
 	fi
-	echo $$ >&200
+	printf '%s\n' $$ >"$LOCKFILE" # informational: PID of the lock holder
 else
 	# Portable fallback: PID file with staleness check
 	if [[ -f "$LOCKFILE" ]]; then

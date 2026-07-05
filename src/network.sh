@@ -120,7 +120,7 @@ http_get() {
 
 	# Build as an array so an unset ip_flag adds no argument at all
 	# (a quoted empty string would reach curl/wget as a bogus "" URL).
-	local cmd
+	local -a cmd
 	if [[ "$HTTP_CLIENT" == "curl" || "$HTTP_CLIENT" == "curl.exe" ]]; then
 		cmd=("$HTTP_CLIENT" "-s")
 		[[ -n "$ip_flag" ]] && cmd+=("$ip_flag")

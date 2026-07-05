@@ -159,9 +159,10 @@ fi
 
 if command -v flock >/dev/null 2>&1; then
 
-	# Atomic lock, released by the kernel on process exit
+	# Atomic lock, released by the kernel on process exit. Open in append
+	# mode so a losing instance never truncates the holder's PID.
 
-	exec 200>"$LOCKFILE"
+	exec 200>>"$LOCKFILE"
 
 	if ! flock -n 200; then
 
@@ -171,7 +172,7 @@ if command -v flock >/dev/null 2>&1; then
 
 	fi
 
-	echo $$ >&200
+	printf '%s\n' $$ >"$LOCKFILE"
 
 else
 

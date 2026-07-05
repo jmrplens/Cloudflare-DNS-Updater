@@ -12,7 +12,7 @@ url_encode() {
 		*) out+=$(printf '%%%02X' "'$c") ;;
 		esac
 	done
-	echo "$out"
+	printf '%s\n' "$out"
 }
 
 # Escape a string for embedding inside a JSON string literal
@@ -23,7 +23,7 @@ json_escape() {
 	raw="${raw//$'\n'/\\n}"
 	raw="${raw//$'\r'/\\r}"
 	raw="${raw//$'\t'/\\t}"
-	echo "$raw"
+	printf '%s\n' "$raw"
 }
 
 send_notification() {
