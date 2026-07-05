@@ -18,19 +18,23 @@ function set_up() {
 # --- cf_needs_update ---
 
 function test_needs_update_when_ip_differs() {
-	assert_successful_code "$(cf_needs_update "192.0.2.1" "192.0.2.2" "true" "true")"
+	cf_needs_update "192.0.2.1" "192.0.2.2" "true" "true"
+	assert_successful_code
 }
 
 function test_needs_update_when_proxied_differs() {
-	assert_successful_code "$(cf_needs_update "192.0.2.1" "192.0.2.1" "true" "false")"
+	cf_needs_update "192.0.2.1" "192.0.2.1" "true" "false"
+	assert_successful_code
 }
 
 function test_no_update_when_everything_matches() {
-	assert_general_error "$(cf_needs_update "192.0.2.1" "192.0.2.1" "true" "true")"
+	cf_needs_update "192.0.2.1" "192.0.2.1" "true" "true"
+	assert_general_error
 }
 
 function test_needs_update_when_both_differ() {
-	assert_successful_code "$(cf_needs_update "192.0.2.1" "192.0.2.2" "false" "true")"
+	cf_needs_update "192.0.2.1" "192.0.2.2" "false" "true"
+	assert_successful_code
 }
 
 # --- cf_build_put_object ---

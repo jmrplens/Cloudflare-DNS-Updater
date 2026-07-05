@@ -40,76 +40,98 @@ function test_prefix64_strips_zone_id() {
 # --- IP validation ---
 
 function test_valid_ipv4_accepted() {
-	assert_successful_code "$(is_valid_ipv4 "192.0.2.1")"
+	is_valid_ipv4 "192.0.2.1"
+	assert_successful_code
 }
 
 function test_ipv4_rejects_words() {
-	assert_general_error "$(is_valid_ipv4 "not-an-ip")"
+	is_valid_ipv4 "not-an-ip"
+	assert_general_error
 }
 
 function test_ipv4_rejects_missing_octet() {
-	assert_general_error "$(is_valid_ipv4 "192.0.2")"
+	is_valid_ipv4 "192.0.2"
+	assert_general_error
 }
 
 function test_ipv4_rejects_ipv6() {
-	assert_general_error "$(is_valid_ipv4 "2001:db8::1")"
+	is_valid_ipv4 "2001:db8::1"
+	assert_general_error
 }
 
 function test_valid_ipv6_accepted() {
-	assert_successful_code "$(is_valid_ipv6 "2001:db8::1")"
+	is_valid_ipv6 "2001:db8::1"
+	assert_successful_code
 }
 
 function test_ipv6_rejects_ipv4() {
-	assert_general_error "$(is_valid_ipv6 "192.0.2.1")"
+	is_valid_ipv6 "192.0.2.1"
+	assert_general_error
 }
 
 function test_ipv6_rejects_words() {
-	assert_general_error "$(is_valid_ipv6 "not-an-ip")"
+	is_valid_ipv6 "not-an-ip"
+	assert_general_error
 }
 
 function test_ipv4_rejects_octets_over_255() {
-	assert_general_error "$(is_valid_ipv4 "999.999.999.999")"
-	assert_general_error "$(is_valid_ipv4 "256.0.0.1")"
+	is_valid_ipv4 "999.999.999.999"
+	assert_general_error
+	is_valid_ipv4 "256.0.0.1"
+	assert_general_error
 }
 
 function test_ipv4_accepts_leading_zero_octets() {
-	assert_successful_code "$(is_valid_ipv4 "010.001.002.099")"
+	is_valid_ipv4 "010.001.002.099"
+	assert_successful_code
 }
 
 function test_ipv6_accepts_full_eight_groups() {
-	assert_successful_code "$(is_valid_ipv6 "2a0c:5a84:b60e:8c00:7a55:36ff:fe04:bb9a")"
+	is_valid_ipv6 "2a0c:5a84:b60e:8c00:7a55:36ff:fe04:bb9a"
+	assert_successful_code
 }
 
 function test_ipv6_rejects_double_compression() {
-	assert_general_error "$(is_valid_ipv6 "2001::db8::1")"
+	is_valid_ipv6 "2001::db8::1"
+	assert_general_error
 }
 
 function test_ipv6_rejects_oversized_hextet() {
-	assert_general_error "$(is_valid_ipv6 "12345::1")"
+	is_valid_ipv6 "12345::1"
+	assert_general_error
 }
 
 function test_ipv6_rejects_incomplete_address_without_compression() {
-	assert_general_error "$(is_valid_ipv6 "1:2:3:4:5:6:7")"
+	is_valid_ipv6 "1:2:3:4:5:6:7"
+	assert_general_error
 }
 
 function test_ipv6_rejects_full_address_with_trailing_compression() {
-	assert_general_error "$(is_valid_ipv6 "1:2:3:4:5:6:7:8::")"
+	is_valid_ipv6 "1:2:3:4:5:6:7:8::"
+	assert_general_error
 }
 
 function test_ipv6_accepts_trailing_compression() {
-	assert_successful_code "$(is_valid_ipv6 "1:2:3:4:5:6:7::")"
-	assert_successful_code "$(is_valid_ipv6 "::1")"
-	assert_successful_code "$(is_valid_ipv6 "::")"
+	is_valid_ipv6 "1:2:3:4:5:6:7::"
+	assert_successful_code
+	is_valid_ipv6 "::1"
+	assert_successful_code
+	is_valid_ipv6 "::"
+	assert_successful_code
 }
 
 function test_ipv6_rejects_triple_colon() {
-	assert_general_error "$(is_valid_ipv6 ":::")"
-	assert_general_error "$(is_valid_ipv6 "1:::2")"
+	is_valid_ipv6 ":::"
+	assert_general_error
+	is_valid_ipv6 "1:::2"
+	assert_general_error
 }
 
 function test_ipv6_rejects_single_edge_colons() {
-	assert_general_error "$(is_valid_ipv6 ":1:2:3:4:5:6:7:8")"
-	assert_general_error "$(is_valid_ipv6 "1:2:3:4:5:6:7:8:")"
+	is_valid_ipv6 ":1:2:3:4:5:6:7:8"
+	assert_general_error
+	is_valid_ipv6 "1:2:3:4:5:6:7:8:"
+	assert_general_error
 }
 
 # --- get_public_ipv4 fallback cascade ---

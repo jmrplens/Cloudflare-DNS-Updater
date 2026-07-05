@@ -224,5 +224,6 @@ main() {
 	fi
 }
 
-# Run
-main "$@"
+# Run only when executed directly (sourcing the file, e.g. from tests,
+# just loads the functions)
+[[ "${BASH_SOURCE[0]}" != "$0" ]] || main "$@"

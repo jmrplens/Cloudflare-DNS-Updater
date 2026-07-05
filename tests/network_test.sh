@@ -57,3 +57,31 @@ function test_http_get_any_protocol_passes_no_empty_flag() {
 	# No stray "" argument between -s and --max-time
 	assert_have_been_called_with curl -s --max-time 10 "https://icanhazip.com"
 }
+
+# --- wget fallback branch ---
+
+function test_http_request_wget_builds_command() {
+	HTTP_CLIENT="wget"
+	bashunit::spy wget
+	http_request "POST" "https://api.example.com/batch" '{"puts":[]}' \
+		"Content-Type: application/json" >/dev/null
+	assert_have_been_called_with wget \
+		-q -O - --method=POST "--header=Content-Type: application/json" \
+		'--body-data={"puts":[]}' --timeout=10 "https://api.example.com/batch"
+}
+
+function test_http_get_wget_uses_ipv4_flag() {
+	HTTP_CLIENT="wget"
+	bashunit::spy wget
+	http_get "https://icanhazip.com" 4 >/dev/null
+	assert_have_been_called_with wget \
+		-q -O - -4 --timeout=10 --tries=1 "https://icanhazip.com"
+}
+
+function test_http_get_wget_omits_empty_flag() {
+	HTTP_CLIENT="wget"
+	bashunit::spy wget
+	http_get "https://icanhazip.com" >/dev/null
+	assert_have_been_called_with wget \
+		-q -O - --timeout=10 --tries=1 "https://icanhazip.com"
+}

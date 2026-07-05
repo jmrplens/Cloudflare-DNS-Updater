@@ -1,0 +1,16 @@
+---
+# Test fixture: minimal config for main() integration tests
+
+cloudflare:
+  zone_id: "main-zone"
+  api_token: "main-token"
+
+domains:
+  - name: "home.example.com"
+
+notifications:
+  telegram:
+    enabled: false
+
+  discord:
+    enabled: false
