@@ -224,6 +224,6 @@ main() {
 	fi
 }
 
-# Run only when executed directly (sourcing the file, e.g. from tests,
-# just loads the functions)
+# Run only when executed directly. Sourcing the file (e.g. from tests)
+# loads the modules and initializes the logger, but skips the update flow.
 [[ "${BASH_SOURCE[0]}" != "$0" ]] || main "$@"

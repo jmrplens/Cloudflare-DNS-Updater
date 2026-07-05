@@ -71,7 +71,8 @@ function test_logger_init_creates_log_file() {
 	local log_dir
 	log_dir=$(mktemp -d)
 	logger_init "$log_dir/nested/updater.log"
-	assert_successful_code "$(test -f "$log_dir/nested/updater.log")"
+	test -f "$log_dir/nested/updater.log"
+	assert_successful_code
 	rm -rf "$log_dir"
 }
 
@@ -80,7 +81,8 @@ function test_logger_rotates_log_over_one_megabyte() {
 	log_dir=$(mktemp -d)
 	head -c $((1024 * 1024 + 16)) /dev/zero | tr '\0' 'x' >"$log_dir/updater.log"
 	logger_init "$log_dir/updater.log"
-	assert_successful_code "$(test -f "$log_dir/updater.log.old")"
+	test -f "$log_dir/updater.log.old"
+	assert_successful_code
 	assert_contains "Log rotated" "$(cat "$log_dir/updater.log")"
 	rm -rf "$log_dir"
 }
@@ -90,7 +92,8 @@ function test_logger_keeps_small_log_untouched() {
 	log_dir=$(mktemp -d)
 	echo "previous content" >"$log_dir/updater.log"
 	logger_init "$log_dir/updater.log"
-	assert_general_error "$(test -f "$log_dir/updater.log.old")"
+	test -f "$log_dir/updater.log.old"
+	assert_general_error
 	assert_contains "previous content" "$(cat "$log_dir/updater.log")"
 	rm -rf "$log_dir"
 }
