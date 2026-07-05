@@ -125,3 +125,12 @@ function test_main_pushes_batch_update_when_ip_changed() {
 function test_main_help_flag_prints_usage() {
 	assert_contains "Usage:" "$(main --help)"
 }
+
+# --- Version consistency ---
+
+function test_version_constant_matches_version_file() {
+	# The release workflow reads the VERSION file; the runtime constant in
+	# main.sh must never drift from it.
+	assert_same "$(tr -d '[:space:]' <"$PROJECT_ROOT/VERSION")" "$VERSION"
+	assert_matches '^[0-9]+\.[0-9]+\.[0-9]+$' "$VERSION"
+}
