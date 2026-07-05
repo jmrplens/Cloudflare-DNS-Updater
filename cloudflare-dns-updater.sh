@@ -9,6 +9,13 @@ CONFIG_FILE="$DIR/cloudflare-dns.yaml"
 # Ensure tools are found by adding standard paths (including Windows/MSYS2)
 export PATH="/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/opt/homebrew/bin:/c/msys64/mingw64/bin:/mnt/c/msys64/mingw64/bin:$PATH"
 
+# Help does not need the lock or a config file
+for arg in "$@"; do
+	if [[ "$arg" == "-h" || "$arg" == "--help" ]]; then
+		exec "$DIR/src/main.sh" --help
+	fi
+done
+
 # --- LOCK MECHANISM ---
 LOCKFILE="/tmp/cloudflare-dns-updater.lock"
 # Fallback if /tmp is not available
@@ -16,21 +23,31 @@ if [[ ! -d "/tmp" ]]; then
 	LOCKFILE="$DIR/cloudflare-dns-updater.lock"
 fi
 
-if [[ -f "$LOCKFILE" ]]; then
-	PID=$(cat "$LOCKFILE")
-	if ps -p "$PID" >/dev/null 2>&1; then
-		echo "Script is already running (PID: $PID). Exiting."
+if command -v flock >/dev/null 2>&1; then
+	# Atomic lock: held for the lifetime of this process, released by the
+	# kernel on exit (no stale-lock or check-then-write races). Open in
+	# append mode so a losing instance never truncates the holder's PID.
+	exec 200>>"$LOCKFILE"
+	if ! flock -n 200; then
+		echo "Script is already running (lock: $LOCKFILE). Exiting."
 		exit 1
-	else
-		echo "Found stale lock file (PID: $PID). Overwriting."
 	fi
+	printf '%s\n' $$ >"$LOCKFILE" # informational: PID of the lock holder
+else
+	# Portable fallback: PID file with staleness check
+	if [[ -f "$LOCKFILE" ]]; then
+		PID=$(cat "$LOCKFILE")
+		if ps -p "$PID" >/dev/null 2>&1; then
+			echo "Script is already running (PID: $PID). Exiting."
+			exit 1
+		else
+			echo "Found stale lock file (PID: $PID). Overwriting."
+		fi
+	fi
+
+	echo $$ >"$LOCKFILE"
+	trap 'rm -f "$LOCKFILE"' EXIT
 fi
-
-# Write PID
-echo $$ >"$LOCKFILE"
-
-# Cleanup on exit
-trap 'rm -f "$LOCKFILE"' EXIT
 # ----------------------
 
 # Parse Arguments
@@ -76,6 +93,16 @@ if [[ ! -f "$CONFIG_FILE" ]]; then
 	fi
 	echo "Configuration file not found!"
 	exit 1
+fi
+
+# The config contains the API token: warn if group/others can read it
+# (octal mask 0044 = the group and other read bits)
+if ! is_silent; then
+	CONFIG_PERMS=$(stat -c '%a' "$CONFIG_FILE" 2>/dev/null || stat -f '%Lp' "$CONFIG_FILE" 2>/dev/null)
+	if [[ "$CONFIG_PERMS" =~ ^[0-7]+$ ]] && ((8#$CONFIG_PERMS & 8#0044)); then
+		echo "Warning: $CONFIG_FILE is readable by other users (mode $CONFIG_PERMS)." >&2
+		echo "It contains your API token; consider: chmod 600 $CONFIG_FILE" >&2
+	fi
 fi
 
 "$DIR/src/main.sh" "$CONFIG_FILE"

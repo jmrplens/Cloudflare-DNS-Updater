@@ -50,3 +50,10 @@ function test_http_get_uses_ipv6_flag() {
 	http_get "https://icanhazip.com" 6 >/dev/null
 	assert_have_been_called_with curl -s -6 --max-time 10 "https://icanhazip.com"
 }
+
+function test_http_get_any_protocol_passes_no_empty_flag() {
+	bashunit::spy curl
+	http_get "https://icanhazip.com" >/dev/null
+	# No stray "" argument between -s and --max-time
+	assert_have_been_called_with curl -s --max-time 10 "https://icanhazip.com"
+}

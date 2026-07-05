@@ -168,11 +168,44 @@ get_ipv6_from_interface() {
 
 # IP Validation Helpers
 is_valid_ipv4() {
-	[[ "$1" =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]
+	[[ "$1" =~ ^([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})$ ]] || return 1
+	local octet
+	for octet in "${BASH_REMATCH[@]:1:4}"; do
+		# 10# forces base-10 so leading zeros are not read as octal
+		((10#$octet <= 255)) || return 1
+	done
 }
 
+# Structural validation: hex+colons only, at most one '::', hextets of at
+# most 4 chars, exactly 8 groups without '::' and at most 7 with it.
 is_valid_ipv6() {
-	[[ "$1" =~ ^[0-9a-fA-F:]+$ ]] && [[ "$1" == *":"* ]]
+	local ip="$1"
+	[[ "$ip" =~ ^[0-9a-fA-F:]+$ ]] || return 1
+	[[ "$ip" == *":"* ]] || return 1
+	[[ "$ip" == *"::"*"::"* ]] && return 1
+	[[ "$ip" == *":::"* ]] && return 1
+	# A single colon at either edge is invalid; '::' there is fine
+	[[ "$ip" == :* && "$ip" != ::* ]] && return 1
+	[[ "$ip" == *: && "$ip" != *:: ]] && return 1
+
+	# Count non-empty groups (read -ra drops trailing empty fields, so
+	# counting array elements would wrongly accept e.g. 1:2:3:4:5:6:7:8::)
+	local -a parts
+	IFS=':' read -ra parts <<<"$ip"
+	local part groups=0
+	for part in "${parts[@]}"; do
+		((${#part} <= 4)) || return 1
+		if [[ -n "$part" ]]; then
+			groups=$((groups + 1))
+		fi
+	done
+
+	if [[ "$ip" == *"::"* ]]; then
+		((groups <= 7)) || return 1
+	else
+		((groups == 8)) || return 1
+	fi
+	return 0
 }
 
 # Get Public IPv4

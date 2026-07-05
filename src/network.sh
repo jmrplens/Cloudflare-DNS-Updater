@@ -118,10 +118,19 @@ http_get() {
 		elif [[ "$HTTP_CLIENT" == "wget" ]]; then ip_flag="-6"; fi
 	fi
 
+	# Build as an array so an unset ip_flag adds no argument at all
+	# (a quoted empty string would reach curl/wget as a bogus "" URL).
+	local -a cmd
 	if [[ "$HTTP_CLIENT" == "curl" || "$HTTP_CLIENT" == "curl.exe" ]]; then
-		$HTTP_CLIENT -s "$ip_flag" --max-time 10 "$url"
+		cmd=("$HTTP_CLIENT" "-s")
+		[[ -n "$ip_flag" ]] && cmd+=("$ip_flag")
+		cmd+=("--max-time" "10" "$url")
+		"${cmd[@]}"
 	elif [[ "$HTTP_CLIENT" == "wget" ]]; then
-		wget -q -O - "$ip_flag" --timeout=10 --tries=1 "$url"
+		cmd=("wget" "-q" "-O" "-")
+		[[ -n "$ip_flag" ]] && cmd+=("$ip_flag")
+		cmd+=("--timeout=10" "--tries=1" "$url")
+		"${cmd[@]}"
 	elif [[ "$HTTP_CLIENT" == "powershell" ]]; then
 		# PowerShell doesn't have a simple flag for -4/-6 in Invoke-RestMethod easily for all versions
 		# but usually it respects the OS preference.

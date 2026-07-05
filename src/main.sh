@@ -132,7 +132,8 @@ main() {
 	done
 	log_success "Loaded $DOMAIN_COUNT domains (Tasks: $total_v4 IPv4, $total_v6 IPv6)."
 
-	# 2. Get Current Public IPs	log_info "Detecting Public IPs..."
+	# 2. Get Current Public IPs
+	log_info "Detecting Public IPs..."
 	CURRENT_IPV4=$(get_public_ipv4)
 	CURRENT_IPV6=$(get_public_ipv6)
 
