@@ -16,6 +16,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq
       - name: Install bashunit (pinned)
         run: ./tools/install-bashunit.sh
       - name: Run unit tests

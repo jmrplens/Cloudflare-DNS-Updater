@@ -19,14 +19,18 @@ fi
 
 echo "Downloading bashunit $BASHUNIT_VERSION..."
 mkdir -p "$PROJECT_ROOT/lib"
-curl -fsSL -o "$TARGET" \
+# Download to a temp file and move into place only after the checksum
+# verifies, so an interrupted download never leaves a broken lib/bashunit.
+TMP_FILE="$TARGET.tmp"
+curl -fsSL -o "$TMP_FILE" \
 	"https://github.com/TypedDevs/bashunit/releases/download/$BASHUNIT_VERSION/bashunit"
 
-echo "$BASHUNIT_SHA256  $TARGET" | sha256sum -c - >/dev/null || {
+echo "$BASHUNIT_SHA256  $TMP_FILE" | sha256sum -c - >/dev/null || {
 	echo "Error: checksum verification failed for bashunit download." >&2
-	rm -f "$TARGET"
+	rm -f "$TMP_FILE"
 	exit 1
 }
 
-chmod +x "$TARGET"
+chmod +x "$TMP_FILE"
+mv "$TMP_FILE" "$TARGET"
 echo "Installed bashunit $BASHUNIT_VERSION at lib/bashunit"

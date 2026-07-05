@@ -36,7 +36,7 @@ fi
 # 2. Syntax Check (Bash -n)
 echo "Running syntax check (bash -n)..."
 syntax_errors=0
-for file in "$PROJECT_ROOT"/*.sh "$PROJECT_ROOT"/src/*.sh; do
+for file in "$PROJECT_ROOT"/*.sh "$PROJECT_ROOT"/src/*.sh "$PROJECT_ROOT"/tests/*.sh; do
 	if ! bash -n "$file"; then
 		echo -e "${RED}✘ Syntax error in \"$file\"${NC}"
 		syntax_errors=$((syntax_errors + 1))
