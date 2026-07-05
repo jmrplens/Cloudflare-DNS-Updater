@@ -44,6 +44,11 @@ Todos los módulos de `src/` fusionados en un único script autocontenido:
 
 Requiere GCC (o MinGW para Windows). Los artefactos se generan en `dist/`.
 
-## Binarios de release en CI
+## Publicar una release
 
-El workflow **Binaries Build** compila todas las plataformas en cada release. Consulta `.github/workflows/binaries.yml`.
+Las releases se controlan con el fichero `VERSION` de la raíz del repositorio:
+
+1. Sube la versión en **ambos** sitios: el fichero `VERSION` y la constante `VERSION` de `src/main.sh` (un test unitario falla si difieren).
+2. Mergea a `main`.
+
+El workflow **Build & Release Binaries** (que solo se dispara con cambios en `VERSION`) compila los cinco binarios, crea el tag `vX.Y.Z` y publica la release de GitHub con notas autogeneradas. Ejecutar el workflow manualmente (`workflow_dispatch`) compila los binarios sin publicar nada.

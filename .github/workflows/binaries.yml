@@ -1,10 +1,14 @@
 ---
 name: Build & Release Binaries
 
+# Releases are cut by bumping the VERSION file (keep src/main.sh's
+# VERSION constant in sync — a unit test enforces it). Pushes to main
+# that don't touch VERSION no longer rebuild or republish anything;
+# workflow_dispatch runs build-only (no release).
 on:
   push:
     branches: [main]
-    tags: ["v*"]
+    paths: ["VERSION"]
   workflow_dispatch:
 
 permissions:
@@ -68,7 +72,7 @@ jobs:
     name: Create Release
     needs: [build-linux, build-windows, build-macos]
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v7
       - name: Download linux-x86_64
@@ -99,7 +103,7 @@ jobs:
       - name: Get Version
         id: vars
         run: |
-          VERSION="$(grep '^VERSION=' src/main.sh | cut -d'"' -f2)"
+          VERSION="$(tr -d '[:space:]' <VERSION)"
           echo "version=v$VERSION" >> "$GITHUB_OUTPUT"
       - name: Release
         uses: softprops/action-gh-release@v3
