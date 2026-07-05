@@ -1,0 +1,28 @@
+---
+name: Tests
+
+on:
+  push:
+    branches: [main, feature/**]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  unit-tests:
+    name: Unit Tests (bashunit)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install bashunit (pinned)
+        run: ./tools/install-bashunit.sh
+      - name: Run unit tests
+        run: ./lib/bashunit --parallel --log-junit junit.xml tests/
+      - name: Upload JUnit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: junit-report
+          path: junit.xml

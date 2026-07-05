@@ -2,13 +2,15 @@
 cloudflare-dns.yaml
 
 # Logs
-# Logs
 logs/
 *.log
 
 # System
 .DS_Store
+
 # Build Artifacts
 dist/
-tools/bundle.sh # Actually we want tools in git, but dist should be ignored.
 
+# Test tooling (installed via tools/install-bashunit.sh)
+lib/
+junit.xml
