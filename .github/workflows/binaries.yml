@@ -104,6 +104,10 @@ jobs:
         id: vars
         run: |
           VERSION="$(tr -d '[:space:]' <VERSION)"
+          if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::VERSION file does not contain a valid X.Y.Z version: '$VERSION'"
+            exit 1
+          fi
           echo "version=v$VERSION" >> "$GITHUB_OUTPUT"
       - name: Release
         uses: softprops/action-gh-release@v3
