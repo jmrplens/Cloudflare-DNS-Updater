@@ -4,6 +4,9 @@ A Bash-based script to automatically update Cloudflare DNS records with your dyn
 
 ![Binaries Build](https://github.com/jmrplens/Cloudflare-DNS-Updater/actions/workflows/binaries.yml/badge.svg)
 ![Lint Check](https://github.com/jmrplens/Cloudflare-DNS-Updater/actions/workflows/lint.yml/badge.svg)
+![Tests](https://github.com/jmrplens/Cloudflare-DNS-Updater/actions/workflows/test.yml/badge.svg)
+
+📖 **Full documentation (English & Español): [jmrplens.github.io/Cloudflare-DNS-Updater](https://jmrplens.github.io/Cloudflare-DNS-Updater/)**
 
 ## Key Features
 
@@ -59,6 +62,7 @@ Copy the example configuration file and edit it with your details.
 
 ```bash
 cp config.example.yaml cloudflare-dns.yaml
+chmod 600 cloudflare-dns.yaml   # it contains your API token
 ```
 
 **Example `cloudflare-dns.yaml`:**
@@ -70,9 +74,9 @@ cloudflare:
   api_token: "your_api_token_here"
 
 options:
-  proxied: true   # true for Orange Cloud (Proxy), false for DNS only
-  ttl: 1          # 1 for Auto, or value in seconds (60-3600)
-  interface: ""   # Optional: Force specific interface (e.g., "eth0")
+  proxied: true   # Default for all domains: true = Orange Cloud (Proxy), false = DNS only
+  ttl: 1          # Default TTL: 1 = Auto, or value in seconds (60-86400)
+  interface: ""   # Optional: network interface for local IPv6 detection (e.g., "eth0")
 
 domains:
   # Update both IPv4 and IPv6 (default)
@@ -86,9 +90,10 @@ domains:
   - name: "ipv6.example.com"
     ip_type: "ipv6"
 
-  # Override global proxy setting
+  # Override the global proxy/TTL defaults
   - name: "direct.example.com"
     proxied: false
+    ttl: 300
 
 notifications:
   telegram:
@@ -106,6 +111,7 @@ notifications:
 ## Usage Examples
 
 ### CLI Options
+*   `-h, --help`: Show usage help.
 *   `-s, --silent`: Run without console output (ideal for Cron).
 *   `-d, --debug`: Enable verbose logging and API response output.
 *   `-f, --force`: Force an update even if the IP has not changed.

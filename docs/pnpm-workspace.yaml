@@ -1,0 +1,7 @@
+# Dependencies allowed to run postinstall build scripts
+allowBuilds:
+  esbuild: true
+  sharp: true
+
+# Install newly published releases immediately (no supply-chain delay)
+minimumReleaseAge: 0

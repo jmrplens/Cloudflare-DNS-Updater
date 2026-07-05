@@ -1,0 +1,37 @@
+---
+title: Cloudflare DNS Updater
+description: Actualizador de DNS dinámico para Cloudflare en Bash, con actualizaciones por lotes, detección IPv4/IPv6 y notificaciones.
+template: splash
+hero:
+  tagline: Mantén tus registros DNS de Cloudflare apuntando a tu IP dinámica — un único script Bash, sin dependencias, actualizaciones por lotes y compatible con IPv6.
+  actions:
+    - text: Empezar
+      link: ./getting-started/
+      icon: right-arrow
+    - text: Ver en GitHub
+      link: https://github.com/jmrplens/Cloudflare-DNS-Updater
+      icon: external
+      variant: minimal
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+## Características
+
+<CardGrid stagger>
+	<Card title="Actualizaciones por lotes" icon="rocket">
+		Todos los cambios de registros se envían en una sola llamada a la API de
+		Cloudflare, con paginación automática para zonas grandes.
+	</Card>
+	<Card title="Detección de IP inteligente" icon="magnifier">
+		Lectura de direcciones IPv6 globales estables desde la interfaz local, con
+		varios servicios externos de respaldo para IPv4 e IPv6.
+	</Card>
+	<Card title="Multiplataforma" icon="laptop">
+		Funciona donde funcione Bash — Linux, macOS y Windows — y publica binarios
+		autónomos que incluyen bash, curl y jq.
+	</Card>
+	<Card title="Notificaciones" icon="email">
+		Avisos opcionales por Telegram y Discord cuando cambian los registros.
+	</Card>
+</CardGrid>

@@ -6,8 +6,9 @@ cloudflare:
   api_token: "YOUR_API_TOKEN"
 
 options:
-  proxied: true   # Default: true (Orange Cloud). to false for Grey Cloud (DNS Only).
-  ttl: 1          # Default: 1 (Auto). to 60-3600 for specific TTL.
+  proxied: true   # Default for all domains: true (Orange Cloud), false (Grey Cloud, DNS only).
+  ttl: 1          # Default TTL: 1 (Auto), or 60-86400 seconds.
+  interface: ""   # Optional: network interface for local IPv6 detection (e.g. "eth0").
 
 domains:
   # Example 1: Update both IPv4 (A) and IPv6 (AAAA) if detected (Default behavior)
