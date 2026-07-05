@@ -23,14 +23,14 @@ jobs:
     name: Build site
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Build with Astro
-        uses: withastro/action@v3
+        uses: withastro/action@v6
         with:
           path: ./docs
-          # pnpm 11 requires Node >= 22.13 (the action defaults to Node 20)
+          # Project minimum is Node 24 (also the action's default)
           node-version: 24
-          package-manager: pnpm@11.9.0
+          package-manager: pnpm@11.10.0
 
   deploy:
     name: Deploy to GitHub Pages
@@ -42,4 +42,4 @@ jobs:
     steps:
       - name: Deploy
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5

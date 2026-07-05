@@ -18,13 +18,13 @@ jobs:
       matrix:
         arch: [x86_64, aarch64]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Build Standalone
         run: |
           chmod +x tools/*.sh
           ./tools/build-all.sh linux ${{ matrix.arch }}
         shell: bash
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: linux-${{ matrix.arch }}
           path: dist/cf-updater-linux-*
@@ -33,7 +33,7 @@ jobs:
     name: Build Windows
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Install MinGW
         run: sudo apt-get update && sudo apt-get install -y gcc-mingw-w64
       - name: Build Standalone
@@ -41,7 +41,7 @@ jobs:
           chmod +x tools/*.sh
           ./tools/build-all.sh windows x86_64
         shell: bash
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: windows-x64
           path: dist/*.exe
@@ -53,13 +53,13 @@ jobs:
       matrix:
         arch: [x86_64, aarch64]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Build Standalone
         run: |
           chmod +x tools/*.sh
           ./tools/build-all.sh macos ${{ matrix.arch }}
         shell: bash
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: macos-${{ matrix.arch }}
           path: dist/cf-updater-macos-*
@@ -70,29 +70,29 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Download linux-x86_64
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: linux-x86_64
           path: artifacts
       - name: Download linux-aarch64
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: linux-aarch64
           path: artifacts
       - name: Download windows-x64
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: windows-x64
           path: artifacts
       - name: Download macos-x86_64
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: macos-x86_64
           path: artifacts
       - name: Download macos-aarch64
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: macos-aarch64
           path: artifacts
@@ -102,7 +102,7 @@ jobs:
           VERSION="$(grep '^VERSION=' src/main.sh | cut -d'"' -f2)"
           echo "version=v$VERSION" >> "$GITHUB_OUTPUT"
       - name: Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ steps.vars.outputs.version }}
           name: Release ${{ steps.vars.outputs.version }}
