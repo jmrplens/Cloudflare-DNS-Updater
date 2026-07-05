@@ -18,6 +18,7 @@ cf_get_all_records() {
 	local page=1
 	local total_pages=1
 	local combined=""
+	local response=""
 
 	while true; do
 		local url="${base_url}&page=${page}"
@@ -42,7 +43,10 @@ cf_get_all_records() {
 		fi
 
 		# total_pages extracted with grep so pagination also works without jq
-		total_pages=$(echo "$response" | grep -o '"total_pages":[0-9]*' | head -n1 | cut -d':' -f2)
+		# (whitespace-tolerant in case the JSON is ever pretty-printed)
+		total_pages=$(echo "$response" |
+			grep -o '"total_pages"[[:space:]]*:[[:space:]]*[0-9]*' |
+			head -n1 | grep -o '[0-9]*$' || true)
 		total_pages=${total_pages:-1}
 
 		if [[ $page -ge $total_pages ]]; then
@@ -82,6 +86,8 @@ cf_parse_records_to_lines() {
 		echo "$json" | "$jq_cmd" -r '.result[] | select(.type == "A" or .type == "AAAA") | "\(.id)|\(.name)|\(.type)|\(.content)|\(.proxied)"'
 	else
 		log_warn "jq not found. Using sed parser fallback."
+
+		local line id name type content proxied
 
 		# The first sed keeps the opening quote of the next record's "id"
 		# key in the replacement; dropping it silently discards every
