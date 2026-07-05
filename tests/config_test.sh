@@ -78,6 +78,59 @@ function test_domain_overrides_proxied_and_ttl() {
 	assert_same "300" "${domains_ttl[3]}"
 }
 
+# --- Quoted values and inline comments ---
+
+function test_quoted_property_values_are_stripped() {
+	parse_config "$FIXTURES/quoted_config.yaml"
+	assert_same "quoted-zone" "$CF_ZONE_ID"
+	assert_same "quoted-token" "$CF_API_TOKEN"
+	assert_same "false" "${domains_proxied[0]}"
+	# quoted ip_type used to be silently ignored
+	assert_same "true" "${domains_ipv4[0]}"
+	assert_same "false" "${domains_ipv6[0]}"
+}
+
+function test_inline_comments_are_stripped_from_values() {
+	parse_config "$FIXTURES/quoted_config.yaml"
+	assert_same "120" "${domains_ttl[0]}"
+}
+
+# --- Global options defaults ---
+
+function test_domains_inherit_options_defaults() {
+	parse_config "$FIXTURES/options_config.yaml"
+	assert_same "false" "${domains_proxied[0]}"
+	assert_same "300" "${domains_ttl[0]}"
+}
+
+function test_domain_overrides_beat_options_defaults() {
+	parse_config "$FIXTURES/options_config.yaml"
+	assert_same "true" "${domains_proxied[1]}"
+	assert_same "60" "${domains_ttl[1]}"
+}
+
+function test_later_sections_do_not_leak_into_last_domain() {
+	parse_config "$FIXTURES/options_config.yaml"
+	# custom_section sets proxied: true / ttl: 999; the parser must have
+	# closed the domains block before reaching it.
+	assert_same "60" "${domains_ttl[1]}"
+	assert_same "2" "$DOMAIN_COUNT"
+}
+
+# --- CRLF (Windows line endings) ---
+
+function test_parses_crlf_config() {
+	local tmp
+	tmp=$(mktemp)
+	printf 'cloudflare:\r\n  zone_id: "crlf-zone"\r\n  api_token: "crlf-token"\r\n\r\ndomains:\r\n  - name: "crlf.example.com"\r\n    proxied: false\r\n' >"$tmp"
+	parse_config "$tmp"
+	assert_same "crlf-zone" "$CF_ZONE_ID"
+	assert_same "crlf-token" "$CF_API_TOKEN"
+	assert_same "crlf.example.com" "${domains_names[0]}"
+	assert_same "false" "${domains_proxied[0]}"
+	rm -f "$tmp"
+}
+
 # --- Error handling ---
 
 function test_missing_config_file_returns_error() {

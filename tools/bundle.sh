@@ -157,27 +157,49 @@ if [[ ! -d "/tmp" ]]; then
 
 fi
 
-if [[ -f "$LOCKFILE" ]]; then
+if command -v flock >/dev/null 2>&1; then
 
-	PID=$(cat "$LOCKFILE")
+	# Atomic lock, released by the kernel on process exit
 
-	if ps -p "$PID" >/dev/null 2>&1; then
+	exec 200>"$LOCKFILE"
 
-		echo "Script is already running (PID: $PID). Exiting."
+	if ! flock -n 200; then
+
+		echo "Script is already running (lock: $LOCKFILE). Exiting."
 
 		exit 1
 
-	else
+	fi
 
-		echo "Found stale lock file (PID: $PID). Overwriting."
+	echo $$ >&200
+
+else
+
+	# Portable fallback: PID file with staleness check
+
+	if [[ -f "$LOCKFILE" ]]; then
+
+		PID=$(cat "$LOCKFILE")
+
+		if ps -p "$PID" >/dev/null 2>&1; then
+
+			echo "Script is already running (PID: $PID). Exiting."
+
+			exit 1
+
+		else
+
+			echo "Found stale lock file (PID: $PID). Overwriting."
+
+		fi
 
 	fi
 
+	echo $$ >"$LOCKFILE"
+
+	trap 'rm -f "$LOCKFILE"' EXIT
+
 fi
-
-echo $ >"$LOCKFILE"
-
-trap 'rm -f "$LOCKFILE"' EXIT
 
 # ----------------------
 

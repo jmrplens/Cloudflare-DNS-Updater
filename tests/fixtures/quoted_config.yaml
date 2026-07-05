@@ -1,0 +1,12 @@
+---
+# Test fixture: quoted scalars and inline comments must parse correctly
+
+cloudflare:
+  zone_id: "quoted-zone"
+  api_token: 'quoted-token'
+
+domains:
+  - name: "q.example.com"
+    ip_type: "ipv4"
+    proxied: "false"
+    ttl: 120 # two minutes
