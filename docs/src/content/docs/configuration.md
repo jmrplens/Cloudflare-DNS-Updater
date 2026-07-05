@@ -77,7 +77,7 @@ Values may be quoted or unquoted; inline comments after a value are ignored. Fil
 
 ## `notifications`
 
-See [Notifications](./notifications/) for setup guides.
+See [Notifications](../notifications/) for setup guides.
 
 :::note[Zones with many records]
 Records are fetched 5000 per API call and pagination is followed automatically, so zones of any size work.

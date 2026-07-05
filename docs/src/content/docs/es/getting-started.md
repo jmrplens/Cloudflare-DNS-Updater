@@ -7,7 +7,7 @@ Cloudflare DNS Updater mantiene los registros A (IPv4) y AAAA (IPv6) de tu zona 
 
 ## 1. Obtén el programa
 
-Descarga un [binario autónomo](./installation/#binarios-autonomos) o clona el repositorio:
+Descarga un [binario autónomo](../installation/#binarios-autonomos) o clona el repositorio:
 
 ```bash
 git clone https://github.com/jmrplens/Cloudflare-DNS-Updater.git
@@ -41,12 +41,16 @@ domains:
   - name: "www.example.com"
 ```
 
-Consulta la [referencia de configuración](./configuration/) para ver todas las opciones.
+Consulta la [referencia de configuración](../configuration/) para ver todas las opciones.
 
 ## 4. Ejecútalo
 
 ```bash
+# Desde el código fuente
 ./cloudflare-dns-updater.sh --debug
+
+# O con un binario autónomo
+./cf-updater-linux-x86_64 --debug /ruta/a/cloudflare-dns.yaml
 ```
 
-Con `--debug` verás cada paso: el parseo de la configuración, la detección de IP, las llamadas a la API y el resultado final. Cuando todo esté correcto, [prográmalo](./automation/) y añade `--silent` para un funcionamiento silencioso.
+Con `--debug` verás cada paso: la detección de IP, las llamadas a la API y la decisión por registro. Cuando todo esté correcto, [prográmalo](../automation/) y añade `--silent` para un funcionamiento silencioso.

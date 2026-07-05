@@ -34,11 +34,11 @@ Todos los módulos de `src/` fusionados en un único script autocontenido:
 `tools/build-all.sh` genera binarios sin dependencias: descarga builds estáticos de bash, curl, jq y busybox para la arquitectura objetivo, los empaqueta con el monolito y compila `tools/launcher.c` como ejecutor autoextraíble.
 
 ```bash
-# Todo
+# --all compila los objetivos Linux (x86_64 + aarch64)
 ./tools/build-all.sh --all
 
-# Una plataforma
-./tools/build-all.sh linux x86_64
+# El resto de plataformas se compilan nombrándolas explícitamente
+./tools/build-all.sh macos aarch64
 ./tools/build-all.sh windows x86_64
 ```
 

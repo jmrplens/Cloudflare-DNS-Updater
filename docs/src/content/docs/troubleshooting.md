@@ -3,7 +3,7 @@ title: Troubleshooting
 description: Diagnose common Cloudflare DNS Updater problems.
 ---
 
-Run with `--debug` first — it prints config parsing, IP detection, every API request (secrets redacted) and the per-record decision, and the same information lands in `logs/updater.log`.
+Run with `--debug` first — it prints IP detection, every API request (secrets redacted) and the per-record decision. When running from source, the same information also lands in `logs/updater.log` in the project directory.
 
 ## "Script is already running"
 

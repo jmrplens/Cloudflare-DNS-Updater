@@ -16,7 +16,7 @@ El lanzador del código fuente (`cloudflare-dns-updater.sh`) usa siempre el `clo
 | --- | --- |
 | `-h`, `--help` | Muestra la ayuda y termina. |
 | `-s`, `--silent` | Sin salida por consola salvo errores. Recomendado para cron. |
-| `-d`, `--debug` | Salida detallada: parseo de configuración, detección de IP, peticiones/respuestas de la API (con secretos redactados) y decisión por registro. |
+| `-d`, `--debug` | Salida detallada: detección de IP, peticiones/respuestas de la API (con secretos redactados) y decisión por registro. |
 | `-f`, `--force` | Envía actualizaciones aunque el registro ya coincida con la IP actual. |
 
 ## Códigos de salida
@@ -32,4 +32,4 @@ Solo se ejecuta una instancia a la vez: el programa toma un lock exclusivo (`flo
 
 ## Logs
 
-Cada ejecución se registra en `logs/updater.log` junto al programa (texto plano, sin colores). El log rota automáticamente al alcanzar 1 MB a `updater.log.old`.
+Al ejecutar desde el código fuente, cada ejecución se registra en `logs/updater.log` dentro del directorio del proyecto (texto plano, sin colores), con rotación automática a `updater.log.old` al alcanzar 1 MB. Los binarios autónomos se ejecutan desde un directorio temporal, así que su log de fichero no persiste en una ubicación fija — usa la salida de consola (o `--debug`).

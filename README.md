@@ -76,7 +76,7 @@ cloudflare:
 options:
   proxied: true   # Default for all domains: true = Orange Cloud (Proxy), false = DNS only
   ttl: 1          # Default TTL: 1 = Auto, or value in seconds (60-86400)
-  interface: ""   # Optional: Force specific interface for IPv6 detection (e.g., "eth0")
+  interface: ""   # Optional: network interface for local IPv6 detection (e.g., "eth0")
 
 domains:
   # Update both IPv4 and IPv6 (default)

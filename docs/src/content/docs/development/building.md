@@ -34,11 +34,11 @@ All `src/` modules merged into one self-contained script:
 `tools/build-all.sh` produces dependency-free binaries: it downloads static builds of bash, curl, jq and busybox for the target architecture, bundles them with the monolith, and compiles `tools/launcher.c` as a self-extracting runner.
 
 ```bash
-# Everything
+# --all builds the Linux targets (x86_64 + aarch64)
 ./tools/build-all.sh --all
 
-# One platform
-./tools/build-all.sh linux x86_64
+# Other platforms are built by naming them explicitly
+./tools/build-all.sh macos aarch64
 ./tools/build-all.sh windows x86_64
 ```
 

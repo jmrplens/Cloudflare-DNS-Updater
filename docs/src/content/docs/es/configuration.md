@@ -77,7 +77,7 @@ Los valores pueden ir con o sin comillas; los comentarios al final de una línea
 
 ## `notifications`
 
-Consulta [Notificaciones](./notifications/) para las guías de configuración.
+Consulta [Notificaciones](../notifications/) para las guías de configuración.
 
 :::note[Zonas con muchos registros]
 Los registros se obtienen de 5000 en 5000 por llamada y la paginación se sigue automáticamente, así que funcionan zonas de cualquier tamaño.

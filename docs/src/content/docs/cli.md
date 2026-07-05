@@ -16,7 +16,7 @@ The source launcher (`cloudflare-dns-updater.sh`) always uses the `cloudflare-dn
 | --- | --- |
 | `-h`, `--help` | Show usage help and exit. |
 | `-s`, `--silent` | No console output except errors. Recommended for cron. |
-| `-d`, `--debug` | Verbose output: config parsing, IP detection, API requests/responses (secrets redacted) and per-record decisions. |
+| `-d`, `--debug` | Verbose output: IP detection, API requests/responses (secrets redacted) and per-record decisions. |
 | `-f`, `--force` | Push updates even when the record already matches the current IP. |
 
 ## Exit codes
@@ -32,4 +32,4 @@ Only one instance runs at a time: the program takes an exclusive lock (`flock` w
 
 ## Logs
 
-Runs are logged to `logs/updater.log` next to the program (plain text, no colors). The log rotates automatically at 1 MB to `updater.log.old`.
+When running from source, runs are logged to `logs/updater.log` in the project directory (plain text, no colors), rotating automatically at 1 MB to `updater.log.old`. Standalone binaries execute from a temporary directory, so their file log does not persist in a fixed location — rely on console output (or `--debug`) instead.
