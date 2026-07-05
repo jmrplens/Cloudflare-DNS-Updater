@@ -95,10 +95,11 @@ if [[ ! -f "$CONFIG_FILE" ]]; then
 	exit 1
 fi
 
-# The config contains the API token: warn if other users can read it
+# The config contains the API token: warn if group/others can read it
+# (octal mask 0044 = the group and other read bits)
 if ! is_silent; then
 	CONFIG_PERMS=$(stat -c '%a' "$CONFIG_FILE" 2>/dev/null || stat -f '%Lp' "$CONFIG_FILE" 2>/dev/null)
-	if [[ -n "$CONFIG_PERMS" && "$CONFIG_PERMS" != *00 ]]; then
+	if [[ "$CONFIG_PERMS" =~ ^[0-7]+$ ]] && ((8#$CONFIG_PERMS & 8#0044)); then
 		echo "Warning: $CONFIG_FILE is readable by other users (mode $CONFIG_PERMS)." >&2
 		echo "It contains your API token; consider: chmod 600 $CONFIG_FILE" >&2
 	fi

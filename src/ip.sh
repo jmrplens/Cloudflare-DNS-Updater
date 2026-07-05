@@ -183,6 +183,10 @@ is_valid_ipv6() {
 	[[ "$ip" =~ ^[0-9a-fA-F:]+$ ]] || return 1
 	[[ "$ip" == *":"* ]] || return 1
 	[[ "$ip" == *"::"*"::"* ]] && return 1
+	[[ "$ip" == *":::"* ]] && return 1
+	# A single colon at either edge is invalid; '::' there is fine
+	[[ "$ip" == :* && "$ip" != ::* ]] && return 1
+	[[ "$ip" == *: && "$ip" != *:: ]] && return 1
 
 	# Count non-empty groups (read -ra drops trailing empty fields, so
 	# counting array elements would wrongly accept e.g. 1:2:3:4:5:6:7:8::)

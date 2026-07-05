@@ -99,6 +99,17 @@ function test_ipv6_rejects_full_address_with_trailing_compression() {
 function test_ipv6_accepts_trailing_compression() {
 	assert_successful_code "$(is_valid_ipv6 "1:2:3:4:5:6:7::")"
 	assert_successful_code "$(is_valid_ipv6 "::1")"
+	assert_successful_code "$(is_valid_ipv6 "::")"
+}
+
+function test_ipv6_rejects_triple_colon() {
+	assert_general_error "$(is_valid_ipv6 ":::")"
+	assert_general_error "$(is_valid_ipv6 "1:::2")"
+}
+
+function test_ipv6_rejects_single_edge_colons() {
+	assert_general_error "$(is_valid_ipv6 ":1:2:3:4:5:6:7:8")"
+	assert_general_error "$(is_valid_ipv6 "1:2:3:4:5:6:7:8:")"
 }
 
 # --- get_public_ipv4 fallback cascade ---
