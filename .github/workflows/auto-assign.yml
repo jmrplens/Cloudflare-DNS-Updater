@@ -1,3 +1,4 @@
+---
 name: Auto-assign
 
 on:
@@ -13,8 +14,12 @@ jobs:
       issues: write
       pull-requests: write
     if: >-
-      (github.event_name == 'issues' && github.event.issue.user.login != 'jmrplens' && github.event.issue.user.login != 'dependabot[bot]') ||
-      (github.event_name == 'pull_request' && github.event.pull_request.user.login != 'jmrplens' && github.event.pull_request.user.login != 'dependabot[bot]')
+      (github.event_name == 'issues' &&
+       github.event.issue.user.login != 'jmrplens' &&
+       github.event.issue.user.login != 'dependabot[bot]') ||
+      (github.event_name == 'pull_request' &&
+       github.event.pull_request.user.login != 'jmrplens' &&
+       github.event.pull_request.user.login != 'dependabot[bot]')
     steps:
       - name: Assign to jmrplens
         env:
@@ -25,5 +30,5 @@ jobs:
           gh api \
             --method POST \
             -H "Accept: application/vnd.github+json" \
-            /repos/$REPO/issues/$NUMBER/assignees \
+            "/repos/$REPO/issues/$NUMBER/assignees" \
             -f assignees[]=jmrplens
