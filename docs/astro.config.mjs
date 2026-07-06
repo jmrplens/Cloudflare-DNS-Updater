@@ -141,6 +141,7 @@ const jsonLd = JSON.stringify({
 				priceCurrency: 'USD',
 			},
 			author: { '@id': authorId },
+			sameAs: ['https://www.wikidata.org/wiki/Q140447586'],
 		},
 		{
 			'@type': 'SoftwareSourceCode',
