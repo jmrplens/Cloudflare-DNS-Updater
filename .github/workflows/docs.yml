@@ -27,6 +27,8 @@ jobs:
         with:
           # Full history: per-page git dates feed the sitemap <lastmod> stamps
           fetch-depth: 0
+          # Build-only job: never leave the GITHUB_TOKEN in .git/config
+          persist-credentials: false
       - name: Build with Astro
         uses: withastro/action@v6
         with:

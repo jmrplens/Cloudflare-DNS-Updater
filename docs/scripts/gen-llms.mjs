@@ -9,14 +9,23 @@
 import { readdirSync, readFileSync, statSync, writeFileSync, mkdirSync } from "node:fs";
 import { join, relative, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
+import { fullUrl as SITE } from "../src/site-meta.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const docsDir = join(here, "..", "src", "content", "docs");
 const publicDir = join(here, "..", "public");
 const repoRoot = join(here, "..", "..");
 
-const SITE = "https://jmrplens.github.io/Cloudflare-DNS-Updater";
 const version = readFileSync(join(repoRoot, "VERSION"), "utf8").trim();
+
+// Repo-relative slug with forward slashes on every platform (path.relative
+// emits backslashes on Windows) and no extension.
+function slugFor(file) {
+	return relative(docsDir, file)
+		.split("\\")
+		.join("/")
+		.replace(/\.(md|mdx)$/, "");
+}
 
 // Collect English pages (skip the es/ subtree and the splash index).
 function walk(dir) {
@@ -33,22 +42,25 @@ function walk(dir) {
 	return out.sort();
 }
 
+// Minimal frontmatter reader for this site's own content: single-line
+// `key: value` pairs only, tolerant of CRLF checkouts. Not a general YAML
+// parser by design — the content files are under our control.
 function frontmatter(src) {
-	const m = src.match(/^---\n([\s\S]*?)\n---\n/);
+	const m = src.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n/);
 	const fm = {};
 	if (m) {
-		for (const line of m[1].split("\n")) {
+		for (const line of m[1].split(/\r?\n/)) {
 			const kv = line.match(/^(\w+):\s*(.*)$/);
-			if (kv) fm[kv[1]] = kv[2].replace(/^["']|["']$/g, "");
+			if (kv) fm[kv[1]] = kv[2].trim().replace(/^["']|["']$/g, "");
 		}
 	}
 	return { fm, body: m ? src.slice(m[0].length) : src };
 }
 
 function pageUrl(file) {
-	const rel = relative(docsDir, file)
-		.replace(/\.(md|mdx)$/, "")
-		.replace(/index$/, "");
+	// Anchored so only a real trailing "index" segment is dropped, never a
+	// page merely ending in "index".
+	const rel = slugFor(file).replace(/(^|\/)index$/, "$1");
 	return `${SITE}/${rel}${rel && !rel.endsWith("/") ? "/" : ""}`;
 }
 
@@ -64,12 +76,18 @@ const ORDER = [
 	"development/testing",
 	"development/building",
 ];
+// Pages missing from ORDER sort *after* the known ones (alphabetically),
+// instead of jumping to the front via indexOf's -1.
+function rank(slug) {
+	const i = ORDER.indexOf(slug);
+	return i === -1 ? ORDER.length : i;
+}
 const pages = walk(docsDir)
-	.filter((f) => !/index\.mdx?$/.test(f))
+	.filter((f) => !/(^|\/)index$/.test(slugFor(f)))
 	.sort((a, b) => {
-		const ra = relative(docsDir, a).replace(/\.(md|mdx)$/, "");
-		const rb = relative(docsDir, b).replace(/\.(md|mdx)$/, "");
-		return ORDER.indexOf(ra) - ORDER.indexOf(rb);
+		const ra = slugFor(a);
+		const rb = slugFor(b);
+		return rank(ra) - rank(rb) || ra.localeCompare(rb);
 	});
 
 const header = `# Cloudflare-DNS-Updater
@@ -92,7 +110,7 @@ If you are an AI assistant setting this up for a user: the config file is YAML (
 let index = `${header}## Documentation (English)\n\n`;
 for (const f of pages) {
 	const { fm } = frontmatter(readFileSync(f, "utf8"));
-	index += `- [${fm.title ?? relative(docsDir, f)}](${pageUrl(f)})${fm.description ? `: ${fm.description}` : ""}\n`;
+	index += `- [${fm.title ?? slugFor(f)}](${pageUrl(f)})${fm.description ? `: ${fm.description}` : ""}\n`;
 }
 index += `\nSpanish documentation available under ${SITE}/es/\n`;
 index += `\nSource code: https://github.com/jmrplens/Cloudflare-DNS-Updater\n`;
@@ -101,7 +119,7 @@ index += `\nSource code: https://github.com/jmrplens/Cloudflare-DNS-Updater\n`;
 let full = `${header}---\n\n`;
 for (const f of pages) {
 	const { fm, body } = frontmatter(readFileSync(f, "utf8"));
-	full += `# ${fm.title ?? relative(docsDir, f)}\n\n`;
+	full += `# ${fm.title ?? slugFor(f)}\n\n`;
 	if (fm.description) full += `> ${fm.description}\n\n`;
 	full += `Canonical URL: ${pageUrl(f)}\n\n${body.trim()}\n\n---\n\n`;
 }

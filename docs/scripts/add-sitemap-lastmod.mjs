@@ -19,6 +19,7 @@ import {
 } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { siteUrl as SITE, basePath as BASE } from "../src/site-meta.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const siteRoot = join(here, "..");
@@ -26,8 +27,6 @@ const repoRoot = join(siteRoot, "..");
 const distDir = join(siteRoot, "dist");
 const docsDir = join(siteRoot, "src", "content", "docs");
 
-const SITE = "https://jmrplens.github.io";
-const BASE = "/Cloudflare-DNS-Updater";
 const buildDate = new Date().toISOString().slice(0, 10);
 
 // Map a sitemap URL to its source content file, or null if none is found or the
@@ -44,8 +43,13 @@ function sourceFileFor(url) {
 	if (rel.startsWith(BASE)) rel = rel.slice(BASE.length);
 	rel = rel.replace(/^\/+|\/+$/g, ""); // trim slashes → "configuration" | "es" | ""
 	const base = rel === "" ? "index" : rel === "es" ? "es/index" : rel;
-	for (const ext of [".mdx", ".md"]) {
-		const candidate = join(docsDir, base + ext);
+	// A URL can come from either <slug>.mdx/.md or <slug>/index.mdx/.md
+	for (const candidate of [
+		join(docsDir, `${base}.mdx`),
+		join(docsDir, `${base}.md`),
+		join(docsDir, base, "index.mdx"),
+		join(docsDir, base, "index.md"),
+	]) {
 		if (existsSync(candidate)) return candidate;
 	}
 	return null;

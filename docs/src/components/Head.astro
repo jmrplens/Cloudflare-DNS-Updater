@@ -5,16 +5,20 @@
 // The site-wide @graph (Person / WebSite / SoftwareApplication) lives in
 // astro.config.mjs; these IDs link the per-page nodes back into that graph.
 import Default from "@astrojs/starlight/components/Head.astro";
+// Shared @id anchors — same module astro.config.mjs uses, so the per-page
+// nodes always link back into the site-wide @graph.
+import {
+	authorId as PERSON_ID,
+	websiteId as WEBSITE_ID,
+	softwareId as SOFTWARE_ID,
+} from "../site-meta.mjs";
 
-// Derive origin + base path from Astro config so a domain/base rename needs no
-// code change here. PERSON_ID mirrors `authorId` in astro.config.mjs (an
-// external identity URL that can't be derived from the site origin).
 const SITE = import.meta.env.SITE ?? "https://jmrplens.github.io";
 const BASE = (import.meta.env.BASE_URL ?? "/").replace(/\/$/, "");
-const PERSON_ID = "https://jmrp.io/#person";
-const WEBSITE_ID = `${SITE}${BASE}/#website`;
-// Matches the SoftwareApplication @id in the site-wide @graph (astro.config.mjs).
-const SOFTWARE_ID = "https://github.com/jmrplens/Cloudflare-DNS-Updater#software";
+
+// Escape "<" so frontmatter content can never break out of the JSON-LD
+// <script> element (U+003C stays valid JSON).
+const jsonLdSafe = (obj: unknown) => JSON.stringify(obj).replace(/</g, "\\u003c");
 
 // Minimal typed view of the Starlight route data we consume.
 interface RouteData {
@@ -76,7 +80,9 @@ if (!isHome) {
 	const homeUrl = lang === "es" ? `${SITE}${BASE}/es/` : `${SITE}${BASE}/`;
 	const homeName = lang === "es" ? "Inicio" : "Home";
 	const items = [{ "@type": "ListItem", position: 1, name: homeName, item: homeUrl }];
-	const segs = rel.split("/").filter(Boolean).filter((s) => s !== "es");
+	// Drop only a *leading* locale prefix, never a mid-path segment named "es".
+	const segs = rel.split("/").filter(Boolean);
+	if (segs[0] === "es") segs.shift();
 	let acc = lang === "es" ? `${BASE}/es` : BASE;
 	segs.forEach((seg, i) => {
 		acc += `/${seg}`;
@@ -98,7 +104,7 @@ if (!isHome) {
 
 <Default />
 
-{techArticle && <script type="application/ld+json" is:inline set:html={JSON.stringify(techArticle)} />}
-{breadcrumb && <script type="application/ld+json" is:inline set:html={JSON.stringify(breadcrumb)} />}
+{techArticle && <script type="application/ld+json" is:inline set:html={jsonLdSafe(techArticle)} />}
+{breadcrumb && <script type="application/ld+json" is:inline set:html={jsonLdSafe(breadcrumb)} />}
 <meta name="twitter:title" content={title} />
 {description && <meta name="twitter:description" content={description} />}

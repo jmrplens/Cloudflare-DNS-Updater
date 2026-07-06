@@ -4,21 +4,23 @@ import { readFileSync } from 'node:fs';
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
 import starlightLinksValidator from 'starlight-links-validator';
+import {
+	siteUrl,
+	basePath,
+	fullUrl,
+	repositoryUrl,
+	authorUrl,
+	authorId,
+	websiteId,
+	softwareId,
+	sourceCodeId,
+} from './src/site-meta.mjs';
 
 // Single-sourced project version (the repo-root VERSION file also drives releases)
 const version = readFileSync(new URL('../VERSION', import.meta.url), 'utf8').trim();
 
-const siteUrl = 'https://jmrplens.github.io';
-const basePath = '/Cloudflare-DNS-Updater';
-const fullUrl = `${siteUrl}${basePath}`;
-const repositoryUrl = 'https://github.com/jmrplens/Cloudflare-DNS-Updater';
 const releasesUrl = `${repositoryUrl}/releases`;
-const authorUrl = 'https://jmrp.io';
 const socialImageUrl = `${fullUrl}/og-image.png`;
-const authorId = `${authorUrl}/#person`;
-const websiteId = `${fullUrl}/#website`;
-const softwareId = `${repositoryUrl}#software`;
-const sourceCodeId = `${repositoryUrl}#source-code`;
 const siteDescription =
 	'Open source dynamic DNS updater for Cloudflare: a single Bash program that keeps A and AAAA records pointed at your public IP, with batch API updates, IPv6-aware detection and notifications.';
 const socialImageAlt =
