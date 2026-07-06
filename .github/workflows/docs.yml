@@ -44,7 +44,87 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
+    outputs:
+      page_url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v5
+
+  indexnow:
+    name: Submit to IndexNow
+    needs: deploy
+    runs-on: ubuntu-latest
+    # Best-effort ping: a failure here must never mark a successful deploy red
+    continue-on-error: true
+    steps:
+      - name: Notify IndexNow of updated URLs
+        env:
+          INDEXNOW_KEY: ${{ secrets.INDEXNOW_KEY }}
+          PAGE_URL: ${{ needs.deploy.outputs.page_url }}
+        run: |
+          set -euo pipefail
+          if [ -z "${INDEXNOW_KEY:-}" ]; then
+            echo "INDEXNOW_KEY not set — skipping IndexNow submission"
+            exit 0
+          fi
+          # Use the actual deployed Pages URL (tracks a custom domain / CNAME and
+          # any repo/org rename automatically).
+          BASE="${PAGE_URL%/}"
+          if [ -z "$BASE" ]; then
+            echo "::warning title=IndexNow::no deploy page_url available (non-fatal); skipping"
+            exit 0
+          fi
+          HOST="$(printf '%s' "$BASE" | sed -E 's#^https?://([^/]+).*#\1#')"
+          echo "Site base: $BASE (host: $HOST)"
+          # Fetch the live sitemap with a short retry/backoff for deploy propagation.
+          idx=""
+          for attempt in 1 2 3 4 5; do
+            if idx=$(curl -fsSL "$BASE/sitemap-index.xml"); then break; fi
+            echo "sitemap fetch attempt ${attempt} failed; retrying in 10s…"
+            sleep 10
+          done
+          if [ -z "$idx" ]; then
+            echo "::warning title=IndexNow::could not fetch sitemap after retries (non-fatal); skipping"
+            exit 0
+          fi
+          # Collect sub-sitemap URLs, then each sitemap's <loc> entries. Every
+          # extraction carries '|| true': under `set -euo pipefail` a grep with
+          # zero matches exits 1 and would abort the whole best-effort job.
+          subs=$(printf '%s' "$idx" | grep -oE '<loc>[^<]+</loc>' | sed -E 's#</?loc>##g' || true)
+          urls=""
+          while IFS= read -r sm; do
+            [ -n "$sm" ] || continue
+            body=$(curl -fsSL "$sm" || true)
+            urls="${urls}$(printf '%s' "$body" | grep -oE '<loc>[^<]+</loc>' | sed -E 's#</?loc>##g' || true)"$'\n'
+          done <<< "$subs"
+          urls_clean=$(printf '%s\n' "$urls" | grep . || true)
+          if [ -z "$urls_clean" ]; then
+            echo "::warning title=IndexNow::no URLs extracted from the sitemap (non-fatal); skipping"
+            exit 0
+          fi
+          url_json=$(printf '%s\n' "$urls_clean" | jq -R . | jq -s .)
+          count=$(printf '%s' "$url_json" | jq 'length')
+          echo "Submitting $count URLs to IndexNow"
+          payload=$(jq -n \
+            --arg host "$HOST" \
+            --arg key "$INDEXNOW_KEY" \
+            --arg keyLocation "https://${HOST}/${INDEXNOW_KEY}.txt" \
+            --argjson urlList "$url_json" \
+            '{host:$host, key:$key, keyLocation:$keyLocation, urlList:$urlList}')
+          # `|| true` so a transport error (DNS/timeout) can't abort under set -e;
+          # curl writes 000 to the http_code on failure, handled by the case below.
+          code=$(curl -sS -o /tmp/indexnow.out -w '%{http_code}' \
+            -X POST "https://api.indexnow.org/IndexNow" \
+            -H "Content-Type: application/json; charset=utf-8" \
+            --data "$payload" || true)
+          echo "IndexNow responded HTTP $code"; cat /tmp/indexnow.out || true
+          # IndexNow is a best-effort ping — never fail the deploy over it.
+          # keyLocation points at the host ROOT (https://$HOST/<key>.txt) because
+          # IndexNow verifies ownership at the host level, and a GitHub Pages
+          # PROJECT site can't publish at the domain root. The key file is served
+          # from the ${GITHUB_REPOSITORY_OWNER}.github.io user-site repository.
+          case "$code" in
+            200|202) echo "IndexNow: submitted OK" ;;
+            *) echo "::warning title=IndexNow::submission returned HTTP $code (non-fatal)" ;;
+          esac

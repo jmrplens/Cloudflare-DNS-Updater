@@ -1,6 +1,9 @@
 # Config
 cloudflare-dns.yaml
 
+# Local secrets (IndexNow key, Wikidata bot credentials)
+.env
+
 # Logs
 logs/
 *.log
