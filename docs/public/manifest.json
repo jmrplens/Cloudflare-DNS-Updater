@@ -1,0 +1,18 @@
+{
+  "name": "Cloudflare DNS Updater",
+  "short_name": "CF DNS Updater",
+  "description": "Open source dynamic DNS updater for Cloudflare: a single Bash program that keeps A and AAAA records pointed at your public IP.",
+  "start_url": "/Cloudflare-DNS-Updater/",
+  "scope": "/Cloudflare-DNS-Updater/",
+  "display": "standalone",
+  "background_color": "#17110B",
+  "theme_color": "#F6821F",
+  "icons": [
+    {
+      "src": "/Cloudflare-DNS-Updater/favicon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any"
+    }
+  ],
+  "categories": ["utilities", "developer tools"]
+}
