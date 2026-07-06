@@ -1,0 +1,15 @@
+/*
+ * The route middleware (src/routeData.ts) enables the sidebar on the splash
+ * landing page so the mobile menu button exists there. On desktop widths the
+ * hero should stay full-width, so hide the sidebar pane and reclaim the
+ * content offset on pages that render a hero. (Unlayered rules override
+ * Starlight's @layer starlight.core styles.)
+ */
+@media (min-width: 50em) {
+	[data-has-hero] .sidebar-pane {
+		display: none;
+	}
+	[data-has-hero] {
+		--sl-content-inline-start: 0;
+	}
+}
