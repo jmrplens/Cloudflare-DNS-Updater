@@ -55,6 +55,8 @@ jobs:
     name: Submit to IndexNow
     needs: deploy
     runs-on: ubuntu-latest
+    # Best-effort ping: a failure here must never mark a successful deploy red
+    continue-on-error: true
     steps:
       - name: Notify IndexNow of updated URLs
         env:
@@ -69,7 +71,10 @@ jobs:
           # Use the actual deployed Pages URL (tracks a custom domain / CNAME and
           # any repo/org rename automatically).
           BASE="${PAGE_URL%/}"
-          if [ -z "$BASE" ]; then echo "No deploy page_url available; aborting"; exit 1; fi
+          if [ -z "$BASE" ]; then
+            echo "::warning title=IndexNow::no deploy page_url available (non-fatal); skipping"
+            exit 0
+          fi
           HOST="$(printf '%s' "$BASE" | sed -E 's#^https?://([^/]+).*#\1#')"
           echo "Site base: $BASE (host: $HOST)"
           # Fetch the live sitemap with a short retry/backoff for deploy propagation.
@@ -83,17 +88,22 @@ jobs:
             echo "::warning title=IndexNow::could not fetch sitemap after retries (non-fatal); skipping"
             exit 0
           fi
-          # Collect sub-sitemap URLs, then each sitemap's <loc> entries. A while
-          # loop over a here-string (not a pipe) keeps errors from being masked
-          # under `set -o pipefail`; a transient sub-sitemap fetch can't abort all.
-          subs=$(printf '%s' "$idx" | grep -oE '<loc>[^<]+</loc>' | sed -E 's#</?loc>##g')
+          # Collect sub-sitemap URLs, then each sitemap's <loc> entries. Every
+          # extraction carries '|| true': under `set -euo pipefail` a grep with
+          # zero matches exits 1 and would abort the whole best-effort job.
+          subs=$(printf '%s' "$idx" | grep -oE '<loc>[^<]+</loc>' | sed -E 's#</?loc>##g' || true)
           urls=""
           while IFS= read -r sm; do
             [ -n "$sm" ] || continue
             body=$(curl -fsSL "$sm" || true)
-            urls="${urls}$(printf '%s' "$body" | grep -oE '<loc>[^<]+</loc>' | sed -E 's#</?loc>##g')"$'\n'
+            urls="${urls}$(printf '%s' "$body" | grep -oE '<loc>[^<]+</loc>' | sed -E 's#</?loc>##g' || true)"$'\n'
           done <<< "$subs"
-          url_json=$(printf '%s\n' "$urls" | grep . | jq -R . | jq -s .)
+          urls_clean=$(printf '%s\n' "$urls" | grep . || true)
+          if [ -z "$urls_clean" ]; then
+            echo "::warning title=IndexNow::no URLs extracted from the sitemap (non-fatal); skipping"
+            exit 0
+          fi
+          url_json=$(printf '%s\n' "$urls_clean" | jq -R . | jq -s .)
           count=$(printf '%s' "$url_json" | jq 'length')
           echo "Submitting $count URLs to IndexNow"
           payload=$(jq -n \
