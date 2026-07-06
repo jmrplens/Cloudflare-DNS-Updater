@@ -164,6 +164,9 @@ export default defineConfig({
 		starlight({
 			title: 'Cloudflare DNS Updater',
 			description: siteDescription,
+			// Enables the sidebar (and the mobile menu button) on the splash page
+			routeMiddleware: './src/routeData.ts',
+			customCss: ['./src/styles/custom.css'],
 			plugins: [
 				starlightLinksValidator({
 					errorOnRelativeLinks: false,

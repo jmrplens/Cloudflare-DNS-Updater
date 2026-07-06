@@ -1,0 +1,18 @@
+/*
+ * The route middleware (src/routeData.ts) enables the sidebar on splash pages
+ * so the mobile menu button exists there. On desktop widths the hero should
+ * stay full-width, so hide the sidebar pane and reclaim the content offset on
+ * pages that render a hero. [data-has-hero] is the most specific hook
+ * Starlight exposes (there is no template attribute); in this site heroes
+ * only appear on the splash landing pages. Unlayered rules override
+ * Starlight's @layer starlight.core styles; 50em matches the breakpoint of
+ * the [data-has-sidebar] rule being reclaimed (Page.astro).
+ */
+@media (min-width: 50em) {
+	[data-has-hero] .sidebar-pane {
+		display: none;
+	}
+	[data-has-hero] {
+		--sl-content-inline-start: 0;
+	}
+}
