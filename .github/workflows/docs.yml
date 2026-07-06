@@ -24,6 +24,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          # Full history: per-page git dates feed the sitemap <lastmod> stamps
+          fetch-depth: 0
       - name: Build with Astro
         uses: withastro/action@v6
         with:
