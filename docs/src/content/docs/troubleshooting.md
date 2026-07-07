@@ -1,6 +1,12 @@
 ---
 title: Troubleshooting
 description: Diagnose common Cloudflare DNS Updater problems.
+head:
+  - tag: script
+    attrs:
+      type: application/ld+json
+    content: |-
+      {"@context":"https://schema.org","@type":"FAQPage","@id":"https://jmrplens.github.io/Cloudflare-DNS-Updater/troubleshooting/#faq","inLanguage":"en","isPartOf":{"@id":"https://jmrplens.github.io/Cloudflare-DNS-Updater/#website"},"about":{"@id":"https://github.com/jmrplens/Cloudflare-DNS-Updater#software"},"mainEntity":[{"@type":"Question","name":"Why does it say the script is already running?","acceptedAnswer":{"@type":"Answer","text":"Another instance holds the lock (/tmp/cloudflare-dns-updater.lock). This is normal under cron if a previous run is still active. Re-run; with flock the kernel releases the lock automatically, and a stale PID-file lock is detected and overwritten."}},{"@type":"Question","name":"Why can it not detect my public IPv4 or IPv6?","acceptedAnswer":{"@type":"Answer","text":"IPv4 is detected via external services (icanhazip.com, ifconfig.co, api.ipify.org), so check outbound HTTPS connectivity. IPv6 is read from a local interface first and then external services. If you have no IPv6, set ip_type: ipv4 on your domains so AAAA lookups are skipped."}},{"@type":"Question","name":"Why does it report that the record was not found?","acceptedAnswer":{"@type":"Answer","text":"The program only updates existing records. Create the A or AAAA record once in the Cloudflare dashboard (any IP — it is corrected on the next run) and re-run."}},{"@type":"Question","name":"Records update but my websites break — why?","acceptedAnswer":{"@type":"Answer","text":"If a record is proxied (orange cloud), Cloudflare terminates traffic and the TTL is ignored — that is normal. For direct connections such as SSH, game servers or mail, set proxied: false on that domain."}},{"@type":"Question","name":"How do I fix failed to fetch records or batch update failed?","acceptedAnswer":{"@type":"Answer","text":"Check the token has Edit zone DNS permission for the configured zone and has not expired, confirm zone_id matches the zone that holds your records, and re-run with --debug to see the redacted API error body."}}]}
 ---
 
 Run with `--debug` first — it prints IP detection, every API request (secrets redacted) and the per-record decision. When running from source, the same information also lands in `logs/updater.log` in the project directory.

@@ -50,7 +50,11 @@ notifications:
 | Key | Required | Description |
 | --- | --- | --- |
 | `zone_id` | yes | The Zone ID shown on your zone's *Overview* page. |
-| `api_token` | yes | An API token with **Edit zone DNS** permission for that zone. |
+| `api_token` | yes | An API token with [**Edit zone DNS**](https://developers.cloudflare.com/fundamentals/api/get-started/create-token/) permission for that zone. |
+
+:::caution[Protect your credentials]
+`cloudflare-dns.yaml` holds your API token. Restrict it to your user with `chmod 600 cloudflare-dns.yaml`, and scope the token to **Edit zone DNS** for a single zone rather than using a Global API Key — so a leaked file can only touch that one zone's DNS. The program warns on startup if the file is world-readable.
+:::
 
 ## `options`
 

@@ -14,6 +14,7 @@ import {
 	websiteId,
 	softwareId,
 	sourceCodeId,
+	organizationId,
 } from './src/site-meta.mjs';
 
 // Single-sourced project version (the repo-root VERSION file also drives releases)
@@ -101,6 +102,24 @@ const jsonLd = JSON.stringify({
 			],
 		},
 		{
+			// Project-as-Organization: the publisher entity for the site and its
+			// articles. `founder` links back to the maintainer Person, keeping the
+			// individual↔project relationship explicit for entity resolution.
+			'@type': 'Organization',
+			'@id': organizationId,
+			name: 'Cloudflare DNS Updater',
+			url: `${fullUrl}/`,
+			logo: {
+				'@type': 'ImageObject',
+				url: socialImageUrl,
+				width: 1200,
+				height: 630,
+			},
+			image: socialImage,
+			founder: { '@id': authorId },
+			sameAs: [repositoryUrl, 'https://www.wikidata.org/wiki/Q140447586'],
+		},
+		{
 			'@type': 'WebSite',
 			'@id': websiteId,
 			name: 'Cloudflare DNS Updater',
@@ -108,7 +127,7 @@ const jsonLd = JSON.stringify({
 			description: siteDescription,
 			inLanguage: ['en', 'es'],
 			image: socialImage,
-			publisher: { '@id': authorId },
+			publisher: { '@id': organizationId },
 			about: { '@id': softwareId },
 		},
 		{

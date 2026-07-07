@@ -7,6 +7,8 @@ Dynamic IPs change without warning, so run the updater on a schedule. It exits q
 
 ## Linux / macOS: cron
 
+Schedule the updater with [cron](https://man7.org/linux/man-pages/man5/crontab.5.html):
+
 ```bash
 crontab -e
 ```
@@ -20,7 +22,7 @@ Use the absolute path to the launcher (or binary). Output is already suppressed 
 
 ## Linux: systemd timer
 
-`/etc/systemd/system/cf-updater.service`:
+Prefer a [systemd timer](https://www.freedesktop.org/software/systemd/man/latest/systemd.timer.html)? Create the service unit at `/etc/systemd/system/cf-updater.service`:
 
 ```ini
 [Unit]
@@ -55,7 +57,7 @@ systemctl list-timers cf-updater.timer
 
 ## Windows: Task Scheduler
 
-1. Open **Task Scheduler** → *Create Basic Task*.
+1. Open [**Task Scheduler**](https://learn.microsoft.com/windows/win32/taskschd/task-scheduler-start-page) → *Create Basic Task*.
 2. Name it e.g. "Cloudflare DNS Updater".
 3. Trigger: **Daily**, then edit the task's properties to *Repeat task every 5 minutes* for a duration of *Indefinitely*.
 4. Action: **Start a Program** → browse to `cf-updater-windows-x86_64.exe`.
