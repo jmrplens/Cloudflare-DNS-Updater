@@ -7,6 +7,8 @@ Las IP dinámicas cambian sin avisar, así que conviene ejecutar el actualizador
 
 ## Linux / macOS: cron
 
+Programa el actualizador con [cron](https://man7.org/linux/man-pages/man5/crontab.5.html):
+
 ```bash
 crontab -e
 ```
@@ -20,7 +22,7 @@ Usa la ruta absoluta al lanzador (o al binario). `--silent` ya suprime la salida
 
 ## Linux: timer de systemd
 
-`/etc/systemd/system/cf-updater.service`:
+¿Prefieres un [timer de systemd](https://www.freedesktop.org/software/systemd/man/latest/systemd.timer.html)? Crea la unidad de servicio en `/etc/systemd/system/cf-updater.service`:
 
 ```ini
 [Unit]
@@ -55,7 +57,7 @@ systemctl list-timers cf-updater.timer
 
 ## Windows: Programador de tareas
 
-1. Abre el **Programador de tareas** → *Crear tarea básica*.
+1. Abre el [**Programador de tareas**](https://learn.microsoft.com/es-es/windows/win32/taskschd/task-scheduler-start-page) → *Crear tarea básica*.
 2. Ponle un nombre, p. ej. "Cloudflare DNS Updater".
 3. Desencadenador: **Diariamente**; después, en las propiedades de la tarea, marca *Repetir la tarea cada 5 minutos* con duración *Indefinidamente*.
 4. Acción: **Iniciar un programa** → busca `cf-updater-windows-x86_64.exe`.

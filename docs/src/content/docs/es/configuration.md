@@ -50,7 +50,11 @@ notifications:
 | Clave | Obligatoria | Descripción |
 | --- | --- | --- |
 | `zone_id` | sí | El Zone ID que aparece en la página *Overview* de tu zona. |
-| `api_token` | sí | Un token de API con permiso **Edit zone DNS** para esa zona. |
+| `api_token` | sí | Un token de API con permiso [**Edit zone DNS**](https://developers.cloudflare.com/fundamentals/api/get-started/create-token/) para esa zona. |
+
+:::caution[Protege tus credenciales]
+`cloudflare-dns.yaml` contiene tu token de API. Restríngelo a tu usuario con `chmod 600 cloudflare-dns.yaml` y limita el token a **Edit zone DNS** para una sola zona en lugar de usar una Global API Key — así, si el fichero se filtra, solo puede afectar al DNS de esa zona. El programa avisa al arrancar si el fichero es legible por todos.
+:::
 
 ## `options`
 
