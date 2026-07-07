@@ -268,6 +268,7 @@ export default defineConfig({
 					},
 				},
 				{ tag: 'link', attrs: { rel: 'me', href: 'https://jmrp.io' } },
+				{ tag: 'link', attrs: { rel: 'me', href: 'https://www.wikidata.org/wiki/Q140455276' } },
 				// PGP public key
 				{
 					tag: 'link',
