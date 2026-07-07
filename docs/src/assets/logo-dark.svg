@@ -1,6 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="Cloudflare DNS Updater"><style>.n{fill:#0051C3}@media(prefers-color-scheme:dark){.n{fill:#4C9AFF}}</style>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="Cloudflare DNS Updater">
 <g fill="none" stroke="#F6821F" stroke-width="30"><path d="M 294.82 111.11 A 150 150 0 0 1 294.82 400.89"/><path d="M 217.18 400.89 A 150 150 0 0 1 217.18 111.11"/></g>
 <path d="M 261.98 409.69 L 310.31 427.8 L 294.79 369.84 Z" fill="#F6821F"/><path d="M 250.02 102.31 L 201.69 84.2 L 217.21 142.16 Z" fill="#F6821F"/>
-<rect class="n" x="249" y="298.12" width="14" height="61.88" rx="7" fill="#0051C3"/>
-<circle class="n" cx="256" cy="356" r="24" fill="#0051C3"/>
+<rect class="n" x="249" y="298.12" width="14" height="61.88" rx="7" fill="#4C9AFF"/>
+<circle class="n" cx="256" cy="356" r="24" fill="#4C9AFF"/>
 <g transform="translate(134.78 127.32) scale(7.6)"><path d="M25.5 13.1a7.5 7.5 0 0 0-14.6-1.9A6 6 0 0 0 6 23h18.5a5 5 0 0 0 1-9.9z" fill="#F6821F"/></g></svg>
