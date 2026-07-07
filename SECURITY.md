@@ -7,7 +7,7 @@ recent [release](https://github.com/jmrplens/Cloudflare-DNS-Updater/releases).
 
 | Version | Supported |
 | ------- | --------- |
-| Latest release (`main`) | ✅ |
+| Latest release | ✅ |
 | Older releases | ❌ |
 
 ## Reporting a vulnerability

@@ -111,9 +111,11 @@ const jsonLd = JSON.stringify({
 			url: `${fullUrl}/`,
 			logo: {
 				'@type': 'ImageObject',
-				url: socialImageUrl,
-				width: 1200,
-				height: 630,
+				// Dedicated square brand mark (min 112×112 for Google's Organization
+				// logo guidance); the 1200×630 banner stays reserved for `image`/OG.
+				url: `${fullUrl}/logo-512.png`,
+				width: 512,
+				height: 512,
 			},
 			image: socialImage,
 			founder: { '@id': authorId },
