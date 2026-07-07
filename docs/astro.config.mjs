@@ -99,7 +99,6 @@ const jsonLd = JSON.stringify({
 				'https://orcid.org/0000-0003-1250-6212',
 				'https://www.researchgate.net/profile/Jose-Requena-Plens-2',
 				'https://www.mathworks.com/matlabcentral/profile/authors/5890853',
-				'https://www.wikidata.org/wiki/Q140455276',
 			],
 		},
 		{
@@ -121,7 +120,7 @@ const jsonLd = JSON.stringify({
 			image: socialImage,
 			description: siteDescription,
 			founder: { '@id': authorId },
-			sameAs: [repositoryUrl, 'https://www.wikidata.org/wiki/Q140447586'],
+			sameAs: [repositoryUrl],
 		},
 		{
 			'@type': 'WebSite',
@@ -164,7 +163,6 @@ const jsonLd = JSON.stringify({
 				priceCurrency: 'USD',
 			},
 			author: { '@id': authorId },
-			sameAs: ['https://www.wikidata.org/wiki/Q140447586'],
 		},
 		{
 			'@type': 'SoftwareSourceCode',
@@ -268,7 +266,6 @@ export default defineConfig({
 					},
 				},
 				{ tag: 'link', attrs: { rel: 'me', href: 'https://jmrp.io' } },
-				{ tag: 'link', attrs: { rel: 'me', href: 'https://www.wikidata.org/wiki/Q140455276' } },
 				// PGP public key
 				{
 					tag: 'link',
