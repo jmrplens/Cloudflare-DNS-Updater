@@ -99,6 +99,7 @@ const jsonLd = JSON.stringify({
 				'https://orcid.org/0000-0003-1250-6212',
 				'https://www.researchgate.net/profile/Jose-Requena-Plens-2',
 				'https://www.mathworks.com/matlabcentral/profile/authors/5890853',
+				'https://www.wikidata.org/wiki/Q140455276',
 			],
 		},
 		{
@@ -267,6 +268,7 @@ export default defineConfig({
 					},
 				},
 				{ tag: 'link', attrs: { rel: 'me', href: 'https://jmrp.io' } },
+				{ tag: 'link', attrs: { rel: 'me', href: 'https://www.wikidata.org/wiki/Q140455276' } },
 				// PGP public key
 				{
 					tag: 'link',
