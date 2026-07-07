@@ -1,6 +1,12 @@
 ---
 title: Configuración
 description: Referencia completa de cloudflare-dns.yaml.
+head:
+  - tag: script
+    attrs:
+      type: application/ld+json
+    content: |-
+      {"@context":"https://schema.org","@type":"FAQPage","@id":"https://jmrplens.github.io/Cloudflare-DNS-Updater/es/configuration/","inLanguage":"es","isPartOf":{"@id":"https://jmrplens.github.io/Cloudflare-DNS-Updater/#website"},"about":{"@id":"https://github.com/jmrplens/Cloudflare-DNS-Updater#software"},"mainEntity":[{"@type":"Question","name":"¿Qué TTL debo usar?","acceptedAnswer":{"@type":"Answer","text":"Deja ttl: 1 (Auto) para registros proxificados: Cloudflare ignora el TTL mientras un registro está proxificado. Para registros solo DNS, pon un valor en segundos (60–86400); un TTL más bajo propaga los cambios de IP más rápido."}},{"@type":"Question","name":"¿Qué hace proxied?","acceptedAnswer":{"@type":"Answer","text":"proxied: true enruta el tráfico por el proxy de Cloudflare (nube naranja); proxied: false es solo DNS (nube gris), que es lo que quieres para conexiones directas como SSH, servidores de juegos o correo."}},{"@type":"Question","name":"¿Puedo actualizar un registro comodín?","acceptedAnswer":{"@type":"Answer","text":"Sí. Usa name: \"*.example.com\". Como cualquier registro, el comodín debe existir ya en Cloudflare: el programa actualiza registros, no los crea."}},{"@type":"Question","name":"¿Puedo gestionar solo IPv4 o solo IPv6?","acceptedAnswer":{"@type":"Answer","text":"Sí. Cada dominio gestiona A y AAAA por defecto; pon ip_type: ipv4 o ip_type: ipv6 en un dominio para limitarlo."}},{"@type":"Question","name":"¿Dónde debe estar el fichero de configuración?","acceptedAnswer":{"@type":"Answer","text":"cloudflare-dns.yaml junto al lanzador por defecto. Pasa una ruta como argumento para usar otra ubicación."}}]}
 ---
 
 El programa lee un fichero YAML — `cloudflare-dns.yaml` por defecto — con cuatro secciones: `cloudflare`, `options`, `domains` y `notifications`.
@@ -86,3 +92,25 @@ Consulta [Notificaciones](../notifications/) para las guías de configuración.
 :::note[Zonas con muchos registros]
 Los registros se obtienen de 5000 en 5000 por llamada y la paginación se sigue automáticamente, así que funcionan zonas de cualquier tamaño.
 :::
+
+## Preguntas frecuentes
+
+### ¿Qué TTL debo usar?
+
+Deja `ttl: 1` (Auto) para registros proxificados: Cloudflare ignora el TTL mientras un registro está proxificado. Para registros solo DNS, pon un valor en segundos (60–86400); un TTL más bajo propaga los cambios de IP más rápido.
+
+### ¿Qué hace `proxied`?
+
+`proxied: true` enruta el tráfico por el proxy de Cloudflare (nube naranja); `proxied: false` es solo DNS (nube gris), que es lo que quieres para conexiones directas como SSH, servidores de juegos o correo.
+
+### ¿Puedo actualizar un registro comodín?
+
+Sí. Usa `name: "*.example.com"`. Como cualquier registro, el comodín debe existir ya en Cloudflare: el programa actualiza registros, no los crea.
+
+### ¿Puedo gestionar solo IPv4 o solo IPv6?
+
+Sí. Cada dominio gestiona A y AAAA por defecto; pon `ip_type: ipv4` o `ip_type: ipv6` en un dominio para limitarlo.
+
+### ¿Dónde debe estar el fichero de configuración?
+
+`cloudflare-dns.yaml` junto al lanzador por defecto. Pasa una ruta como argumento para usar otra ubicación.

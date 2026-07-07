@@ -61,6 +61,21 @@ Consulta la [referencia de configuración](../configuration/) para ver todas las
 
 Con `--debug` verás cada paso: la detección de IP, las llamadas a la API y la decisión por registro. Cuando todo esté correcto, [prográmalo](../automation/) y añade `--silent` para un funcionamiento silencioso.
 
+## Cómo se compara
+
+Si ya mantienes tu DNS con un script propio de cron + curl, esto es lo que añade esta herramienta:
+
+| | Cloudflare DNS Updater | cron + curl manual |
+| --- | --- | --- |
+| Configuración | Un único fichero YAML | Escribir y mantener tu propio script |
+| IPv4 + IPv6 | Ambos; la IPv6 se lee de la interfaz local | Lo que implementes |
+| Varios registros | Agrupados en una sola llamada a la API | Una petición por registro |
+| Escribe solo si hay cambios | Sí | Normalmente en cada ejecución, salvo que añadas estado |
+| Notificaciones | Telegram y Discord | Ninguna |
+| Dependencias | Bash + jq opcional (los binarios incluyen ambos) | curl más tu propio código |
+
+Para un actualizador multiproveedor, [ddclient](https://github.com/ddclient/ddclient) es una alternativa común en Perl; esta herramienta se centra en Cloudflare con actualizaciones por lotes y detección de IPv6 desde la interfaz.
+
 ## Preguntas frecuentes
 
 ### ¿Cloudflare DNS Updater crea registros DNS?

@@ -1,6 +1,12 @@
 ---
 title: Configuration
 description: Complete reference for cloudflare-dns.yaml.
+head:
+  - tag: script
+    attrs:
+      type: application/ld+json
+    content: |-
+      {"@context":"https://schema.org","@type":"FAQPage","@id":"https://jmrplens.github.io/Cloudflare-DNS-Updater/configuration/","inLanguage":"en","isPartOf":{"@id":"https://jmrplens.github.io/Cloudflare-DNS-Updater/#website"},"about":{"@id":"https://github.com/jmrplens/Cloudflare-DNS-Updater#software"},"mainEntity":[{"@type":"Question","name":"What TTL should I use?","acceptedAnswer":{"@type":"Answer","text":"Leave ttl: 1 (Auto) for proxied records — Cloudflare ignores the TTL while a record is proxied. For DNS-only records, set a value in seconds (60–86400); a lower TTL propagates IP changes faster."}},{"@type":"Question","name":"What does proxied do?","acceptedAnswer":{"@type":"Answer","text":"proxied: true routes traffic through Cloudflare's proxy (orange cloud); proxied: false is DNS-only (grey cloud), which you want for direct connections such as SSH, game servers or mail."}},{"@type":"Question","name":"Can I update a wildcard record?","acceptedAnswer":{"@type":"Answer","text":"Yes. Use name: \"*.example.com\". Like any record, the wildcard must already exist in Cloudflare — the program updates records, it does not create them."}},{"@type":"Question","name":"Can I manage only IPv4 or only IPv6?","acceptedAnswer":{"@type":"Answer","text":"Yes. Each domain manages both A and AAAA by default; set ip_type: ipv4 or ip_type: ipv6 on a domain to limit it."}},{"@type":"Question","name":"Where does the config file need to be?","acceptedAnswer":{"@type":"Answer","text":"cloudflare-dns.yaml next to the launcher by default. Pass a path as an argument to use another location."}}]}
 ---
 
 The program reads a YAML file — `cloudflare-dns.yaml` by default — with four sections: `cloudflare`, `options`, `domains` and `notifications`.
@@ -86,3 +92,25 @@ See [Notifications](../notifications/) for setup guides.
 :::note[Zones with many records]
 Records are fetched 5000 per API call and pagination is followed automatically, so zones of any size work.
 :::
+
+## Frequently asked questions
+
+### What TTL should I use?
+
+Leave `ttl: 1` (Auto) for proxied records — Cloudflare ignores the TTL while a record is proxied. For DNS-only records, set a value in seconds (60–86400); a lower TTL propagates IP changes faster.
+
+### What does `proxied` do?
+
+`proxied: true` routes traffic through Cloudflare's proxy (orange cloud); `proxied: false` is DNS-only (grey cloud), which you want for direct connections such as SSH, game servers or mail.
+
+### Can I update a wildcard record?
+
+Yes. Use `name: "*.example.com"`. Like any record, the wildcard must already exist in Cloudflare — the program updates records, it does not create them.
+
+### Can I manage only IPv4 or only IPv6?
+
+Yes. Each domain manages both A and AAAA by default; set `ip_type: ipv4` or `ip_type: ipv6` on a domain to limit it.
+
+### Where does the config file need to be?
+
+`cloudflare-dns.yaml` next to the launcher by default. Pass a path as an argument to use another location.
