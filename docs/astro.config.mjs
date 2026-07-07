@@ -118,6 +118,7 @@ const jsonLd = JSON.stringify({
 				height: 512,
 			},
 			image: socialImage,
+			description: siteDescription,
 			founder: { '@id': authorId },
 			sameAs: [repositoryUrl, 'https://www.wikidata.org/wiki/Q140447586'],
 		},
