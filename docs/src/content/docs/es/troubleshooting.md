@@ -23,7 +23,7 @@ Otra instancia tiene el lock (`/tmp/cloudflare-dns-updater.lock`). Es normal con
 
 ## «Record ... does not exist in Cloudflare»
 
-El programa solo **actualiza** registros existentes. Crea el registro A/AAAA una vez en el panel de Cloudflare (con cualquier IP; se corregirá en la siguiente ejecución) y vuelve a ejecutar.
+Por defecto el programa solo **actualiza** registros existentes. Crea el registro A/AAAA una vez en el panel de Cloudflare (con cualquier IP; se corregirá en la siguiente ejecución) y vuelve a ejecutar, o pon [`create_if_missing: true`](../configuration/#creating-records) y deja que el programa lo añada.
 
 Si el nombre empieza por `*`, ten en cuenta que un comodín es el nombre literal de un registro, no un patrón que coincida con tus subdominios existentes. `*.example.com` solo funciona cuando existe un registro con ese nombre exacto en Cloudflare, y no afectará a `www.example.com` ni a ningún otro nombre que ya tenga su propio registro. Para mantener esos actualizados, ponlos uno a uno en `domains`.
 

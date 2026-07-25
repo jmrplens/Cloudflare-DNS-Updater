@@ -1,0 +1,22 @@
+---
+# Test fixture: main() integration with record creation enabled
+
+cloudflare:
+  zone_id: "main-zone"
+  api_token: "main-token"
+
+options:
+  create_if_missing: true
+
+domains:
+  - name: "home.example.com"
+    ip_type: ipv4
+  - name: "brand-new.example.com"
+    ip_type: ipv4
+
+notifications:
+  telegram:
+    enabled: false
+
+  discord:
+    enabled: false

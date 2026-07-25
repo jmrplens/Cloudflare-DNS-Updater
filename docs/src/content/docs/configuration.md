@@ -71,6 +71,7 @@ Global defaults inherited by every domain.
 | `proxied` | `true` | `true` routes traffic through Cloudflare (orange cloud); `false` is DNS-only (grey cloud). |
 | `ttl` | `1` | Record TTL in seconds. `1` means *Auto*. Ignored by Cloudflare while a record is proxied. |
 | `interface` | auto-detect | Network interface used for local IPv6 detection. When empty, the default-route interface is used. |
+| `create_if_missing` | `false` | When `true`, a listed record that does not exist in Cloudflare is created instead of warned about. |
 
 ## `domains`
 
@@ -78,10 +79,30 @@ A list of records to keep updated. Each entry accepts:
 
 | Key | Default | Description |
 | --- | --- | --- |
-| `name` | — | Record name (e.g. `home.example.com`, `example.com` or a wildcard `*.example.com`). The record must already exist in Cloudflare; the program updates records, it does not create them. |
+| `name` | — | Record name (e.g. `home.example.com`, `example.com` or a wildcard `*.example.com`). The record must already exist in Cloudflare unless `create_if_missing` is on. |
 | `ip_type` | `both` | Which records to manage: `ipv4` (A only), `ipv6` (AAAA only) or `both`. |
 | `proxied` | from `options` | Per-domain override of the proxy setting. |
 | `ttl` | from `options` | Per-domain TTL override. |
+| `create_if_missing` | from `options` | Per-domain override: create the record if Cloudflare does not have it. |
+
+### Creating records
+
+By default the program only updates records that already exist, so a typo in `name` costs you a warning and nothing else. Set `create_if_missing: true` (globally or per domain) and a missing record is created instead, with the `proxied` and `ttl` you configured:
+
+```yaml
+options:
+  create_if_missing: true
+
+domains:
+  - name: "home.example.com"
+  - name: "vpn.example.com"
+    create_if_missing: false   # warn instead of creating this one
+```
+
+Two things worth knowing:
+
+- The name has to be free. Cloudflare refuses to add an A record where a CNAME already answers for that name, and the whole batch is rejected when it does. Pending updates are then retried on their own, so a record that cannot be created never blocks the ones that can be updated.
+- Creation still is not a substitute for a wildcard. Creating `*.example.com` does not change any subdomain that already has its own record.
 
 Values may be quoted or unquoted; inline comments after a value are ignored. Files with Windows (CRLF) line endings are handled.
 

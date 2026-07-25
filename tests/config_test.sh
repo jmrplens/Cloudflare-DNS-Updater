@@ -117,6 +117,38 @@ function test_later_sections_do_not_leak_into_last_domain() {
 	assert_same "2" "$DOMAIN_COUNT"
 }
 
+# --- create_if_missing ---
+
+function test_create_if_missing_defaults_to_false() {
+	# full_config.yaml does not mention the option at all
+	assert_same "false" "${domains_create[0]}"
+}
+
+function test_create_if_missing_inherited_from_options() {
+	parse_config "$FIXTURES/create_config.yaml"
+	assert_same "true" "${domains_create[0]}"
+}
+
+function test_create_if_missing_overridden_per_domain() {
+	parse_config "$FIXTURES/create_config.yaml"
+	assert_same "false" "${domains_create[1]}"
+}
+
+function test_options_block_is_not_limited_to_five_lines() {
+	# create_if_missing sits deep in a commented options block; a fixed
+	# grep -A window would silently miss it.
+	parse_config "$FIXTURES/create_config.yaml"
+	assert_same "eth0" "$NET_INTERFACE"
+	assert_same "true" "$DEFAULT_CREATE"
+}
+
+function test_options_block_does_not_leak_into_defaults() {
+	parse_config "$FIXTURES/options_config.yaml"
+	# custom_section further down sets ttl: 999 and proxied: true
+	assert_same "300" "$DEFAULT_TTL"
+	assert_same "false" "$DEFAULT_PROXIED"
+}
+
 # --- CRLF (Windows line endings) ---
 
 function test_parses_crlf_config() {

@@ -173,3 +173,17 @@ cf_build_put_object() {
 	# Returns: {"id":"...","type":"...","name":"...","content":"...","ttl":...,"proxied":...}
 	echo "{\"id\":\"$id\",\"type\":\"$type\",\"name\":\"$name\",\"content\":\"$content\",\"ttl\":$ttl,\"proxied\":$proxied}"
 }
+
+# Helper to build a single creation object JSON. Same shape as a put minus
+# the record id, which Cloudflare assigns.
+cf_build_post_object() {
+	local type="$1"
+	local name="$2"
+	local content="$3"
+	local proxied="$4"
+	local ttl="$5"
+
+	if [[ "$ttl" == "auto" ]]; then ttl=1; fi
+
+	echo "{\"type\":\"$type\",\"name\":\"$name\",\"content\":\"$content\",\"ttl\":$ttl,\"proxied\":$proxied}"
+}

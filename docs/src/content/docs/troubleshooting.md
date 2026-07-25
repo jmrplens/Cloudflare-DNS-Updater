@@ -23,7 +23,7 @@ Another instance holds the lock (`/tmp/cloudflare-dns-updater.lock`). Normal und
 
 ## "Record ... does not exist in Cloudflare"
 
-The program only **updates** existing records. Create the A/AAAA record once in the Cloudflare dashboard (any IP, it will be corrected on the next run) and re-run.
+The program only **updates** existing records by default. Create the A/AAAA record once in the Cloudflare dashboard (any IP, it will be corrected on the next run) and re-run, or set [`create_if_missing: true`](../configuration/#creating-records) and let the program add it.
 
 If the name starts with `*`, note that a wildcard is the literal name of a record, not a pattern that matches your existing subdomains. `*.example.com` only works once a record with that exact name exists in Cloudflare, and it will not affect `www.example.com` or any other name that already has its own record. To keep those updated, list them individually in `domains`.
 

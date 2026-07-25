@@ -1,0 +1,27 @@
+---
+# Test fixture: create_if_missing defaults and per-domain overrides.
+# The options block is deliberately long (comments included) so the parser
+# cannot rely on a fixed number of lines after "options:".
+
+cloudflare:
+  zone_id: "create-zone"
+  api_token: "create-token"
+
+options:
+  # Proxy everything by default
+  proxied: false
+  # Auto TTL
+  ttl: 1
+  interface: "eth0"
+  # Missing records are created by default in this fixture
+  create_if_missing: true
+
+domains:
+  - name: "inherit.example.com"
+
+  - name: "nocreate.example.com"
+    create_if_missing: false
+
+notifications:
+  telegram:
+    enabled: false
