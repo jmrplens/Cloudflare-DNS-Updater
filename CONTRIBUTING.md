@@ -75,7 +75,7 @@ To create the dependency-free binaries (like `cf-updater-linux-x86_64`), we use 
 **To build for a specific platform:**
 ```bash
 ./tools/build-all.sh linux x86_64
-./tools/build-all.sh windows x86_64
+./tools/build-all.sh macos aarch64
 ```
 
 ## 🧪 Testing

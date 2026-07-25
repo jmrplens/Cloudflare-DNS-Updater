@@ -63,12 +63,14 @@ systemctl list-timers cf-updater.timer
 
 ## Windows: Programador de tareas
 
+No hay binario para Windows, así que esto ejecuta el programa desde el código fuente con [Git Bash](https://git-scm.com/downloads) (mira [Instalación](../installation/#windows)). Con WSL, usa [cron](#linux--macos-cron) dentro de la distribución de WSL.
+
 1. Abre el [**Programador de tareas**](https://learn.microsoft.com/es-es/windows/win32/taskschd/task-scheduler-start-page) → *Crear tarea básica*.
 2. Ponle un nombre, p. ej. "Cloudflare DNS Updater".
 3. Desencadenador: **Diariamente**; después, en las propiedades de la tarea, marca *Repetir la tarea cada 5 minutos* con duración *Indefinidamente*.
-4. Acción: **Iniciar un programa** → busca `cf-updater-windows-x86_64.exe`.
-5. Argumentos: `--silent`.
-6. En la configuración de la tarea, establece *Iniciar en* a la carpeta que contiene `cloudflare-dns.yaml`.
+4. Acción: **Iniciar un programa** → Programa o script: `C:\Program Files\Git\bin\bash.exe`
+5. Argumentos: `-c "/c/ruta/a/Cloudflare-DNS-Updater/cloudflare-dns-updater.sh --silent"` (Git Bash usa `/c/...` para `C:\...`).
+6. En la configuración de la tarea, marca *Ejecutar tanto si el usuario inició sesión como si no* si quieres que corra sin sesión abierta.
 
 ## Elegir el intervalo
 

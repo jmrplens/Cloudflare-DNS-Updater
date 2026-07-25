@@ -39,6 +39,16 @@ cat <<'EOF' >>"$OUTPUT"
 
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 
+# Bundled tools, as a fallback only: the host's own tools keep winning, so
+
+# a system with a newer jq is unaffected, and a system without one still
+
+# gets a working parser. Nothing used to add this directory to PATH, which
+
+# made the whole bundled toolchain dead weight.
+
+[[ -d "$DIR/bin" ]] && export PATH="$PATH:$DIR/bin"
+
 # For makeself bundles, we need the original launching directory
 
 ORIGINAL_PWD="${MAKESELF_PWD:-$PWD}"

@@ -6,7 +6,7 @@ head:
     attrs:
       type: application/ld+json
     content: |-
-      {"@context":"https://schema.org","@type":"FAQPage","@id":"https://jmrplens.github.io/Cloudflare-DNS-Updater/getting-started/","inLanguage":"en","isPartOf":{"@id":"https://jmrplens.github.io/Cloudflare-DNS-Updater/#website"},"about":{"@id":"https://github.com/jmrplens/Cloudflare-DNS-Updater#software"},"mainEntity":[{"@type":"Question","name":"Does Cloudflare DNS Updater create DNS records?","acceptedAnswer":{"@type":"Answer","text":"Not by default: it only updates records that already exist, so a typo in a name cannot fill your zone with junk. Set create_if_missing: true (globally or per domain) and missing records are created with the proxied and TTL you configured."}},{"@type":"Question","name":"Does it support IPv6?","acceptedAnswer":{"@type":"Answer","text":"Yes. It keeps AAAA records updated, preferring the stable global IPv6 address on your local interface and falling back to external services."}},{"@type":"Question","name":"Do I need jq to run it?","acceptedAnswer":{"@type":"Answer","text":"No, but it is recommended. Standalone binaries bundle jq; from source, a slower sed-based JSON parser is used when jq is absent."}},{"@type":"Question","name":"Which Cloudflare API token permission does it need?","acceptedAnswer":{"@type":"Answer","text":"An API token scoped to Edit zone DNS for your zone. A Global API Key is not required and is discouraged."}},{"@type":"Question","name":"How often should it run?","acceptedAnswer":{"@type":"Answer","text":"Every 5 minutes is a comfortable default for home connections. A lockfile makes overlapping runs safe, so shorter intervals also work."}},{"@type":"Question","name":"Is it free and open source?","acceptedAnswer":{"@type":"Answer","text":"Yes. It is released under the MIT license."}}]}
+      {"@context":"https://schema.org","@type":"FAQPage","@id":"https://jmrplens.github.io/Cloudflare-DNS-Updater/getting-started/","inLanguage":"en","isPartOf":{"@id":"https://jmrplens.github.io/Cloudflare-DNS-Updater/#website"},"about":{"@id":"https://github.com/jmrplens/Cloudflare-DNS-Updater#software"},"mainEntity":[{"@type":"Question","name":"Does Cloudflare DNS Updater create DNS records?","acceptedAnswer":{"@type":"Answer","text":"Not by default: it only updates records that already exist, so a typo in a name cannot fill your zone with junk. Set create_if_missing: true (globally or per domain) and missing records are created with the proxied and TTL you configured."}},{"@type":"Question","name":"Does it support IPv6?","acceptedAnswer":{"@type":"Answer","text":"Yes. It keeps AAAA records updated, preferring the stable global IPv6 address on your local interface and falling back to external services."}},{"@type":"Question","name":"Do I need jq to run it?","acceptedAnswer":{"@type":"Answer","text":"No, but it is recommended. Standalone binaries bundle jq and use it when the host has none; from source, a slower sed-based JSON parser is used when jq is absent."}},{"@type":"Question","name":"Which Cloudflare API token permission does it need?","acceptedAnswer":{"@type":"Answer","text":"An API token scoped to Edit zone DNS for your zone. A Global API Key is not required and is discouraged."}},{"@type":"Question","name":"How often should it run?","acceptedAnswer":{"@type":"Answer","text":"Every 5 minutes is a comfortable default for home connections. A lockfile makes overlapping runs safe, so shorter intervals also work."}},{"@type":"Question","name":"Is it free and open source?","acceptedAnswer":{"@type":"Answer","text":"Yes. It is released under the MIT license."}}]}
 ---
 
 Cloudflare DNS Updater keeps the A (IPv4) and AAAA (IPv6) records of your Cloudflare zone pointed at your current public IP. It is a plain Bash program: run it from source or grab a standalone binary, point it at a YAML config, and schedule it with cron or any task scheduler.
@@ -72,7 +72,7 @@ If you already keep DNS updated with a hand-written cron + curl script, here is 
 | Multiple records | Batched into a single API call | One request per record |
 | Writes only on change | Yes | Usually every run, unless you add state |
 | Notifications | Telegram and Discord | None |
-| Dependencies | Bash + optional jq (binaries bundle both) | curl plus your own glue |
+| Dependencies | Bash + optional jq (binaries bundle both) + curl | curl plus your own glue |
 
 For a multi-provider updater, [ddclient](https://github.com/ddclient/ddclient) is a common Perl alternative; this tool focuses on Cloudflare with batched updates and IPv6-from-interface detection.
 
@@ -88,7 +88,7 @@ Yes. It keeps AAAA records updated, preferring the stable global IPv6 address on
 
 ### Do I need jq to run it?
 
-No, but it is recommended. Standalone binaries bundle jq; from source, a slower sed-based JSON parser is used when jq is absent.
+No, but it is recommended. Standalone binaries bundle jq and use it when the host has none; from source, a slower sed-based JSON parser is used when jq is absent.
 
 ### Which Cloudflare API token permission does it need?
 

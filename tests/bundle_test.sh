@@ -88,3 +88,185 @@ function test_monolith_lock_is_per_config_file() {
 	# shellcheck disable=SC2016 # asserting on literal source text
 	assert_contains 'LOCKFILE="/tmp/cloudflare-dns-updater-$LOCK_KEY.lock"' "$(cat "$MONOLITH")"
 }
+
+# --- bundled toolchain on PATH ---
+
+function test_monolith_adds_bundled_bin_to_path() {
+	# Without this the bundled jq is never reachable and the binary silently
+	# falls back to the sed parser, which is what shipped until now.
+	# shellcheck disable=SC2016 # asserting on literal source text
+	assert_contains 'export PATH="$PATH:$DIR/bin"' "$(cat "$MONOLITH")"
+}
+
+function test_bundled_bin_is_a_fallback_not_an_override() {
+	# Appended, never prepended: a host with its own jq keeps using it.
+	# shellcheck disable=SC2016 # asserting on literal source text
+	assert_not_contains 'export PATH="$DIR/bin:$PATH"' "$(cat "$MONOLITH")"
+}
+
+# --- toolchain download guard ---
+
+BUILDER="$PROJECT_ROOT/tools/build-all.sh"
+
+function test_downloads_use_failing_curl() {
+	# "curl -L -s -o" without --fail writes the 404 body to the destination
+	# and exits 0, which is how a 258-byte HTML page shipped as busybox.
+	assert_not_contains 'curl -L -s -o' "$(cat "$BUILDER")"
+	assert_contains 'curl -fsSL' "$(cat "$BUILDER")"
+}
+
+# fetch() lives in a build script, so the tests source just the helpers they
+# need. expected_sha256 can be overridden per case: the digests in the builder
+# belong to real upstream assets, which a fixture cannot reproduce.
+function run_fetch() {
+	local dest="$1" src="$2" digest="${3:-}"
+	(
+		cd "$PROJECT_ROOT" || exit 1
+		bash -c '
+			source <(sed -n "/^expected_sha256()/,/^}/p;/^sha256_of()/,/^}/p;/^fetch()/,/^}/p" tools/build-all.sh)
+			if [[ -n "'"$digest"'" ]]; then
+				expected_sha256() { echo "'"$digest"'"; }
+			fi
+			fetch "'"$dest"'" "file://'"$src"'"
+		' 2>&1
+	)
+}
+
+function test_fetch_rejects_html_error_pages() {
+	local tmp out
+	tmp=$(mktemp -d)
+	printf '<!DOCTYPE HTML><html><body>404 Not Found</body></html>' >"$tmp/fake"
+	out=$(run_fetch "$tmp/dest" "$tmp/fake")
+	rm -rf "$tmp"
+	assert_contains "Suspiciously small download" "$out"
+}
+
+function test_fetch_rejects_non_executable_payload() {
+	local tmp out
+	tmp=$(mktemp -d)
+	# Large enough to clear the size floor, still not an executable
+	head -c 200000 /dev/zero | tr '\0' 'x' >"$tmp/fake"
+	out=$(run_fetch "$tmp/dest" "$tmp/fake")
+	rm -rf "$tmp"
+	assert_contains "not an executable" "$out"
+}
+
+function test_fetch_accepts_a_matching_executable() {
+	local tmp out digest
+	tmp=$(mktemp -d)
+	cp "$(command -v bash)" "$tmp/fake"
+	digest=$(sha256sum "$tmp/fake" | cut -d' ' -f1)
+	out=$(run_fetch "$tmp/dest" "$tmp/fake" "$digest")
+	local mode=""
+	[[ -x "$tmp/dest" ]] && mode="executable"
+	rm -rf "$tmp"
+	assert_empty "$out"
+	assert_same "executable" "$mode"
+}
+
+function test_fetch_rejects_a_checksum_mismatch() {
+	local tmp out
+	tmp=$(mktemp -d)
+	cp "$(command -v bash)" "$tmp/fake"
+	# A real executable, correct size, wrong content for that digest
+	out=$(run_fetch "$tmp/dest" "$tmp/fake" \
+		"0000000000000000000000000000000000000000000000000000000000000000")
+	rm -rf "$tmp"
+	assert_contains "Checksum mismatch" "$out"
+}
+
+function test_unknown_asset_without_a_recorded_digest_is_refused() {
+	local tmp out
+	tmp=$(mktemp -d)
+	cp "$(command -v bash)" "$tmp/brand-new-tool"
+	out=$(run_fetch "$tmp/dest" "$tmp/brand-new-tool")
+	rm -rf "$tmp"
+	assert_contains "No SHA-256 recorded" "$out"
+}
+
+# --- no Windows target ---
+
+function test_no_windows_build_target() {
+	# The program needs a real bash: BusyBox ash cannot even parse the
+	# monolith (arrays, BASH_SOURCE, here-strings), and there is no static
+	# single-file bash for Windows to bundle instead. Reintroducing a Windows
+	# artifact needs a windows-latest job that actually runs it.
+	assert_not_contains 'mingw' "$(cat "$BUILDER")"
+	# Indented comments count as comments too, hence the leading-space class
+	assert_not_contains 'busybox' "$(grep -v '^[[:space:]]*#' "$BUILDER")"
+	assert_not_contains 'jq-windows' "$(cat "$BUILDER")"
+}
+
+function test_release_workflow_publishes_no_exe() {
+	local wf
+	wf=$(cat "$PROJECT_ROOT/.github/workflows/binaries.yml")
+	assert_not_contains 'windows' "$wf"
+	assert_not_contains '.exe' "$wf"
+}
+
+function test_monolith_still_carries_windows_runtime_fallbacks() {
+	# Running from source under Git Bash, MSYS2 or WSL stays supported, so
+	# the powershell/curl.exe/jq.exe detection must not be collateral damage.
+	local mono
+	mono=$(cat "$MONOLITH")
+	assert_contains 'powershell.exe' "$mono"
+	assert_contains 'curl.exe' "$mono"
+	assert_contains 'jq.exe' "$mono"
+}
+
+# --- supply chain ---
+
+function test_every_download_url_is_version_pinned() {
+	# "latest/download" changes the payload under us and makes a recorded
+	# checksum impossible to keep valid.
+	assert_not_contains 'releases/latest/download' "$(cat "$BUILDER")"
+}
+
+function test_recorded_digests_cover_every_fetched_asset() {
+	# Each asset the builder fetches must have an entry, or the build stops.
+	local missing=""
+	local asset
+	for asset in bash-linux-x86_64 bash-linux-aarch64 bash-macos-x86_64 \
+		bash-macos-aarch64 jq-linux-amd64 jq-linux-arm64 jq-macos-amd64 \
+		jq-macos-arm64; do
+		grep -q "$asset)" "$BUILDER" || missing+=" $asset"
+	done
+	assert_empty "$missing"
+}
+
+# --- target architecture ---
+
+function test_launcher_is_built_for_the_target_not_the_builder() {
+	# A bare "gcc" ignores the target: the published linux-aarch64 binary is
+	# an x86-64 ELF and cannot start on ARM at all.
+	assert_contains 'verify_launcher_arch' "$(cat "$BUILDER")"
+	# shellcheck disable=SC2016 # asserting on literal source text
+	assert_contains '${arch}-linux-gnu-gcc' "$(cat "$BUILDER")"
+	# shellcheck disable=SC2016 # asserting on literal source text
+	assert_contains '-arch "$apple_arch"' "$(cat "$BUILDER")"
+}
+
+function test_verify_launcher_arch_rejects_a_mismatch() {
+	local out
+	out=$(cd "$PROJECT_ROOT" && bash -c '
+		source <(sed -n "/^verify_launcher_arch()/,/^}/p" tools/build-all.sh)
+		verify_launcher_arch "$(command -v bash)" "aarch64"
+	' 2>&1)
+	assert_contains "wrong architecture" "$out"
+}
+
+function test_verify_launcher_arch_accepts_the_host_arch() {
+	local out
+	out=$(cd "$PROJECT_ROOT" && bash -c '
+		source <(sed -n "/^verify_launcher_arch()/,/^}/p" tools/build-all.sh)
+		verify_launcher_arch "$(command -v bash)" "$(uname -m)"
+	' 2>&1)
+	assert_empty "$out"
+}
+
+function test_workflow_cross_compiles_and_checks_the_arm_target() {
+	local wf
+	wf=$(cat "$PROJECT_ROOT/.github/workflows/binaries.yml")
+	assert_contains 'gcc-aarch64-linux-gnu' "$wf"
+	assert_contains 'Verify artifact architecture' "$wf"
+}
