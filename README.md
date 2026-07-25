@@ -1,6 +1,6 @@
 # Cloudflare DNS Updater
 
-A Bash-based script to automatically update Cloudflare DNS records with your dynamic public IP address. Designed for efficiency and compatibility across **Linux**, **macOS**, and **Windows**.
+A Bash-based script to automatically update Cloudflare DNS records with your dynamic public IP address. Designed for efficiency and compatibility across **Linux** and **macOS**, and on **Windows** through Git Bash, MSYS2 or WSL.
 
 ![Binaries Build](https://github.com/jmrplens/Cloudflare-DNS-Updater/actions/workflows/binaries.yml/badge.svg)
 ![Lint Check](https://github.com/jmrplens/Cloudflare-DNS-Updater/actions/workflows/lint.yml/badge.svg)
@@ -14,7 +14,7 @@ A Bash-based script to automatically update Cloudflare DNS records with your dyn
 -   **IP Detection**:
     -   **Local**: Detects global IPv6 addresses directly from the network interface.
     -   **External**: Uses multiple fallback services (`icanhazip`, `ifconfig.co`, `ipify`) for redundancy.
--   **Cross-Platform**: Runs on Linux, macOS, and Windows (via bundled binaries or Bash).
+-   **Cross-Platform**: Standalone binaries for Linux and macOS; on Windows, run from source under Git Bash, MSYS2 or WSL.
 -   **Notifications**: Support for Telegram and Discord alerts upon IP changes.
 -   **Logging**: Rotation-aware logs with optional debug mode.
 -   **Safety**: Lockfile mechanism to prevent concurrent executions.
@@ -29,7 +29,6 @@ Pre-compiled binaries bundle Bash and jq, so neither has to be installed on the 
 1.  **Download** the latest release for your OS from the [Releases Page](../../releases).
     *   **Linux**: `cf-updater-linux-x86_64` (Intel/AMD) or `cf-updater-linux-aarch64` (ARM/Raspberry Pi)
     *   **macOS**: `cf-updater-macos-x86_64` (Intel) or `cf-updater-macos-aarch64` (Apple Silicon)
-    *   **Windows**: `cf-updater-windows-x86_64.exe`
 2.  **Make Executable** (Linux/macOS only):
     ```bash
     chmod +x cf-updater-linux-x86_64
@@ -126,12 +125,15 @@ To run the updater every 5 minutes:
     ```
 
 ### Windows Automation (Task Scheduler)
+
+There is no Windows binary: this program needs a real Bash, and no single-file static Bash exists for Windows. Run it from source under [Git Bash](https://git-scm.com/downloads), MSYS2 or WSL.
+
 1.  Open **Task Scheduler** and "Create Basic Task".
 2.  Name it "Cloudflare DNS Updater".
 3.  Set Trigger to **Daily**, then in properties set "Repeat task every X minutes" (e.g., 5 or 10).
 4.  Action: **Start a Program**.
-5.  Program/script: Browse to `cf-updater-windows-x86_64.exe`.
-6.  Add arguments: `--silent`.
+5.  Program/script: `C:\Program Files\Git\bin\bash.exe`
+6.  Add arguments: `-c "/c/path/to/Cloudflare-DNS-Updater/cloudflare-dns-updater.sh --silent"`
 
 ---
 

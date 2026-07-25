@@ -184,18 +184,34 @@ function test_unknown_asset_without_a_recorded_digest_is_refused() {
 	assert_contains "No SHA-256 recorded" "$out"
 }
 
-function test_windows_jq_is_not_a_busybox_copy() {
-	# jq.exe used to be a copy of busybox, so "command -v jq" succeeded and
-	# the first actual call failed.
-	# shellcheck disable=SC2016 # asserting on literal source text
-	assert_not_contains 'cp "$bin_dir/bash.exe" "$bin_dir/jq.exe"' "$(cat "$BUILDER")"
-	assert_contains 'jq-windows-amd64.exe' "$(cat "$BUILDER")"
+# --- no Windows target ---
+
+function test_no_windows_build_target() {
+	# The program needs a real bash: BusyBox ash cannot even parse the
+	# monolith (arrays, BASH_SOURCE, here-strings), and there is no static
+	# single-file bash for Windows to bundle instead. Reintroducing a Windows
+	# artifact needs a windows-latest job that actually runs it.
+	assert_not_contains 'mingw' "$(cat "$BUILDER")"
+	# Indented comments count as comments too, hence the leading-space class
+	assert_not_contains 'busybox' "$(grep -v '^[[:space:]]*#' "$BUILDER")"
+	assert_not_contains 'jq-windows' "$(cat "$BUILDER")"
 }
 
-function test_windows_shell_url_points_at_upstream() {
-	# The old URL was a repository that does not exist.
-	assert_not_contains 'rmayo/busybox-w32' "$(cat "$BUILDER")"
-	assert_contains 'frippery.org/files/busybox/busybox-w32-' "$(cat "$BUILDER")"
+function test_release_workflow_publishes_no_exe() {
+	local wf
+	wf=$(cat "$PROJECT_ROOT/.github/workflows/binaries.yml")
+	assert_not_contains 'windows' "$wf"
+	assert_not_contains '.exe' "$wf"
+}
+
+function test_monolith_still_carries_windows_runtime_fallbacks() {
+	# Running from source under Git Bash, MSYS2 or WSL stays supported, so
+	# the powershell/curl.exe/jq.exe detection must not be collateral damage.
+	local mono
+	mono=$(cat "$MONOLITH")
+	assert_contains 'powershell.exe' "$mono"
+	assert_contains 'curl.exe' "$mono"
+	assert_contains 'jq.exe' "$mono"
 }
 
 # --- supply chain ---
@@ -212,7 +228,7 @@ function test_recorded_digests_cover_every_fetched_asset() {
 	local asset
 	for asset in bash-linux-x86_64 bash-linux-aarch64 bash-macos-x86_64 \
 		bash-macos-aarch64 jq-linux-amd64 jq-linux-arm64 jq-macos-amd64 \
-		jq-macos-arm64 jq-windows-amd64.exe; do
+		jq-macos-arm64; do
 		grep -q "$asset)" "$BUILDER" || missing+=" $asset"
 	done
 	assert_empty "$missing"

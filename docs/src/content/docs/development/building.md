@@ -31,18 +31,19 @@ All `src/` modules merged into one self-contained script:
 
 ## Standalone binaries
 
-`tools/build-all.sh` produces dependency-free binaries: it downloads static builds of bash, curl, jq and busybox for the target architecture, bundles them with the monolith, and compiles `tools/launcher.c` as a self-extracting runner.
+`tools/build-all.sh` builds the Linux and macOS binaries: it downloads static builds of bash and jq for the target architecture, verifies each against a recorded SHA-256, bundles them with the monolith, and compiles `tools/launcher.c` as a self-extracting runner. There is no Windows target, since the program needs a real Bash and none can be bundled as a single file.
 
 ```bash
 # --all builds the Linux targets (x86_64 + aarch64)
 ./tools/build-all.sh --all
 
-# Other platforms are built by naming them explicitly
+# Other targets are built by naming them explicitly
 ./tools/build-all.sh macos aarch64
-./tools/build-all.sh windows x86_64
 ```
 
-Requires GCC (or MinGW for Windows targets). Artifacts land in `dist/`.
+Requires GCC. Artifacts land in `dist/`.
+
+A download that fails, arrives truncated, is not an executable, or does not match its recorded digest aborts the build. Bumping a bundled tool means updating both the pinned version and its SHA-256 in `expected_sha256()`.
 
 ## Cutting a release
 

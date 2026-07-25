@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Ultimate Multi-Platform C-Wrapped Builder
-# Targets: Linux (x64/ARM), macOS (x64/ARM), Windows (x64)
+# Targets: Linux (x64/ARM), macOS (x64/ARM)
 
 set -e
 
@@ -19,17 +19,20 @@ JQ_VERSION="1.7.1"
 JQ_URL="https://github.com/jqlang/jq/releases/download/jq-${JQ_VERSION}"
 BASH_STATIC_VERSION="5.2.015-1.2.3-2"
 BASH_STATIC_URL="https://github.com/robxu9/bash-static/releases/download/${BASH_STATIC_VERSION}"
-# busybox-w32 upstream (Ron Yorston). The previous URL pointed at a
-# misspelled GitHub account whose repository does not exist, so every
-# Windows build downloaded an error page instead of a shell.
-BUSYBOX_W32_VERSION="FRP-5398-g89ae34445"
-BUSYBOX_W32_URL="https://frippery.org/files/busybox/busybox-w32-${BUSYBOX_W32_VERSION}.exe"
+# No Windows target. There is no single-file static bash for Windows, and
+# this program needs a real one: the bundled script uses arrays,
+# BASH_SOURCE and here-strings, so BusyBox's ash cannot even parse it.
+# Shipping a Windows binary would mean bundling an MSYS2 subset, and CI has
+# no Windows runner to execute the result on, which is exactly how a
+# 9-byte error page shipped as bash.exe for three releases. Windows is
+# supported by running from source under Git Bash, MSYS2 or WSL; see the
+# installation docs. Do not reintroduce a Windows artifact without a
+# windows-latest job that actually runs it.
 
 # Expected SHA-256 of every asset that goes into a payload.
 #
-# The jq digests are the ones published in jq's own sha256sum.txt, and the
-# busybox one is from frippery.org's GPG-signed SHA256SUM, so those are
-# verified against upstream rather than merely recorded. bash-static
+# The jq digests are the ones published in jq's own sha256sum.txt, so those
+# are verified against upstream rather than merely recorded. bash-static
 # publishes no digests, so those four are trust-on-first-use: they pin the
 # artifact we reviewed, and any later change to it fails the build.
 expected_sha256() {
@@ -42,8 +45,6 @@ expected_sha256() {
 	jq-linux-arm64) echo "4dd2d8a0661df0b22f1bb9a1f9830f06b6f3b8f7d91211a1ef5d7c4f06a8b4a5" ;;
 	jq-macos-amd64) echo "4155822bbf5ea90f5c79cf254665975eb4274d426d0709770c21774de5407443" ;;
 	jq-macos-arm64) echo "0bbe619e663e0de2c550be2fe0d240d076799d6f8a652b70fa04aea8a8362e8a" ;;
-	jq-windows-amd64.exe) echo "7451fbbf37feffb9bf262bd97c54f0da558c63f0748e64152dd87b0a07b6d6ab" ;;
-	busybox-w32-${BUSYBOX_W32_VERSION}.exe) echo "e311f576b6222a6a30fc892c4be13bd42387bcca65563e7ffff7004b9460b86c" ;;
 	*) echo "" ;;
 	esac
 }
@@ -132,7 +133,7 @@ fetch() {
 }
 
 build_target() {
-	local os=$1   # linux, macos, windows
+	local os=$1   # linux, macos
 	local arch=$2 # x86_64, aarch64
 	local label="${os}-${arch}"
 
@@ -157,14 +158,6 @@ build_target() {
 		fetch "$bin_dir/bash" "${BASH_STATIC_URL}/bash-linux-$arch"
 		fetch "$bin_dir/jq" "${JQ_URL}/jq-linux-${jq_arch}"
 
-	elif [[ "$os" == "windows" ]]; then
-		# busybox-w32 is the shell on Windows: the launcher execs it as
-		# bash.exe. It provides no jq, so jq is fetched separately instead
-		# of being a copy of busybox under a name that would satisfy
-		# "command -v jq" and then fail on the first call.
-		fetch "$bin_dir/bash.exe" "$BUSYBOX_W32_URL"
-		fetch "$bin_dir/jq.exe" "${JQ_URL}/jq-windows-amd64.exe"
-
 	elif [[ "$os" == "macos" ]]; then
 		local jq_march="amd64"
 		[[ "$arch" == "aarch64" ]] && jq_march="arm64"
@@ -178,15 +171,9 @@ build_target() {
 
 	# --- Compile Launcher ---
 	local final_bin="$DIST_DIR/cf-updater-$label"
-	[[ "$os" == "windows" ]] && final_bin="${final_bin}.exe"
 
-	if [[ "$os" == "windows" ]]; then
-		x86_64-w64-mingw32-gcc -O2 "$DIR/launcher.c" -o "$BUILD_DIR/launcher-$label.exe"
-		cp "$BUILD_DIR/launcher-$label.exe" "$final_bin"
-	else
-		gcc -O2 "$DIR/launcher.c" -o "$BUILD_DIR/launcher-$label"
-		cp "$BUILD_DIR/launcher-$label" "$final_bin"
-	fi
+	gcc -O2 "$DIR/launcher.c" -o "$BUILD_DIR/launcher-$label"
+	cp "$BUILD_DIR/launcher-$label" "$final_bin"
 
 	# --- Append Payload ---
 	echo -e "\n---PAYLOAD_START---" >>"$final_bin"
