@@ -115,53 +115,73 @@ function test_downloads_use_failing_curl() {
 	assert_contains 'curl -fsSL' "$(cat "$BUILDER")"
 }
 
+# fetch() lives in a build script, so the tests source just the helpers they
+# need. expected_sha256 can be overridden per case: the digests in the builder
+# belong to real upstream assets, which a fixture cannot reproduce.
+function run_fetch() {
+	local dest="$1" src="$2" digest="${3:-}"
+	(
+		cd "$PROJECT_ROOT" || exit 1
+		bash -c '
+			source <(sed -n "/^expected_sha256()/,/^}/p;/^sha256_of()/,/^}/p;/^fetch()/,/^}/p" tools/build-all.sh)
+			if [[ -n "'"$digest"'" ]]; then
+				expected_sha256() { echo "'"$digest"'"; }
+			fi
+			fetch "'"$dest"'" "file://'"$src"'"
+		' 2>&1
+	)
+}
+
 function test_fetch_rejects_html_error_pages() {
-	local tmp
+	local tmp out
 	tmp=$(mktemp -d)
 	printf '<!DOCTYPE HTML><html><body>404 Not Found</body></html>' >"$tmp/fake"
-	# Serve it over file:// so no network is needed
-	local out
-	out=$(cd "$PROJECT_ROOT" && bash -c '
-		source <(sed -n "/^fetch()/,/^}/p" tools/build-all.sh)
-		fetch "'"$tmp"'/dest" "file://'"$tmp"'/fake"
-	' 2>&1)
-	local code=$?
+	out=$(run_fetch "$tmp/dest" "$tmp/fake")
 	rm -rf "$tmp"
-	assert_not_equals "0" "$code"
 	assert_contains "Suspiciously small download" "$out"
 }
 
 function test_fetch_rejects_non_executable_payload() {
-	local tmp
+	local tmp out
 	tmp=$(mktemp -d)
-	# Large enough to pass the size check, still not an executable
+	# Large enough to clear the size floor, still not an executable
 	head -c 200000 /dev/zero | tr '\0' 'x' >"$tmp/fake"
-	local out
-	out=$(cd "$PROJECT_ROOT" && bash -c '
-		source <(sed -n "/^fetch()/,/^}/p" tools/build-all.sh)
-		fetch "'"$tmp"'/dest" "file://'"$tmp"'/fake"
-	' 2>&1)
-	local code=$?
+	out=$(run_fetch "$tmp/dest" "$tmp/fake")
 	rm -rf "$tmp"
-	assert_not_equals "0" "$code"
 	assert_contains "not an executable" "$out"
 }
 
-function test_fetch_accepts_a_real_executable() {
-	local tmp
+function test_fetch_accepts_a_matching_executable() {
+	local tmp out digest
 	tmp=$(mktemp -d)
 	cp "$(command -v bash)" "$tmp/fake"
-	local out code
-	out=$(cd "$PROJECT_ROOT" && bash -c '
-		source <(sed -n "/^fetch()/,/^}/p" tools/build-all.sh)
-		fetch "'"$tmp"'/dest" "file://'"$tmp"'/fake"
-	' 2>&1)
-	code=$?
+	digest=$(sha256sum "$tmp/fake" | cut -d' ' -f1)
+	out=$(run_fetch "$tmp/dest" "$tmp/fake" "$digest")
 	local mode=""
 	[[ -x "$tmp/dest" ]] && mode="executable"
 	rm -rf "$tmp"
-	assert_equals "0" "$code"
+	assert_empty "$out"
 	assert_same "executable" "$mode"
+}
+
+function test_fetch_rejects_a_checksum_mismatch() {
+	local tmp out
+	tmp=$(mktemp -d)
+	cp "$(command -v bash)" "$tmp/fake"
+	# A real executable, correct size, wrong content for that digest
+	out=$(run_fetch "$tmp/dest" "$tmp/fake" \
+		"0000000000000000000000000000000000000000000000000000000000000000")
+	rm -rf "$tmp"
+	assert_contains "Checksum mismatch" "$out"
+}
+
+function test_unknown_asset_without_a_recorded_digest_is_refused() {
+	local tmp out
+	tmp=$(mktemp -d)
+	cp "$(command -v bash)" "$tmp/brand-new-tool"
+	out=$(run_fetch "$tmp/dest" "$tmp/brand-new-tool")
+	rm -rf "$tmp"
+	assert_contains "No SHA-256 recorded" "$out"
 }
 
 function test_windows_jq_is_not_a_busybox_copy() {
@@ -175,5 +195,25 @@ function test_windows_jq_is_not_a_busybox_copy() {
 function test_windows_shell_url_points_at_upstream() {
 	# The old URL was a repository that does not exist.
 	assert_not_contains 'rmayo/busybox-w32' "$(cat "$BUILDER")"
-	assert_contains 'frippery.org/files/busybox/busybox64.exe' "$(cat "$BUILDER")"
+	assert_contains 'frippery.org/files/busybox/busybox-w32-' "$(cat "$BUILDER")"
+}
+
+# --- supply chain ---
+
+function test_every_download_url_is_version_pinned() {
+	# "latest/download" changes the payload under us and makes a recorded
+	# checksum impossible to keep valid.
+	assert_not_contains 'releases/latest/download' "$(cat "$BUILDER")"
+}
+
+function test_recorded_digests_cover_every_fetched_asset() {
+	# Each asset the builder fetches must have an entry, or the build stops.
+	local missing=""
+	local asset
+	for asset in bash-linux-x86_64 bash-linux-aarch64 bash-macos-x86_64 \
+		bash-macos-aarch64 jq-linux-amd64 jq-linux-arm64 jq-macos-amd64 \
+		jq-macos-arm64 jq-windows-amd64.exe; do
+		grep -q "$asset)" "$BUILDER" || missing+=" $asset"
+	done
+	assert_empty "$missing"
 }
