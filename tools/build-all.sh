@@ -132,6 +132,33 @@ fetch() {
 	chmod +x "$dest"
 }
 
+# Refuse to package a launcher built for the wrong architecture.
+#
+# Both linux targets are built on the same x86_64 runner and both macOS
+# targets on the same Apple Silicon runner, so a compiler invocation that
+# ignores the target is not a hypothetical: it is what happened.
+verify_launcher_arch() {
+	local bin="$1"
+	local arch="$2"
+	local want
+
+	case "$arch" in
+	x86_64) want="x86.64" ;;
+	aarch64) want="aarch64|arm64" ;;
+	*)
+		echo "::error::Unknown target architecture: $arch" >&2
+		exit 1
+		;;
+	esac
+
+	local desc
+	desc=$(file -b "$bin")
+	if ! echo "$desc" | grep -qE "$want"; then
+		echo "::error::Launcher was built for the wrong architecture (wanted $arch): $desc" >&2
+		exit 1
+	fi
+}
+
 build_target() {
 	local os=$1   # linux, macos
 	local arch=$2 # x86_64, aarch64
@@ -170,9 +197,36 @@ build_target() {
 	cp "$MONOLITH" "$work_dir/main.sh"
 
 	# --- Compile Launcher ---
+	#
+	# The launcher has to match the TARGET architecture, not the machine
+	# doing the build. It used to be a bare "gcc", so a cross-architecture
+	# target produced a launcher for the builder wrapped around a payload
+	# for the target: the published linux-aarch64 binary is an x86-64 ELF
+	# holding aarch64 tools, and cannot start on a Raspberry Pi at all.
 	local final_bin="$DIST_DIR/cf-updater-$label"
+	local host_arch
+	host_arch=$(uname -m)
 
-	gcc -O2 "$DIR/launcher.c" -o "$BUILD_DIR/launcher-$label"
+	if [[ "$os" == "macos" ]]; then
+		# The Apple toolchain cross-compiles between arm64 and x86_64 with
+		# -arch, so no separate compiler is needed.
+		local apple_arch="$arch"
+		[[ "$arch" == "aarch64" ]] && apple_arch="arm64"
+		cc -O2 -arch "$apple_arch" "$DIR/launcher.c" -o "$BUILD_DIR/launcher-$label"
+	elif [[ "$arch" == "$host_arch" ]]; then
+		gcc -O2 "$DIR/launcher.c" -o "$BUILD_DIR/launcher-$label"
+	else
+		# Cross-compiling. Falling back to the host compiler is exactly what
+		# shipped a broken ARM binary, so a missing toolchain is an error.
+		local cross="${arch}-linux-gnu-gcc"
+		if ! command -v "$cross" >/dev/null 2>&1; then
+			echo "::error::Building $label on $host_arch needs $cross, or an $arch runner." >&2
+			exit 1
+		fi
+		"$cross" -O2 -static "$DIR/launcher.c" -o "$BUILD_DIR/launcher-$label"
+	fi
+
+	verify_launcher_arch "$BUILD_DIR/launcher-$label" "$arch"
 	cp "$BUILD_DIR/launcher-$label" "$final_bin"
 
 	# --- Append Payload ---

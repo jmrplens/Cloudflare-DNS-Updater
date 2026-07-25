@@ -23,11 +23,27 @@ jobs:
         arch: [x86_64, aarch64]
     steps:
       - uses: actions/checkout@v7
+      # Both targets build on an x86_64 runner, so the aarch64 launcher has
+      # to be cross-compiled. Without this the build fails rather than
+      # producing an x86_64 launcher around an aarch64 payload, which is
+      # what shipped before.
+      - name: Install cross toolchain
+        if: matrix.arch == 'aarch64'
+        run: sudo apt-get update && sudo apt-get install -y gcc-aarch64-linux-gnu libc6-dev-arm64-cross
       - name: Build Standalone
         run: |
           chmod +x tools/*.sh
           ./tools/build-all.sh linux ${{ matrix.arch }}
         shell: bash
+      # A wrong-architecture artifact is invisible in a release listing, so
+      # assert it here as well as in the build script.
+      - name: Verify artifact architecture
+        run: |
+          file dist/cf-updater-linux-${{ matrix.arch }}
+          case "${{ matrix.arch }}" in
+            x86_64)  file -b dist/cf-updater-linux-x86_64  | grep -q 'x86-64' ;;
+            aarch64) file -b dist/cf-updater-linux-aarch64 | grep -q 'ARM aarch64' ;;
+          esac
       - uses: actions/upload-artifact@v7
         with:
           name: linux-${{ matrix.arch }}
@@ -46,6 +62,16 @@ jobs:
           chmod +x tools/*.sh
           ./tools/build-all.sh macos ${{ matrix.arch }}
         shell: bash
+      # macos-latest is Apple Silicon, so the x86_64 launcher is a cross
+      # build via clang -arch. Same failure mode as linux/aarch64 if the
+      # target is ignored.
+      - name: Verify artifact architecture
+        run: |
+          file dist/cf-updater-macos-${{ matrix.arch }}
+          case "${{ matrix.arch }}" in
+            x86_64)  file -b dist/cf-updater-macos-x86_64  | grep -q 'x86_64' ;;
+            aarch64) file -b dist/cf-updater-macos-aarch64 | grep -q 'arm64' ;;
+          esac
       - uses: actions/upload-artifact@v7
         with:
           name: macos-${{ matrix.arch }}

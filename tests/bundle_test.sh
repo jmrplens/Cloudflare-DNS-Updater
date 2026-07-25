@@ -233,3 +233,40 @@ function test_recorded_digests_cover_every_fetched_asset() {
 	done
 	assert_empty "$missing"
 }
+
+# --- target architecture ---
+
+function test_launcher_is_built_for_the_target_not_the_builder() {
+	# A bare "gcc" ignores the target: the published linux-aarch64 binary is
+	# an x86-64 ELF and cannot start on ARM at all.
+	assert_contains 'verify_launcher_arch' "$(cat "$BUILDER")"
+	# shellcheck disable=SC2016 # asserting on literal source text
+	assert_contains '${arch}-linux-gnu-gcc' "$(cat "$BUILDER")"
+	# shellcheck disable=SC2016 # asserting on literal source text
+	assert_contains '-arch "$apple_arch"' "$(cat "$BUILDER")"
+}
+
+function test_verify_launcher_arch_rejects_a_mismatch() {
+	local out
+	out=$(cd "$PROJECT_ROOT" && bash -c '
+		source <(sed -n "/^verify_launcher_arch()/,/^}/p" tools/build-all.sh)
+		verify_launcher_arch "$(command -v bash)" "aarch64"
+	' 2>&1)
+	assert_contains "wrong architecture" "$out"
+}
+
+function test_verify_launcher_arch_accepts_the_host_arch() {
+	local out
+	out=$(cd "$PROJECT_ROOT" && bash -c '
+		source <(sed -n "/^verify_launcher_arch()/,/^}/p" tools/build-all.sh)
+		verify_launcher_arch "$(command -v bash)" "$(uname -m)"
+	' 2>&1)
+	assert_empty "$out"
+}
+
+function test_workflow_cross_compiles_and_checks_the_arm_target() {
+	local wf
+	wf=$(cat "$PROJECT_ROOT/.github/workflows/binaries.yml")
+	assert_contains 'gcc-aarch64-linux-gnu' "$wf"
+	assert_contains 'Verify artifact architecture' "$wf"
+}
