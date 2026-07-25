@@ -81,7 +81,12 @@ queue_if_changed() {
 	match=$(cf_get_record_from_cache "$parsed_records" "$domain" "$type")
 
 	if [[ -z "$match" ]]; then
-		log_warn "Record $type for $domain not found. Creation not implemented."
+		log_warn "Record $type for $domain does not exist in Cloudflare. Create it once in the dashboard (any IP); this program only updates existing records."
+		# A wildcard name is a literal record, not a filter over existing
+		# subdomains: the most common misreading of the warning above.
+		if [[ "$domain" == \** ]]; then
+			log_warn "  Note: '$domain' is the name of a wildcard record, not a pattern matching your existing subdomains. List those by name to keep them updated."
+		fi
 		return
 	fi
 

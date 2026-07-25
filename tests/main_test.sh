@@ -35,6 +35,29 @@ function test_queue_skips_unknown_record() {
 	assert_same "0" "$update_count"
 }
 
+function test_queue_warns_that_missing_record_must_be_created_first() {
+	local out
+	SILENT="false"
+	out=$(queue_if_changed "A" "missing.example.com" "192.0.2.9" "true" "auto" 2>&1)
+	assert_contains "does not exist in Cloudflare" "$out"
+	assert_contains "only updates existing records" "$out"
+}
+
+function test_queue_explains_wildcard_semantics_for_missing_wildcard() {
+	local out
+	SILENT="false"
+	out=$(queue_if_changed "A" "*.example.com" "192.0.2.9" "true" "auto" 2>&1)
+	assert_contains "does not exist in Cloudflare" "$out"
+	assert_contains "not a pattern" "$out"
+}
+
+function test_queue_does_not_mention_wildcards_for_regular_names() {
+	local out
+	SILENT="false"
+	out=$(queue_if_changed "A" "missing.example.com" "192.0.2.9" "true" "auto" 2>&1)
+	assert_not_contains "not a pattern" "$out"
+}
+
 function test_queue_skips_when_record_matches() {
 	queue_if_changed "A" "home.example.com" "192.0.2.1" "true" "auto"
 	assert_same "0" "$update_count"

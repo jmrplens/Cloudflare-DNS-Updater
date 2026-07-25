@@ -21,9 +21,11 @@ Another instance holds the lock (`/tmp/cloudflare-dns-updater.lock`). Normal und
 - IPv6 is first read from a local interface. If your interface has no global IPv6, external detection is tried next. Set `options.interface` explicitly if the auto-detected interface is wrong.
 - No IPv6 at all? Set `ip_type: "ipv4"` on your domains so AAAA lookups are skipped.
 
-## "Record ... not found. Creation not implemented."
+## "Record ... does not exist in Cloudflare"
 
 The program only **updates** existing records. Create the A/AAAA record once in the Cloudflare dashboard (any IP, it will be corrected on the next run) and re-run.
+
+If the name starts with `*`, note that a wildcard is the literal name of a record, not a pattern that matches your existing subdomains. `*.example.com` only works once a record with that exact name exists in Cloudflare, and it will not affect `www.example.com` or any other name that already has its own record. To keep those updated, list them individually in `domains`.
 
 ## "Failed to fetch records" / "Batch update failed"
 
