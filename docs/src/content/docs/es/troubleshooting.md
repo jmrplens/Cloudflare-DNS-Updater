@@ -21,9 +21,11 @@ Otra instancia tiene el lock (`/tmp/cloudflare-dns-updater.lock`). Es normal con
 - La IPv6 se lee primero de una interfaz local. Si tu interfaz no tiene IPv6 global, se intenta la detección externa. Define `options.interface` explícitamente si la interfaz autodetectada no es la correcta.
 - ¿No tienes IPv6? Pon `ip_type: "ipv4"` en tus dominios para saltarte los registros AAAA.
 
-## «Record ... not found. Creation not implemented.»
+## «Record ... does not exist in Cloudflare»
 
 El programa solo **actualiza** registros existentes. Crea el registro A/AAAA una vez en el panel de Cloudflare (con cualquier IP; se corregirá en la siguiente ejecución) y vuelve a ejecutar.
+
+Si el nombre empieza por `*`, ten en cuenta que un comodín es el nombre literal de un registro, no un patrón que coincida con tus subdominios existentes. `*.example.com` solo funciona cuando existe un registro con ese nombre exacto en Cloudflare, y no afectará a `www.example.com` ni a ningún otro nombre que ya tenga su propio registro. Para mantener esos actualizados, ponlos uno a uno en `domains`.
 
 ## «Failed to fetch records» / «Batch update failed»
 
