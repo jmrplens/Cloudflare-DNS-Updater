@@ -6,7 +6,7 @@ head:
     attrs:
       type: application/ld+json
     content: |-
-      {"@context":"https://schema.org","@type":"FAQPage","@id":"https://jmrplens.github.io/Cloudflare-DNS-Updater/automation/","inLanguage":"en","isPartOf":{"@id":"https://jmrplens.github.io/Cloudflare-DNS-Updater/#website"},"about":{"@id":"https://github.com/jmrplens/Cloudflare-DNS-Updater#software"},"mainEntity":[{"@type":"Question","name":"How often should it run?","acceptedAnswer":{"@type":"Answer","text":"Every 5 minutes is a comfortable default for home connections. Cloudflare's limit of 1200 requests per 5 minutes leaves large headroom even at one run per minute."}},{"@type":"Question","name":"Will overlapping runs cause problems?","acceptedAnswer":{"@type":"Answer","text":"No. A lockfile makes a second invocation exit immediately, so aggressive schedules are safe."}},{"@type":"Question","name":"How do I check it is working?","acceptedAnswer":{"@type":"Answer","text":"Run it once with --debug to watch IP detection and the API calls. When running from source, the same output is also written to logs/updater.log in the project directory."}},{"@type":"Question","name":"Does a run cost an API request when nothing changed?","acceptedAnswer":{"@type":"Answer","text":"Yes, one read request per run. It only writes to the API when the IP actually changed (or when you pass --force)."}}]}
+      {"@context":"https://schema.org","@type":"FAQPage","@id":"https://jmrplens.github.io/Cloudflare-DNS-Updater/automation/","inLanguage":"en","isPartOf":{"@id":"https://jmrplens.github.io/Cloudflare-DNS-Updater/#website"},"about":{"@id":"https://github.com/jmrplens/Cloudflare-DNS-Updater#software"},"mainEntity":[{"@type":"Question","name":"How often should it run?","acceptedAnswer":{"@type":"Answer","text":"Every 5 minutes is a comfortable default for home connections. Cloudflare's limit of 1200 requests per 5 minutes leaves large headroom even at one run per minute."}},{"@type":"Question","name":"Will overlapping runs cause problems?","acceptedAnswer":{"@type":"Answer","text":"No. A lockfile makes a second invocation exit immediately, so aggressive schedules are safe. The lock is per config file, so schedules using different config files (different zones, for example) never block each other."}},{"@type":"Question","name":"How do I check it is working?","acceptedAnswer":{"@type":"Answer","text":"Run it once with --debug to watch IP detection and the API calls. When running from source, the same output is also written to logs/updater.log in the project directory."}},{"@type":"Question","name":"Does a run cost an API request when nothing changed?","acceptedAnswer":{"@type":"Answer","text":"Yes, one read request per run. It only writes to the API when the IP actually changed (or when you pass --force)."}}]}
 ---
 
 Dynamic IPs change without warning, so run the updater on a schedule. It exits quickly when nothing changed (one paginated API read, no writes), and the lock prevents overlapping runs.
@@ -82,7 +82,7 @@ Every 5 minutes is a comfortable default for home connections. Cloudflare's limi
 
 ### Will overlapping runs cause problems?
 
-No. A lockfile makes a second invocation exit immediately, so aggressive schedules are safe.
+No. A lockfile makes a second invocation exit immediately, so aggressive schedules are safe. The lock is per config file, so schedules using different config files (different zones, for example) never block each other.
 
 ### How do I check it is working?
 

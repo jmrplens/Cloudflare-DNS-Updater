@@ -89,23 +89,19 @@ for arg in "$@"; do
 
 	*)
 
-		if [[ "$arg" == *.yaml ]]; then
+		if [[ -f "$arg" ]]; then
 
-			if [[ -f "$arg" ]]; then
+			CONFIG_FILE="$arg"
 
-				CONFIG_FILE="$arg"
+		elif [[ -f "$ORIGINAL_PWD/$arg" ]]; then
 
-			elif [[ -f "$ORIGINAL_PWD/$arg" ]]; then
+			CONFIG_FILE="$ORIGINAL_PWD/$arg"
 
-				CONFIG_FILE="$ORIGINAL_PWD/$arg"
+		else
 
-			else
+			echo "Error: Configuration file '$arg' not found!"
 
-				echo "Error: Configuration file '$arg' not found!"
-
-				exit 1
-
-			fi
+			exit 1
 
 		fi
 
@@ -149,11 +145,17 @@ fi
 
 # --- LOCK MECHANISM ---
 
-LOCKFILE="/tmp/cloudflare-dns-updater.lock"
+# One lock per config file, so several configs can run concurrently while a
+
+# single config still cannot overlap with itself.
+
+LOCK_KEY=$(printf '%s' "$CONFIG_FILE" | cksum | cut -d' ' -f1)
+
+LOCKFILE="/tmp/cloudflare-dns-updater-$LOCK_KEY.lock"
 
 if [[ ! -d "/tmp" ]]; then
 
-	LOCKFILE="$DIR/cloudflare-dns-updater.lock"
+	LOCKFILE="$DIR/cloudflare-dns-updater-$LOCK_KEY.lock"
 
 fi
 
@@ -208,7 +210,7 @@ if [[ ! -f "$CONFIG_FILE" ]]; then
 
 	echo "Error: Configuration file not found!"
 
-	echo "Please provide a valid .yaml file as an argument or create 'cloudflare-dns.yaml' in the current directory."
+	echo "Please provide a config file as an argument or create 'cloudflare-dns.yaml' in the current directory."
 
 	exit 1
 

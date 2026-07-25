@@ -4,7 +4,7 @@
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 # shellcheck source=src/logger.sh
 source "$DIR/src/logger.sh"
-CONFIG_FILE="$DIR/cloudflare-dns.yaml"
+CONFIG_FILE=""
 
 # Ensure tools are found by adding standard paths (including Windows/MSYS2)
 export PATH="/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/opt/homebrew/bin:/c/msys64/mingw64/bin:/mnt/c/msys64/mingw64/bin:$PATH"
@@ -16,11 +16,31 @@ for arg in "$@"; do
 	fi
 done
 
+# A non-flag argument is the config file, as documented in --help. Relative
+# paths resolve against the caller's directory, absolute ones are taken as is.
+for arg in "$@"; do
+	[[ "$arg" == -* ]] && continue
+	if [[ -f "$arg" ]]; then
+		CONFIG_FILE="$arg"
+	elif [[ -f "$PWD/$arg" ]]; then
+		CONFIG_FILE="$PWD/$arg"
+	else
+		echo "Error: Configuration file '$arg' not found!" >&2
+		exit 1
+	fi
+done
+
+[[ -z "$CONFIG_FILE" ]] && CONFIG_FILE="$DIR/cloudflare-dns.yaml"
+
 # --- LOCK MECHANISM ---
-LOCKFILE="/tmp/cloudflare-dns-updater.lock"
+# One lock per config file, so several configs (different zones, different
+# schedules) can run concurrently while a single config still cannot overlap
+# with itself.
+LOCK_KEY=$(printf '%s' "$CONFIG_FILE" | cksum | cut -d' ' -f1)
+LOCKFILE="/tmp/cloudflare-dns-updater-$LOCK_KEY.lock"
 # Fallback if /tmp is not available
 if [[ ! -d "/tmp" ]]; then
-	LOCKFILE="$DIR/cloudflare-dns-updater.lock"
+	LOCKFILE="$DIR/cloudflare-dns-updater-$LOCK_KEY.lock"
 fi
 
 if command -v flock >/dev/null 2>&1; then
@@ -66,7 +86,7 @@ for arg in "$@"; do
 		export FORCE="true"
 		;;
 	*)
-		# Ignore unknown arguments
+		# Non-flag arguments are the config file, already resolved above
 		;;
 	esac
 done
