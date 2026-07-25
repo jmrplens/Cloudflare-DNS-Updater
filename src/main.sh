@@ -34,7 +34,7 @@ logger_init "$LOG_PATH"
 # Project metadata. Keep in sync with the VERSION file at the repo root
 # (the release workflow triggers on that file; a unit test enforces the
 # match). Embedded here so bundled binaries stay self-contained.
-VERSION="1.2.0"
+VERSION="1.3.0"
 updates_json_list=""
 update_count=0
 creates_json_list=""
