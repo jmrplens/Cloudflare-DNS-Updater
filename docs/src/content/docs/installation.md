@@ -5,7 +5,7 @@ description: Install Cloudflare DNS Updater from a standalone binary or from sou
 
 ## Standalone binaries
 
-Pre-compiled binaries bundle the script's own dependencies (Bash, curl, jq); the self-extracting launcher only relies on basic system tools (`tar`, and PowerShell on Windows) to unpack itself.
+Pre-compiled binaries bundle Bash and jq, the two dependencies a host is most likely to lack or to have in too old a version. `curl` and the usual command line tools are taken from the system, and the self-extracting launcher needs `tar` (PowerShell on Windows) to unpack itself.
 
 1. Download the latest release for your platform from the [Releases page](https://github.com/jmrplens/Cloudflare-DNS-Updater/releases):
    - **Linux**: `cf-updater-linux-x86_64` (Intel/AMD) or `cf-updater-linux-aarch64` (ARM/Raspberry Pi)

@@ -11,7 +11,8 @@ logs/
 # System
 .DS_Store
 
-# Build Artifacts
+# Build Artifacts (recreated from scratch by tools/build-all.sh)
+build/
 dist/
 
 # Test tooling (installed via tools/install-bashunit.sh)

@@ -24,7 +24,7 @@ A Bash-based script to automatically update Cloudflare DNS records with your dyn
 ## Installation
 
 ### Option A: Standalone Binaries
-Pre-compiled binaries are available that bundle all necessary dependencies (Bash, Curl, JQ).
+Pre-compiled binaries bundle Bash and jq, so neither has to be installed on the host. `curl` and the usual command line tools (`tar`, `sed`, `grep`) are taken from the system.
 
 1.  **Download** the latest release for your OS from the [Releases Page](../../releases).
     *   **Linux**: `cf-updater-linux-x86_64` (Intel/AMD) or `cf-updater-linux-aarch64` (ARM/Raspberry Pi)

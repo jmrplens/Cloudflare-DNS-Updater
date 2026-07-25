@@ -88,3 +88,92 @@ function test_monolith_lock_is_per_config_file() {
 	# shellcheck disable=SC2016 # asserting on literal source text
 	assert_contains 'LOCKFILE="/tmp/cloudflare-dns-updater-$LOCK_KEY.lock"' "$(cat "$MONOLITH")"
 }
+
+# --- bundled toolchain on PATH ---
+
+function test_monolith_adds_bundled_bin_to_path() {
+	# Without this the bundled jq is never reachable and the binary silently
+	# falls back to the sed parser, which is what shipped until now.
+	# shellcheck disable=SC2016 # asserting on literal source text
+	assert_contains 'export PATH="$PATH:$DIR/bin"' "$(cat "$MONOLITH")"
+}
+
+function test_bundled_bin_is_a_fallback_not_an_override() {
+	# Appended, never prepended: a host with its own jq keeps using it.
+	# shellcheck disable=SC2016 # asserting on literal source text
+	assert_not_contains 'export PATH="$DIR/bin:$PATH"' "$(cat "$MONOLITH")"
+}
+
+# --- toolchain download guard ---
+
+BUILDER="$PROJECT_ROOT/tools/build-all.sh"
+
+function test_downloads_use_failing_curl() {
+	# "curl -L -s -o" without --fail writes the 404 body to the destination
+	# and exits 0, which is how a 258-byte HTML page shipped as busybox.
+	assert_not_contains 'curl -L -s -o' "$(cat "$BUILDER")"
+	assert_contains 'curl -fsSL' "$(cat "$BUILDER")"
+}
+
+function test_fetch_rejects_html_error_pages() {
+	local tmp
+	tmp=$(mktemp -d)
+	printf '<!DOCTYPE HTML><html><body>404 Not Found</body></html>' >"$tmp/fake"
+	# Serve it over file:// so no network is needed
+	local out
+	out=$(cd "$PROJECT_ROOT" && bash -c '
+		source <(sed -n "/^fetch()/,/^}/p" tools/build-all.sh)
+		fetch "'"$tmp"'/dest" "file://'"$tmp"'/fake"
+	' 2>&1)
+	local code=$?
+	rm -rf "$tmp"
+	assert_not_equals "0" "$code"
+	assert_contains "Suspiciously small download" "$out"
+}
+
+function test_fetch_rejects_non_executable_payload() {
+	local tmp
+	tmp=$(mktemp -d)
+	# Large enough to pass the size check, still not an executable
+	head -c 200000 /dev/zero | tr '\0' 'x' >"$tmp/fake"
+	local out
+	out=$(cd "$PROJECT_ROOT" && bash -c '
+		source <(sed -n "/^fetch()/,/^}/p" tools/build-all.sh)
+		fetch "'"$tmp"'/dest" "file://'"$tmp"'/fake"
+	' 2>&1)
+	local code=$?
+	rm -rf "$tmp"
+	assert_not_equals "0" "$code"
+	assert_contains "not an executable" "$out"
+}
+
+function test_fetch_accepts_a_real_executable() {
+	local tmp
+	tmp=$(mktemp -d)
+	cp "$(command -v bash)" "$tmp/fake"
+	local out code
+	out=$(cd "$PROJECT_ROOT" && bash -c '
+		source <(sed -n "/^fetch()/,/^}/p" tools/build-all.sh)
+		fetch "'"$tmp"'/dest" "file://'"$tmp"'/fake"
+	' 2>&1)
+	code=$?
+	local mode=""
+	[[ -x "$tmp/dest" ]] && mode="executable"
+	rm -rf "$tmp"
+	assert_equals "0" "$code"
+	assert_same "executable" "$mode"
+}
+
+function test_windows_jq_is_not_a_busybox_copy() {
+	# jq.exe used to be a copy of busybox, so "command -v jq" succeeded and
+	# the first actual call failed.
+	# shellcheck disable=SC2016 # asserting on literal source text
+	assert_not_contains 'cp "$bin_dir/bash.exe" "$bin_dir/jq.exe"' "$(cat "$BUILDER")"
+	assert_contains 'jq-windows-amd64.exe' "$(cat "$BUILDER")"
+}
+
+function test_windows_shell_url_points_at_upstream() {
+	# The old URL was a repository that does not exist.
+	assert_not_contains 'rmayo/busybox-w32' "$(cat "$BUILDER")"
+	assert_contains 'frippery.org/files/busybox/busybox64.exe' "$(cat "$BUILDER")"
+}
