@@ -51,6 +51,20 @@ function test_build_put_object_with_numeric_ttl() {
 	assert_same '{"id":"rec-2","type":"AAAA","name":"v6.example.com","content":"2001:db8::1","ttl":300,"proxied":false}' "$obj"
 }
 
+# --- cf_build_post_object ---
+
+function test_build_post_object_with_auto_ttl() {
+	local obj
+	obj=$(cf_build_post_object "A" "new.example.com" "192.0.2.1" "true" "auto")
+	assert_same '{"type":"A","name":"new.example.com","content":"192.0.2.1","ttl":1,"proxied":true}' "$obj"
+}
+
+function test_build_post_object_with_numeric_ttl() {
+	local obj
+	obj=$(cf_build_post_object "AAAA" "new.example.com" "2001:db8::1" "false" "300")
+	assert_same '{"type":"AAAA","name":"new.example.com","content":"2001:db8::1","ttl":300,"proxied":false}' "$obj"
+}
+
 # --- cf_get_record_from_cache ---
 
 CACHE_LINES="rec-a-root|example.com|A|192.0.2.10|true

@@ -13,6 +13,7 @@ DISCORD_WEBHOOK=""
 # Global domain defaults (options: block)
 DEFAULT_PROXIED="true"
 DEFAULT_TTL="auto"
+DEFAULT_CREATE="false"
 
 # Domain arrays
 domains_names=()
@@ -20,6 +21,7 @@ domains_proxied=()
 domains_ipv4=()
 domains_ipv6=()
 domains_ttl=()
+domains_create=()
 DOMAIN_COUNT=0
 
 # Normalize a raw YAML scalar: strip trailing CR (CRLF configs), inline
@@ -63,9 +65,11 @@ parse_config() {
 	CF_ZONE_ID=$(_yaml_get "$(cat "$yaml_file")" "zone_id")
 	CF_API_TOKEN=$(_yaml_get "$(cat "$yaml_file")" "api_token")
 
-	# Parse Options (global domain defaults)
+	# Parse Options (global domain defaults). The block runs from "options:"
+	# to the next top-level key, so comments and new keys cannot push an
+	# option out of a fixed-size window, and no later section leaks in.
 	local options_block
-	options_block=$(grep -A 5 "^options:" "$yaml_file")
+	options_block=$(sed -n '/^options:/,/^[A-Za-z_]/{/^options:/d;/^[A-Za-z_]/d;p;}' "$yaml_file")
 	NET_INTERFACE=$(_yaml_get "$options_block" "interface")
 	DEFAULT_PROXIED=$(_yaml_get "$options_block" "proxied")
 	DEFAULT_PROXIED=${DEFAULT_PROXIED:-true}
@@ -73,6 +77,8 @@ parse_config() {
 	DEFAULT_TTL=${DEFAULT_TTL:-auto}
 	# Cloudflare uses ttl=1 for "auto"
 	[[ "$DEFAULT_TTL" == "1" ]] && DEFAULT_TTL="auto"
+	DEFAULT_CREATE=$(_yaml_get "$options_block" "create_if_missing")
+	DEFAULT_CREATE=${DEFAULT_CREATE:-false}
 
 	# Parse Notifications
 	local tg_block discord_block
@@ -93,6 +99,7 @@ parse_config() {
 	domains_ipv4=()
 	domains_ipv6=()
 	domains_ttl=()
+	domains_create=()
 
 	local current_idx=-1
 	local in_domains_block=false
@@ -128,6 +135,7 @@ parse_config() {
 				domains_ipv4[current_idx]="true"
 				domains_ipv6[current_idx]="true"
 				domains_ttl[current_idx]="$DEFAULT_TTL"
+				domains_create[current_idx]="$DEFAULT_CREATE"
 			fi
 
 			# Parse properties
@@ -152,12 +160,14 @@ parse_config() {
 					fi
 				elif [[ "$clean_line" =~ ^ttl:[[:space:]]*(.*) ]]; then
 					domains_ttl[current_idx]=$(clean_value "${BASH_REMATCH[1]}")
+				elif [[ "$clean_line" =~ ^create_if_missing:[[:space:]]*(.*) ]]; then
+					domains_create[current_idx]=$(clean_value "${BASH_REMATCH[1]}")
 				fi
 			fi
 		fi
 
 	done <"$yaml_file"
 
-	export domains_names domains_proxied domains_ipv4 domains_ipv6 domains_ttl
+	export domains_names domains_proxied domains_ipv4 domains_ipv6 domains_ttl domains_create
 	export DOMAIN_COUNT=${#domains_names[@]}
 }

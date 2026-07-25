@@ -37,6 +37,8 @@ logger_init "$LOG_PATH"
 VERSION="1.2.0"
 updates_json_list=""
 update_count=0
+creates_json_list=""
+create_count=0
 verification_list=()
 
 show_help() {
@@ -64,6 +66,22 @@ Project:
 EOF
 }
 
+# Assemble the batch body, leaving out whichever list is empty so the API
+# never receives an empty "puts" or "posts" array.
+build_batch_payload() {
+	local puts="$1"
+	local posts="$2"
+	local parts=""
+
+	[[ -n "$puts" ]] && parts="\"puts\":[$puts]"
+	if [[ -n "$posts" ]]; then
+		[[ -n "$parts" ]] && parts+=","
+		parts+="\"posts\":[$posts]"
+	fi
+
+	echo "{$parts}"
+}
+
 # Helper to check and queue updates
 queue_if_changed() {
 	local type="$1"
@@ -71,6 +89,7 @@ queue_if_changed() {
 	local target_ip="$3"
 	local target_proxied="$4"
 	local ttl="$5"
+	local create="${6:-false}"
 
 	if [[ -z "$target_ip" ]]; then
 		log_debug "  - IPv$([[ "$type" == "A" ]] && echo 4 || echo 6) Check skipped: No Public IP detected."
@@ -81,7 +100,23 @@ queue_if_changed() {
 	match=$(cf_get_record_from_cache "$parsed_records" "$domain" "$type")
 
 	if [[ -z "$match" ]]; then
-		log_warn "Record $type for $domain does not exist in Cloudflare. Create it once in the dashboard (any IP); this program only updates existing records."
+		if [[ "$create" == "true" ]]; then
+			log_info "Creating $type record for $domain: $target_ip"
+
+			local new_obj
+			new_obj=$(cf_build_post_object "$type" "$domain" "$target_ip" "$target_proxied" "$ttl")
+
+			if [[ -n "$creates_json_list" ]]; then creates_json_list+=","; fi
+			creates_json_list+="$new_obj"
+			((create_count++))
+
+			if [[ "$target_proxied" == "false" ]]; then
+				verification_list+=("$domain|$([[ "$type" == "A" ]] && echo 4 || echo 6)|$target_ip")
+			fi
+			return
+		fi
+
+		log_warn "Record $type for $domain does not exist in Cloudflare. Create it once in the dashboard (any IP), or set create_if_missing: true; this program only updates existing records by default."
 		# A wildcard name is a literal record, not a filter over existing
 		# subdomains: the most common misreading of the warning above.
 		if [[ "$domain" == \** ]]; then
@@ -185,30 +220,58 @@ main() {
 		local domain="${domains_names[i]}"
 		local proxied="${domains_proxied[i]}"
 		local ttl="${domains_ttl[i]}"
+		local create="${domains_create[i]:-false}"
 
 		log_debug "Checking domain: $domain (Proxy: $proxied)"
 
 		# Check IPv4 if enabled
 		if [[ "${domains_ipv4[i]}" == "true" ]]; then
-			queue_if_changed "A" "$domain" "$CURRENT_IPV4" "$proxied" "$ttl"
+			queue_if_changed "A" "$domain" "$CURRENT_IPV4" "$proxied" "$ttl" "$create"
 		fi
 
 		# Check IPv6 if enabled
 		if [[ "${domains_ipv6[i]}" == "true" ]]; then
-			queue_if_changed "AAAA" "$domain" "$CURRENT_IPV6" "$proxied" "$ttl"
+			queue_if_changed "AAAA" "$domain" "$CURRENT_IPV6" "$proxied" "$ttl" "$create"
 		fi
 	done
 
 	# 5. Execute Batch Update
-	if [[ $update_count -gt 0 ]]; then
-		log_info "Pushing $update_count updates to Cloudflare..."
+	local change_count=$((update_count + create_count))
+	if [[ $change_count -gt 0 ]]; then
+		if [[ $create_count -gt 0 ]]; then
+			log_info "Pushing $update_count update(s) and $create_count new record(s) to Cloudflare..."
+		else
+			log_info "Pushing $update_count updates to Cloudflare..."
+		fi
 
-		local final_payload="{\"puts\":[$updates_json_list]}"
+		local final_payload
+		final_payload=$(build_batch_payload "$updates_json_list" "$creates_json_list")
 		local batch_response
 
-		if batch_response=$(cf_batch_update "$final_payload"); then
-			log_success "Successfully updated $update_count records!"
-			send_notification "Cloudflare DNS: Updated $update_count records to IP(s) $CURRENT_IPV4 $CURRENT_IPV6"
+		if ! batch_response=$(cf_batch_update "$final_payload"); then
+			# The batch is atomic, so one record Cloudflare refuses to create
+			# (a CNAME already owns the name, an invalid name, a plan limit)
+			# would also drop the updates. Those are what keeps DNS pointing
+			# at the right host, so push them on their own before giving up.
+			if [[ $create_count -gt 0 && $update_count -gt 0 ]]; then
+				log_warn "Batch rejected. Retrying without the new records: creating $create_count record(s) failed, the $update_count update(s) still matter."
+				create_count=0
+				final_payload=$(build_batch_payload "$updates_json_list" "")
+				batch_response=$(cf_batch_update "$final_payload") || batch_response=""
+			else
+				batch_response=""
+			fi
+		fi
+
+		if [[ -n "$batch_response" ]]; then
+			change_count=$((update_count + create_count))
+			if [[ $create_count -gt 0 ]]; then
+				log_success "Successfully applied $change_count changes ($update_count updated, $create_count created)!"
+				send_notification "Cloudflare DNS: updated $update_count and created $create_count records to IP(s) $CURRENT_IPV4 $CURRENT_IPV6"
+			else
+				log_success "Successfully updated $update_count records!"
+				send_notification "Cloudflare DNS: Updated $update_count records to IP(s) $CURRENT_IPV4 $CURRENT_IPV6"
+			fi
 
 			# --- Verification ---
 			if is_debug; then

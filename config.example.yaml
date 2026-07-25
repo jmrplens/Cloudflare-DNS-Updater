@@ -9,6 +9,7 @@ options:
   proxied: true   # Default for all domains: true (Orange Cloud), false (Grey Cloud, DNS only).
   ttl: 1          # Default TTL: 1 (Auto), or 60-86400 seconds.
   interface: ""   # Optional: network interface for local IPv6 detection (e.g. "eth0").
+  create_if_missing: false   # true: create records listed here that do not exist yet.
 
 domains:
   # Example 1: Update both IPv4 (A) and IPv6 (AAAA) if detected (Default behavior)
@@ -29,6 +30,10 @@ domains:
   # Example 5: Explicitly update both
   - name: "both.example.com"
     ip_type: "both"
+
+  # Example 6: Create this record if it does not exist yet in Cloudflare
+  - name: "new.example.com"
+    create_if_missing: true
 
 notifications:
   telegram:
