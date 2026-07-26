@@ -70,13 +70,22 @@ const jsonLd = JSON.stringify({
 		{
 			// Mirrors the canonical Person node published at https://jmrp.io/#person
 			// so AI engines and search graphs reconcile both into one entity.
+			// Because the @id is shared, single-valued properties (jobTitle,
+			// description, image) MUST match the canonical values verbatim — a
+			// divergent value contradicts the entity instead of enriching it.
+			// `image` deliberately uses the GitHub avatar rather than an asset on
+			// jmrp.io: that site fingerprints its build output, so a hashed
+			// /_astro/ URL silently 404s on its next deploy (which is exactly how
+			// the previous value here rotted).
 			'@type': 'Person',
 			'@id': authorId,
 			name: 'José Manuel Requena Plens',
 			alternateName: 'jmrplens',
-			jobTitle: 'R&D Engineer',
+			jobTitle: 'R&D · Firmware & Software Engineer',
+			description:
+				'Firmware and software engineer in Valencia, Spain — industrial embedded systems, open-source tooling, and self-hosted infrastructure.',
 			url: authorUrl,
-			image: 'https://jmrp.io/_astro/mehome_landscape.Dg8oVd34.webp',
+			image: 'https://github.com/jmrplens.png',
 			worksFor: {
 				'@type': 'Organization',
 				name: 'Power Electronics',
