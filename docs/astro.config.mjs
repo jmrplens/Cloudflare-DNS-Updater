@@ -86,11 +86,10 @@ const jsonLd = JSON.stringify({
 				'Firmware and software engineer in Valencia, Spain — industrial embedded systems, open-source tooling, and self-hosted infrastructure.',
 			url: authorUrl,
 			image: 'https://github.com/jmrplens.png',
-			worksFor: {
-				'@type': 'Organization',
-				name: 'Power Electronics',
-				url: 'https://power-electronics.com/',
-			},
+			// No `worksFor` on purpose: employment is a property of the person,
+			// not of this project, and the canonical node at https://jmrp.io/#person
+			// asserts none. Declaring one only here would attach an employer to
+			// the shared entity that its own source of truth does not claim.
 			identifier: {
 				'@type': 'PropertyValue',
 				propertyID: 'ORCID',
