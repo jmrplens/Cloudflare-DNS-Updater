@@ -14,7 +14,6 @@ import {
 	websiteId,
 	softwareId,
 	sourceCodeId,
-	organizationId,
 } from './src/site-meta.mjs';
 
 // Single-sourced project version (the repo-root VERSION file also drives releases)
@@ -190,27 +189,7 @@ const jsonLd = JSON.stringify({
 		// and jmrp.io describe the same node with the same values, instead of
 		// two hand-maintained copies that drift.
 		personNode,
-		{
-			// Project-as-Organization: the publisher entity for the site and its
-			// articles. `founder` links back to the maintainer Person, keeping the
-			// individual↔project relationship explicit for entity resolution.
-			'@type': 'Organization',
-			'@id': organizationId,
-			name: 'Cloudflare DNS Updater',
-			url: `${fullUrl}/`,
-			logo: {
-				'@type': 'ImageObject',
-				// Dedicated square brand mark (min 112×112 for Google's Organization
-				// logo guidance); the 1200×630 banner stays reserved for `image`/OG.
-				url: `${fullUrl}/logo-512.png`,
-				width: 512,
-				height: 512,
-			},
-			image: socialImage,
-			description: siteDescription,
-			founder: { '@id': authorId },
-			sameAs: [repositoryUrl],
-		},
+
 		{
 			'@type': 'WebSite',
 			'@id': websiteId,
@@ -219,7 +198,7 @@ const jsonLd = JSON.stringify({
 			description: siteDescription,
 			inLanguage: ['en', 'es'],
 			image: socialImage,
-			publisher: { '@id': organizationId },
+			publisher: { '@id': authorId },
 			about: { '@id': softwareId },
 		},
 		{
