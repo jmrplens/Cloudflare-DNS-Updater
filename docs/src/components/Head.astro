@@ -11,7 +11,6 @@ import {
 	authorId as PERSON_ID,
 	websiteId as WEBSITE_ID,
 	softwareId as SOFTWARE_ID,
-	organizationId as PROJECT_ID,
 } from "../site-meta.mjs";
 
 const SITE = import.meta.env.SITE ?? "https://jmrplens.github.io";
@@ -59,7 +58,7 @@ const techArticle = isHome
 			},
 			...(updated ? { datePublished: updated, dateModified: updated } : {}),
 			author: { "@id": PERSON_ID },
-			publisher: { "@id": PROJECT_ID },
+			publisher: { "@id": PERSON_ID },
 			isPartOf: { "@id": WEBSITE_ID },
 			about: { "@id": SOFTWARE_ID },
 		};
