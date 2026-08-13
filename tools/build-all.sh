@@ -15,7 +15,7 @@ DIST_DIR="$PROJECT_ROOT/dist"
 # Every URL is pinned to an immutable asset. "latest/download" used to be
 # used for bash, which meant the payload changed under us whenever upstream
 # published, and made the checksums below impossible to maintain.
-JQ_VERSION="1.7.1"
+JQ_VERSION="1.8.2"
 JQ_URL="https://github.com/jqlang/jq/releases/download/jq-${JQ_VERSION}"
 BASH_STATIC_VERSION="5.2.015-1.2.3-2"
 BASH_STATIC_URL="https://github.com/robxu9/bash-static/releases/download/${BASH_STATIC_VERSION}"
@@ -41,10 +41,10 @@ expected_sha256() {
 	bash-linux-aarch64) echo "8877ad33344af461ed801066322fd9a7808cd73e4e81087da228e32e8fad54ca" ;;
 	bash-macos-x86_64) echo "2c25a84ad34721ee93644c020aa25a1813dce6b84c36ece604115d08f55ef6db" ;;
 	bash-macos-aarch64) echo "5d783a12a553a45bcd9ecb4f390907f4e3827844d090dd7abfbb768c9392657a" ;;
-	jq-linux-amd64) echo "5942c9b0934e510ee61eb3e30273f1b3fe2590df93933a93d7c58b81d19c8ff5" ;;
-	jq-linux-arm64) echo "4dd2d8a0661df0b22f1bb9a1f9830f06b6f3b8f7d91211a1ef5d7c4f06a8b4a5" ;;
-	jq-macos-amd64) echo "4155822bbf5ea90f5c79cf254665975eb4274d426d0709770c21774de5407443" ;;
-	jq-macos-arm64) echo "0bbe619e663e0de2c550be2fe0d240d076799d6f8a652b70fa04aea8a8362e8a" ;;
+	jq-linux-amd64) echo "b1c22172dd303f3be49e935aa56aa48a8b7a46e0bc838b4997d3bb451495870f" ;;
+	jq-linux-arm64) echo "8b85c817833814ddca00a144c33705546355afccf0cf39b188f3cdb48b852309" ;;
+	jq-macos-amd64) echo "e94b266e3c26690550006abe63152b782280f4e14374accdf04cbde844f00bc0" ;;
+	jq-macos-arm64) echo "2d75340ba57a4b4b4c8708a21c2dc8e958a48aaa8bba13b27f77f6e4c0eca07e" ;;
 	*) echo "" ;;
 	esac
 }

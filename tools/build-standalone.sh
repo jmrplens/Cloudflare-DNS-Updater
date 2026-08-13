@@ -12,7 +12,7 @@ OUT_DIR="$PROJECT_ROOT/dist"
 
 # Config
 VERSION="1.0.0"
-JQ_VERSION="1.7.1"
+JQ_VERSION="1.8.2"
 CURL_STATIC_URL="https://github.com/moparisthebest/static-curl/releases/latest/download"
 
 # Colors

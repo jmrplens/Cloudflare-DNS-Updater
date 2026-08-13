@@ -35,7 +35,7 @@ jobs:
           path: ./docs
           # Project minimum is Node 24 (also the action's default)
           node-version: 24
-          package-manager: pnpm@11.10.0
+          package-manager: pnpm@11.21.0
 
   deploy:
     name: Deploy to GitHub Pages
