@@ -12,7 +12,6 @@
 		"start": "astro dev",
 		"prebuild": "node scripts/gen-llms.mjs && node scripts/check-i18n-parity.mjs",
 		"build": "astro build",
-		"identity:sync": "node scripts/sync-identity.mjs",
 		"postbuild": "node scripts/add-sitemap-lastmod.mjs",
 		"preview": "astro preview",
 		"i18n:check": "node scripts/check-i18n-parity.mjs",
