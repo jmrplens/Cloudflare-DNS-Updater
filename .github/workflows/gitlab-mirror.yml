@@ -1,3 +1,4 @@
+---
 # Mirrors the GitHub repository to GitLab.com and publishes GitLab releases that
 # link back to the canonical GitHub release assets.
 
@@ -197,7 +198,10 @@ jobs:
 
             tag_encoded=$(jq -nr --arg value "$tag" '$value | @uri')
             name=$(jq -r '.name // .tagName' <<<"$release_json")
-            description=$(jq -r '"This GitLab release mirrors the canonical GitHub release: \(.url)\n\n---\n\n\(.body // "")"' <<<"$release_json")
+            description=$(jq -r '
+              "This GitLab release mirrors the canonical GitHub release: "
+              + "\(.url)\n\n---\n\n\(.body // "")"
+            ' <<<"$release_json")
             released_at=$(jq -r '.publishedAt // empty' <<<"$release_json")
             create_release_payload=$(jq -cn \
               --arg name "$name" \
@@ -220,14 +224,18 @@ jobs:
             existing_links=$(curl --fail --show-error --silent \
               --header "PRIVATE-TOKEN: ${GITLAB_API_TOKEN}" \
               "${gitlab_api}/releases/${tag_encoded}/assets/links")
-            desired_links=$(jq -c '[{name: "GitHub Release", url: .url, link_type: "other"}] + [.assets[]? | {name: .name, url: .url, link_type: "package"}]' <<<"$release_json")
+            desired_links=$(jq -c '
+              [{name: "GitHub Release", url: .url, link_type: "other"}]
+              + [.assets[]? | {name: .name, url: .url, link_type: "package"}]
+            ' <<<"$release_json")
 
             jq -c '.[]' <<<"$desired_links" |
             while IFS= read -r link; do
               link_name=$(jq -r '.name' <<<"$link")
               link_url=$(jq -r '.url' <<<"$link")
               link_type=$(jq -r '.link_type' <<<"$link")
-              [ -n "$link_name" ] && [ -n "$link_url" ] || continue
+              [ -n "$link_name" ] || continue
+              [ -n "$link_url" ] || continue
               sync_link "$tag_encoded" "$existing_links" "$link_name" "$link_url" "$link_type"
             done
             delete_stale_links "$tag_encoded" "$desired_links"
