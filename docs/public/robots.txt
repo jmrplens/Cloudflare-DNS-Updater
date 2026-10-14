@@ -1,8 +1,8 @@
 # Cloudflare-DNS-Updater documentation — robots.txt
 # All crawlers are welcome, including AI / generative-engine crawlers.
 # Structured context for LLMs:
-#   https://jmrplens.github.io/Cloudflare-DNS-Updater/llms.txt
-#   https://jmrplens.github.io/Cloudflare-DNS-Updater/llms-full.txt
+#   https://docs.jmrp.io/Cloudflare-DNS-Updater/llms.txt
+#   https://docs.jmrp.io/Cloudflare-DNS-Updater/llms-full.txt
 
 User-agent: *
 Allow: /
@@ -58,4 +58,4 @@ Allow: /
 User-agent: Bytespider
 Allow: /
 
-Sitemap: https://jmrplens.github.io/Cloudflare-DNS-Updater/sitemap-index.xml
+Sitemap: https://docs.jmrp.io/Cloudflare-DNS-Updater/sitemap-index.xml

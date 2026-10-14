@@ -6,7 +6,7 @@ A Bash-based script to automatically update Cloudflare DNS records with your dyn
 ![Lint Check](https://github.com/jmrplens/Cloudflare-DNS-Updater/actions/workflows/lint.yml/badge.svg)
 ![Tests](https://github.com/jmrplens/Cloudflare-DNS-Updater/actions/workflows/test.yml/badge.svg)
 
-📖 **Full documentation (English & Español): [jmrplens.github.io/Cloudflare-DNS-Updater](https://jmrplens.github.io/Cloudflare-DNS-Updater/)**
+📖 **Full documentation (English & Español): [docs.jmrp.io/Cloudflare-DNS-Updater](https://docs.jmrp.io/Cloudflare-DNS-Updater/)**
 
 ## Key Features
 
