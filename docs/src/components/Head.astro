@@ -11,9 +11,12 @@ import {
 	authorId as PERSON_ID,
 	websiteId as WEBSITE_ID,
 	softwareId as SOFTWARE_ID,
+	siteUrl,
 } from "../site-meta.mjs";
 
-const SITE = import.meta.env.SITE ?? "https://jmrplens.github.io";
+// The fallback reads the same module as astro.config.mjs's `site`, so the
+// origin is declared in one place only.
+const SITE = import.meta.env.SITE ?? siteUrl;
 const BASE = (import.meta.env.BASE_URL ?? "/").replace(/\/$/, "");
 
 // Escape "<" so frontmatter content can never break out of the JSON-LD
