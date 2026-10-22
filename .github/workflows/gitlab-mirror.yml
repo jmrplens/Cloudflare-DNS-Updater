@@ -1,18 +1,25 @@
----
 # Mirrors the GitHub repository to GitLab.com and publishes GitLab releases that
 # link back to the canonical GitHub release assets.
 
 name: GitLab Mirror
 
+# Pushes to main and tags mirror at once. Work branches used to as well, with
+# `branches: "**"`, which meant every push of every pull request replicated the
+# whole repository and put a "Mirror repository" check on the pull request: on
+# a day of many small pull requests, ten mirror runs an hour for branches
+# nobody reads on GitLab. Those now arrive through the six-hourly schedule
+# below, and the push below is the only one that can be delayed by pruning:
+# the whole refspec is pushed every time, so main and the tags carry every
+# branch with them anyway.
 on:
   push:
     branches:
-      - "**"
+      - main
     tags:
       - "**"
   workflow_run:
     workflows:
-      - Release
+      - "Build & Release Binaries"
     types:
       - completed
   schedule:
@@ -36,7 +43,13 @@ jobs:
   repository:
     name: Mirror repository
     runs-on: ubuntu-latest
-    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    timeout-minutes: 15
+    # Dependabot runs without Actions secrets, so the SSH key would be empty
+    # and the job could only fail. Its branches reach GitLab with the next
+    # push to main or the six-hourly scheduled run, which mirrors every ref.
+    if: >-
+      github.actor != 'dependabot[bot]' &&
+      (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success')
     steps:
       - name: Configure GitLab SSH key
         env:
@@ -60,7 +73,12 @@ jobs:
 
       - name: Push branches and tags to GitLab
         env:
-          GIT_SSH_COMMAND: ssh -i ~/.ssh/gitlab_mirror -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes
+          # IPv4 only: gitlab.com publishes an AAAA record and GitHub-hosted
+          # runners have no IPv6 route, so an IPv6 attempt can only fail. The
+          # run of 2026-10-14 14:56Z died on "connect to host gitlab.com port
+          # 22: Network is unreachable" while the runs before and after it
+          # mirrored fine.
+          GIT_SSH_COMMAND: ssh -i ~/.ssh/gitlab_mirror -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o AddressFamily=inet -o ConnectTimeout=20
         run: |
           set -euo pipefail
           git init --bare mirror.git
@@ -78,13 +96,29 @@ jobs:
           # refspec is the equivalent form, but `--force` is explicit
           # and easier to grep for. --prune keeps the GitLab side tidy
           # by removing refs that have been deleted on GitHub.
-          git -C mirror.git push --force --prune gitlab \
-            '+refs/heads/*:refs/heads/*' \
-            '+refs/tags/*:refs/tags/*'
+          #
+          # Retried because a transient network failure between the runner
+          # and gitlab.com is the usual way this step fails. Retrying is safe:
+          # every attempt force-pushes the same refspec, so a push that did
+          # land is simply repeated as a no-op.
+          for attempt in 1 2 3; do
+            if git -C mirror.git push --force --prune gitlab \
+              '+refs/heads/*:refs/heads/*' \
+              '+refs/tags/*:refs/tags/*'; then
+              exit 0
+            fi
+            if [ "$attempt" -lt 3 ]; then
+              echo "::warning::GitLab push attempt ${attempt} failed; retrying in $((attempt * 20)) s"
+              sleep $((attempt * 20))
+            fi
+          done
+          echo "::error::GitLab push failed after 3 attempts"
+          exit 1
 
   releases:
     name: Sync linked releases
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     if: >-
       github.event_name == 'workflow_dispatch' ||
       github.event_name == 'schedule' ||
@@ -110,16 +144,14 @@ jobs:
           gitlab_api="https://gitlab.com/api/v4/projects/${GITLAB_PROJECT_ID}"
 
           # Every write and listing goes through here, so a failed request
-          # prints GitLab's response body instead of a bare curl exit 22.
+          # prints GitLab's response body instead of a bare curl exit 22,
+          # which is all the run that first hit the bug below could say.
           gitlab_request() {
             local method="$1"
             local url="$2"
             local payload="${3:-}"
             local body
-            local args=(
-              --fail-with-body --show-error --silent --connect-timeout 10 --max-time 60
-              --request "$method" --header "PRIVATE-TOKEN: ${GITLAB_API_TOKEN}"
-            )
+            local args=(--fail-with-body --show-error --silent --connect-timeout 10 --max-time 60 --request "$method" --header "PRIVATE-TOKEN: ${GITLAB_API_TOKEN}")
             # Only reads are retried: a write GitLab committed before the
             # connection dropped would be made twice.
             if [ "$method" = GET ]; then
@@ -146,9 +178,10 @@ jobs:
           }
 
           # GitLab pages a release's links, twenty to a page unless asked
-          # otherwise. Reading only the first page makes the last links of a
-          # release with more than twenty look missing, the sync POSTs them
-          # again, and GitLab refuses with 400 because the name is taken.
+          # otherwise, and v3.2.0 was the first release here with more than
+          # twenty (21 assets and the GitHub link). Reading only the first
+          # page made its last links look missing, the sync POSTed them
+          # again, and GitLab refused with 400 because the name was taken.
           # Every page is read, at 100 to a page, the API's maximum.
           list_links() {
             local tag_encoded="$1"
@@ -156,8 +189,7 @@ jobs:
             local batch
             local all='[]'
             while :; do
-              batch=$(gitlab_request GET \
-                "${gitlab_api}/releases/${tag_encoded}/assets/links?per_page=100&page=${page}") || return 1
+              batch=$(gitlab_request GET "${gitlab_api}/releases/${tag_encoded}/assets/links?per_page=100&page=${page}") || return 1
               [ "$(jq 'length' <<<"$batch")" -gt 0 ] || break
               all=$(jq -c --argjson more "$batch" '. + $more' <<<"$all")
               page=$((page + 1))
@@ -197,7 +229,6 @@ jobs:
             local link_type="$5"
             local payload
             local existing
-            local link_id
 
             payload=$(jq -cn \
               --arg name "$name" \
@@ -210,8 +241,7 @@ jobs:
               request_json POST "${gitlab_api}/releases/${tag_encoded}/assets/links" "$payload"
             elif ! jq -e --arg url "$url" --arg link_type "$link_type" \
               '.url == $url and .link_type == $link_type' <<<"$existing" >/dev/null; then
-              link_id=$(jq -r '.id' <<<"$existing")
-              request_json PUT "${gitlab_api}/releases/${tag_encoded}/assets/links/${link_id}" "$payload"
+              request_json PUT "${gitlab_api}/releases/${tag_encoded}/assets/links/$(jq -r '.id' <<<"$existing")" "$payload"
             fi
           }
 
@@ -255,10 +285,7 @@ jobs:
 
             tag_encoded=$(jq -nr --arg value "$tag" '$value | @uri')
             name=$(jq -r '.name // .tagName' <<<"$release_json")
-            description=$(jq -r '
-              "This GitLab release mirrors the canonical GitHub release: "
-              + "\(.url)\n\n---\n\n\(.body // "")"
-            ' <<<"$release_json")
+            description=$(jq -r '"This GitLab release mirrors the canonical GitHub release: \(.url)\n\n---\n\n\(.body // "")"' <<<"$release_json")
             released_at=$(jq -r '.publishedAt // empty' <<<"$release_json")
             create_release_payload=$(jq -cn \
               --arg name "$name" \
@@ -293,18 +320,14 @@ jobs:
             fi
 
             existing_links=$(list_links "$tag_encoded")
-            desired_links=$(jq -c '
-              [{name: "GitHub Release", url: .url, link_type: "other"}]
-              + [.assets[]? | {name: .name, url: .url, link_type: "package"}]
-            ' <<<"$release_json")
+            desired_links=$(jq -c '[{name: "GitHub Release", url: .url, link_type: "other"}] + [.assets[]? | {name: .name, url: .url, link_type: "package"}]' <<<"$release_json")
 
             jq -c '.[]' <<<"$desired_links" |
             while IFS= read -r link; do
               link_name=$(jq -r '.name' <<<"$link")
               link_url=$(jq -r '.url' <<<"$link")
               link_type=$(jq -r '.link_type' <<<"$link")
-              [ -n "$link_name" ] || continue
-              [ -n "$link_url" ] || continue
+              [ -n "$link_name" ] && [ -n "$link_url" ] || continue
               sync_link "$tag_encoded" "$existing_links" "$link_name" "$link_url" "$link_type"
             done
             delete_stale_links "$tag_encoded" "$desired_links"
