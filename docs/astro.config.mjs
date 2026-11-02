@@ -75,7 +75,7 @@ const softwareRequirements =
 // purpose: this build runs on a CI runner, and jmrp.io sits behind Cloudflare,
 // CrowdSec and a MikroTik bouncer, where a blocked runner IP would silently
 // degrade this site to a stale snapshot. GitHub serves the same bytes and is
-// already a hard dependency of the build — the checkout comes from it.
+// already a hard dependency of the build: the checkout comes from it.
 const CANONICAL_IDENTITY_URL =
 	'https://raw.githubusercontent.com/jmrplens/jmrp.io/main/public/identity/person.jsonld';
 
@@ -136,7 +136,7 @@ const canonicalPerson = Object.fromEntries(
 /**
  * Topics specific to this project, kept alongside the canonical expertise list
  * rather than replacing it. `knowsAbout` is multi-valued, so the two sets merge
- * instead of conflicting — which is why these may stay local while the
+ * instead of conflicting, which is why these may stay local while the
  * single-valued properties above may not. The full original set is listed, not
  * just the entries the canonical lacks, so this site keeps asserting its own
  * topics even if the canonical list changes.
@@ -205,8 +205,8 @@ const personNode = (() => {
 const jsonLd = JSON.stringify({
 	'@context': 'https://schema.org',
 	'@graph': [
-		// The canonical Person entity, fetched at build time — see the
-		// "Canonical identity" block above. Spliced verbatim so this document
+		// The canonical Person entity, fetched at build time (see the
+		// "Canonical identity" block above). Spliced verbatim so this document
 		// and jmrp.io describe the same node with the same values, instead of
 		// two hand-maintained copies that drift.
 		personNode,
@@ -236,7 +236,7 @@ const jsonLd = JSON.stringify({
 			codeRepository: repositoryUrl,
 			image: socialImage,
 			screenshot: socialImage,
-			license: 'https://opensource.org/licenses/MIT',
+			license: 'https://opensource.org/license/MIT',
 			isAccessibleForFree: true,
 			datePublished,
 			dateModified,
@@ -264,7 +264,7 @@ const jsonLd = JSON.stringify({
 			codeRepository: repositoryUrl,
 			programmingLanguage: 'Bash',
 			runtimePlatform: 'Windows, Linux, macOS',
-			license: 'https://opensource.org/licenses/MIT',
+			license: 'https://opensource.org/license/MIT',
 			isPartOf: { '@id': softwareId },
 			author: { '@id': authorId },
 			// Same three agents jmrp.io/projects/ emits for this @id, so the merged
