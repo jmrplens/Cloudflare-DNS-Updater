@@ -313,7 +313,7 @@ function client_env() {
 command() {
 	if [[ "$1" == "-v" ]]; then
 		case "$2" in
-		curl | curl.exe | wget | pwsh | pwsh.exe | powershell.exe)
+		curl | curl.exe | wget | wget2 | pwsh | pwsh.exe | powershell.exe)
 			declare -F "$2" >/dev/null || return 1
 			;;
 		esac

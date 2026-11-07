@@ -61,7 +61,7 @@ El lanzador busca `cloudflare-dns.yaml` junto a sí mismo.
 Cada petición pasa por el primero de estos que encuentre el programa:
 
 1. `curl`, o el `curl.exe` del propio Windows desde WSL
-2. GNU Wget 1.15 o posterior, o GNU Wget2
+2. GNU Wget 1.15 o posterior, o GNU Wget2, instalado como `wget` o como `wget2`
 3. PowerShell: `pwsh`, o el `powershell.exe` de Windows PowerShell en Git Bash, MSYS2 o WSL
 
 Si no hay ninguno, el programa se detiene antes de hacer nada más, y dice qué falta y cómo instalar curl. Cualquiera de los tres envía todas las peticiones que hace el programa:

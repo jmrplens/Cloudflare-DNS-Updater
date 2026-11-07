@@ -197,6 +197,32 @@ printf "%s" "{\"success\":true}"'
 	assert_contains "--content-on-error" "$(stub_args wget)"
 }
 
+# shellcheck disable=SC2016 # stub code
+function test_gnu_wget2_is_used_under_its_own_name() {
+	# Debian, Ubuntu and Arch install Wget2 as wget2 only; Fedora's
+	# wget2-wget installs it as wget
+	make_stub wget2 '[[ "$1" == "--version" ]] && { echo "GNU Wget2 2.2.0 - multithreaded metalink/file/website downloader"; exit 0; }
+printf "%s" "{\"success\":true}"'
+	local client out
+	client=$(without_curl declare -p HTTP_CLIENT)
+	out=$(without_curl http_request "GET" "https://api.example.com/records" "")
+	assert_same 'declare -- HTTP_CLIENT="wget2"' "$client"
+	assert_same '{"success":true}' "$out"
+	assert_contains "--content-on-error" "$(stub_args wget2)"
+}
+
+# shellcheck disable=SC2016 # stub code
+function test_gnu_wget2_is_used_beside_busybox_wget() {
+	make_stub wget 'echo "BusyBox v1.37.0 (2026-01-10 15:38:28 UTC) multi-call binary." >&2
+exit 1'
+	make_stub wget2 '[[ "$1" == "--version" ]] && { echo "GNU Wget2 2.2.0 - multithreaded metalink/file/website downloader"; exit 0; }
+printf "%s" "{\"success\":true}"'
+	local out
+	out=$(without_curl http_request "GET" "https://api.example.com/records" "")
+	assert_same '{"success":true}' "$out"
+	assert_same "--version" "$(stub_args wget)"
+}
+
 function test_busybox_wget_is_never_used() {
 	make_stub wget 'echo "wget: unrecognized option '"'"'--version'"'"'" >&2
 echo "BusyBox v1.37.0 (2026-01-10 15:38:28 UTC) multi-call binary." >&2

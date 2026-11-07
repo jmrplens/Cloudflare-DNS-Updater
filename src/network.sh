@@ -9,7 +9,8 @@
 #
 #   curl, or curl.exe (Windows' own curl, reachable from WSL)
 #   GNU Wget 1.15 or later (the first release with --method and
-#     --body-data), or GNU Wget2, which takes the same options
+#     --body-data), or GNU Wget2, which takes the same options, as wget
+#     or as wget2 (Debian, Ubuntu and Arch install it under that name)
 #   PowerShell: pwsh, pwsh.exe, or Windows PowerShell's powershell.exe
 #     under Git Bash, MSYS2 or WSL
 #
@@ -19,18 +20,21 @@
 # and several of its builds do not check TLS certificates at all, which
 # would hand the API token to anyone on the path.
 
-# The version line of the wget on PATH, or nothing when there is none.
+# The version line of the wget (or wget2) on PATH, or nothing when there is
+# none. Usage: _http_wget_version [NAME]
 _http_wget_version() {
-	command -v wget >/dev/null 2>&1 || return 1
+	local name="${1:-wget}"
+	command -v "$name" >/dev/null 2>&1 || return 1
 	local line
-	line=$(wget --version 2>&1)
+	line=$("$name" --version 2>&1)
 	printf '%s\n' "${line%%$'\n'*}"
 }
 
-# True when the wget on PATH is GNU Wget 1.15 or later, or GNU Wget2.
+# True when the wget (or wget2) on PATH is GNU Wget 1.15 or later, or GNU
+# Wget2. Usage: _http_is_gnu_wget [NAME]
 _http_is_gnu_wget() {
 	local version
-	version=$(_http_wget_version) || return 1
+	version=$(_http_wget_version "${1:-wget}") || return 1
 	if [[ "$version" =~ ^GNU\ Wget\ ([0-9]+)\.([0-9]+) ]]; then
 		local major="${BASH_REMATCH[1]}" minor="${BASH_REMATCH[2]}"
 		((major > 1 || (major == 1 && minor >= 15)))
@@ -50,10 +54,12 @@ http_detect_client() {
 			return 0
 		fi
 	done
-	if _http_is_gnu_wget; then
-		HTTP_CLIENT="wget"
-		return 0
-	fi
+	for candidate in wget wget2; do
+		if _http_is_gnu_wget "$candidate"; then
+			HTTP_CLIENT="$candidate"
+			return 0
+		fi
+	done
 	for candidate in pwsh pwsh.exe powershell.exe; do
 		if command -v "$candidate" >/dev/null 2>&1; then
 			HTTP_CLIENT="$candidate"
@@ -182,12 +188,12 @@ http_send() {
 		"${cmd[@]}"
 		;;
 
-	wget)
+	wget | wget2)
 		# --content-on-error keeps the body of an error status, which wget
 		# otherwise drops; --tries=1 because wget retries up to 20 times
 		# by default, and curl never does. wget has no cap on the whole
 		# exchange, so the read time limit takes curl's 30 s instead.
-		cmd=("wget" "-q" "-O" "-")
+		cmd=("$HTTP_CLIENT" "-q" "-O" "-")
 		if [[ "$profile" == "probe" ]]; then
 			[[ "$family" != "any" ]] && cmd+=("-$family")
 			cmd+=("--timeout=10" "--tries=1")

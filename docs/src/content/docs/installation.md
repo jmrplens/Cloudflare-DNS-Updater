@@ -61,7 +61,7 @@ The launcher looks for `cloudflare-dns.yaml` next to itself.
 Every request goes through the first of these the program finds:
 
 1. `curl`, or Windows' own `curl.exe` from WSL
-2. GNU Wget 1.15 or later, or GNU Wget2
+2. GNU Wget 1.15 or later, or GNU Wget2, installed as `wget` or as `wget2`
 3. PowerShell: `pwsh`, or Windows PowerShell's `powershell.exe` under Git Bash, MSYS2 or WSL
 
 When there is none, the program stops before doing anything else, and says what is missing and how to install curl. Any of the three sends every request the program makes:
