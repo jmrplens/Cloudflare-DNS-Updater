@@ -58,10 +58,10 @@ const featureList = [
 	'Per-domain configuration: proxy (orange cloud) toggle, TTL, IPv4/IPv6 selection, wildcard records',
 	'Optional Telegram and Discord notifications on record changes',
 	'Atomic locking (flock), log rotation, and secret redaction in debug output',
-	'Runs anywhere Bash runs, plus standalone binaries bundling bash, curl and jq for Linux, macOS and Windows',
+	'Runs from source on Linux, macOS, and Windows under Git Bash, MSYS2 or WSL, plus standalone binaries for Linux and macOS that bundle bash and jq',
 ];
 const softwareRequirements =
-	'A Cloudflare zone and an API token with Edit zone DNS permission. From source: Bash 4+, curl and (recommended) jq. Standalone binaries have no dependencies beyond basic system tools.';
+	'A Cloudflare zone and an API token with Edit zone DNS permission. From source: Bash 4+, curl and (recommended) jq. Standalone binaries (Linux and macOS) bundle bash and jq, and take curl and tar from the host.';
 
 // --- Canonical identity --------------------------------------------------
 // The `#person` entity is no longer restated here; it is fetched from its

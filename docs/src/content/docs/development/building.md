@@ -52,4 +52,4 @@ Releases are driven by the `VERSION` file at the repository root:
 1. Bump the version in **both** the `VERSION` file and the `VERSION` constant in `src/main.sh` (a unit test fails if they differ).
 2. Merge to `main`.
 
-The **Build & Release Binaries** workflow (triggered only by changes to `VERSION`) builds all five platform binaries, creates the `vX.Y.Z` tag and publishes the GitHub release with auto-generated notes. Running the workflow manually (`workflow_dispatch`) builds the binaries without publishing anything.
+The **Build & Release Binaries** workflow (triggered only by changes to `VERSION`) builds the four binaries (Linux and macOS, each for x86_64 and aarch64), creates the `vX.Y.Z` tag and publishes the GitHub release with auto-generated notes. Running the workflow manually (`workflow_dispatch`) builds the binaries without publishing anything.

@@ -234,6 +234,33 @@ function test_recorded_digests_cover_every_fetched_asset() {
 	assert_empty "$missing"
 }
 
+# --- every script under tools/ ---
+
+# The guards above read build-all.sh only. An older builder that nothing
+# called any more slipped past them: it fetched a static curl from
+# releases/latest with a silent curl and packed it under the release asset
+# names. These read every script in tools/, so a leftover fails here too.
+
+function test_every_curl_in_tools_fails_on_http_errors() {
+	local silent
+	silent=$(grep -hE '(^|[[:space:](])curl[[:space:]]+-' "$PROJECT_ROOT"/tools/*.sh |
+		grep -v '^[[:space:]]*#' |
+		grep -vE '[[:space:]](-[[:alpha:]]*f[[:alpha:]]*|--fail)([[:space:]]|$)' || true)
+	assert_empty "$silent"
+}
+
+function test_no_tool_downloads_from_latest() {
+	assert_not_contains 'releases/latest/download' "$(cat "$PROJECT_ROOT"/tools/*.sh)"
+}
+
+function test_no_tool_bundles_curl() {
+	# The binaries carry bash and jq. curl always comes from the host.
+	local tools
+	tools=$(cat "$PROJECT_ROOT"/tools/*.sh)
+	assert_not_contains 'static-curl' "$tools"
+	assert_not_contains 'bin/curl' "$tools"
+}
+
 # --- target architecture ---
 
 function test_launcher_is_built_for_the_target_not_the_builder() {
