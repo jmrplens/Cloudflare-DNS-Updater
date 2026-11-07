@@ -216,6 +216,16 @@ fi
 
 # ----------------------
 
+# No HTTP client this program can use: say what is missing and how to get it
+
+if [[ -z "$HTTP_CLIENT" ]]; then
+
+	http_client_problem >&2
+
+	exit 1
+
+fi
+
 if [[ ! -f "$CONFIG_FILE" ]]; then
 
 	echo "Error: Configuration file not found!"

@@ -8,6 +8,9 @@ CONFIG_FILE=""
 
 # Ensure tools are found by adding standard paths (including Windows/MSYS2)
 export PATH="/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/opt/homebrew/bin:/c/msys64/mingw64/bin:/mnt/c/msys64/mingw64/bin:$PATH"
+# Picks the HTTP client (curl, GNU Wget or PowerShell) from that PATH
+# shellcheck source=src/network.sh
+source "$DIR/src/network.sh"
 
 # Help does not need the lock or a config file
 for arg in "$@"; do
@@ -91,10 +94,10 @@ for arg in "$@"; do
 	esac
 done
 
-# Check Dependencies
-if ! command -v curl &>/dev/null; then
-	echo "Error: 'curl' is required but not found in PATH." >&2
-	echo "Please install curl (e.g., apt install curl, brew install curl)." >&2
+# Check Dependencies: refuse here, naming what is missing, rather than
+# failing on the first request
+if [[ -z "$HTTP_CLIENT" ]]; then
+	http_client_problem >&2
 	exit 1
 fi
 

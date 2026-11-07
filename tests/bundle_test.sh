@@ -297,3 +297,133 @@ function test_workflow_cross_compiles_and_checks_the_arm_target() {
 	assert_contains 'gcc-aarch64-linux-gnu' "$wf"
 	assert_contains 'Verify artifact architecture' "$wf"
 }
+
+# --- the HTTP client check ---
+#
+# The source launcher puts /usr/bin and the other system directories back on
+# PATH, so a narrowed PATH cannot hide the host's curl from it. These tests
+# hide the clients from `command -v` instead, which is how the program looks
+# for them, through a file that BASH_ENV sources into every bash the launcher
+# starts. A client defined there as a function stays visible: that is how a
+# test hands the program a stub wget.
+
+function client_env() {
+	local env_file="$1" stubs="$2"
+	cat >"$env_file" <<'HIDE'
+command() {
+	if [[ "$1" == "-v" ]]; then
+		case "$2" in
+		curl | curl.exe | wget | pwsh | pwsh.exe | powershell.exe)
+			declare -F "$2" >/dev/null || return 1
+			;;
+		esac
+	fi
+	builtin command "$@"
+}
+HIDE
+	printf '%s\n' "$stubs" >>"$env_file"
+}
+
+# A config of its own per test: the lock is per config file, so tests that
+# share one could see each other as "already running" under --parallel.
+function own_config() {
+	local cfg
+	cfg=$(mktemp "${TMPDIR:-/tmp}/launcher_client_XXXXXX")
+	cp "$TESTS_DIR/fixtures/main_config.yaml" "$cfg"
+	echo "$cfg"
+}
+
+function test_launcher_refuses_without_an_http_client() {
+	local env cfg out status
+	env=$(mktemp)
+	cfg=$(own_config)
+	client_env "$env" ""
+	out=$(BASH_ENV="$env" "$PROJECT_ROOT/cloudflare-dns-updater.sh" "$cfg" 2>&1)
+	status=$?
+	rm -f "$env" "$cfg"
+	assert_same 1 "$status"
+	assert_contains "no HTTP client this program can use was found" "$out"
+	assert_contains "curl, GNU Wget 1.15 or later (or GNU Wget2), or" "$out"
+	assert_contains "PowerShell (pwsh, or powershell.exe under Git Bash, MSYS2 or WSL)" "$out"
+	assert_contains "apt install curl" "$out"
+	assert_not_contains "Loading configuration" "$out"
+}
+
+function test_launcher_names_busybox_wget_when_it_is_the_only_client() {
+	local env cfg out status
+	env=$(mktemp)
+	cfg=$(own_config)
+	client_env "$env" 'wget() {
+	echo "wget: unrecognized option '"'"'--version'"'"'" >&2
+	echo "BusyBox v1.37.0 (2026-01-10 15:38:28 UTC) multi-call binary." >&2
+	return 1
+}'
+	out=$(BASH_ENV="$env" "$PROJECT_ROOT/cloudflare-dns-updater.sh" "$cfg" 2>&1)
+	status=$?
+	rm -f "$env" "$cfg"
+	assert_same 1 "$status"
+	assert_contains "The wget found here is BusyBox wget" "$out"
+	assert_contains "Install curl" "$out"
+}
+
+# A GNU Wget that answers like the IP services and the Cloudflare API, and
+# writes down every request it was asked to send.
+# shellcheck disable=SC2016 # stub code
+GNU_WGET_STUB='wget() {
+	[[ "$1" == "--version" ]] && { echo "GNU Wget 1.21.4 built on linux-gnu."; return 0; }
+	printf "%s\n" "$*" >>"$WGET_LOG"
+	local url="${*: -1}"
+	case " $* " in
+	*" -6 "*) return 4 ;;
+	esac
+	case "$url" in
+	https://icanhazip.com) echo "198.51.100.7" ;;
+	*/dns_records/batch) echo "{\"success\":true,\"result\":{\"puts\":[{\"id\":\"rec-1\",\"name\":\"home.example.com\",\"content\":\"198.51.100.7\"}]}}" ;;
+	*/dns_records*) echo "{\"success\":true,\"result\":[{\"id\":\"rec-1\",\"name\":\"home.example.com\",\"type\":\"A\",\"content\":\"192.0.2.1\",\"proxied\":false}],\"result_info\":{\"total_pages\":1}}" ;;
+	*) return 4 ;;
+	esac
+}'
+
+function test_launcher_runs_the_update_with_gnu_wget_and_no_curl() {
+	local env cfg log out status requests
+	env=$(mktemp)
+	log=$(mktemp)
+	cfg=$(mktemp "${TMPDIR:-/tmp}/launcher_client_XXXXXX")
+	cat >"$cfg" <<'CFG'
+cloudflare:
+  zone_id: "zone-1"
+  api_token: "token-1"
+options:
+  interface: "no-such-interface"
+domains:
+  - name: "home.example.com"
+    ip_type: ipv4
+    proxied: false
+CFG
+	client_env "$env" "$GNU_WGET_STUB"
+	out=$(WGET_LOG="$log" BASH_ENV="$env" "$PROJECT_ROOT/cloudflare-dns-updater.sh" "$cfg" 2>&1)
+	status=$?
+	requests=$(cat "$log")
+	rm -f "$env" "$cfg" "$log"
+	assert_same 0 "$status"
+	assert_contains "Detected IPv4: 198.51.100.7" "$out"
+	assert_contains "Successfully updated 1 records!" "$out"
+	assert_contains "--method=GET --header=Authorization: Bearer token-1" "$requests"
+	assert_contains '--method=POST --header=Authorization: Bearer token-1 --header=Content-Type: application/json --body-data={"puts":[{"id":"rec-1","type":"A","name":"home.example.com","content":"198.51.100.7","ttl":1,"proxied":false}]}' "$requests"
+}
+
+function test_monolith_refuses_without_an_http_client() {
+	# The bundle leaves PATH as it finds it, so here a PATH that holds the
+	# usual tools and no HTTP client is enough.
+	local sandbox cfg out status tool
+	sandbox=$(mktemp -d)
+	cfg=$(own_config)
+	for tool in bash dirname cksum cut cat mkdir touch date rm flock ps tr sed grep awk head tail wc stat basename; do
+		command -v "$tool" >/dev/null 2>&1 && ln -s "$(command -v "$tool")" "$sandbox/$tool"
+	done
+	out=$(PATH="$sandbox" "$sandbox/bash" "$MONOLITH" "$cfg" 2>&1)
+	status=$?
+	rm -rf "$sandbox" "$cfg"
+	assert_same 1 "$status"
+	assert_contains "no HTTP client this program can use was found" "$out"
+}
