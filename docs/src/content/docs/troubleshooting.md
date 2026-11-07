@@ -11,6 +11,10 @@ head:
 
 Run with `--debug` first — it prints IP detection, every API request (secrets redacted) and the per-record decision. When running from source, the same information also lands in `logs/updater.log` in the project directory.
 
+## "No HTTP client this program can use was found"
+
+The program sends its requests with curl, GNU Wget 1.15 or later (or GNU Wget2), or PowerShell, and found none of them in `PATH`. Install one, for example `apt install curl`. If the message says the `wget` it found is BusyBox wget, that one is not used; [HTTP client](../installation/#http-client) says why, and what each client can do.
+
 ## "Script is already running"
 
 Another instance holds the lock (`/tmp/cloudflare-dns-updater.lock`). Normal under cron if a previous run is still active. If no process is actually running, the lock uses `flock` and is released by the kernel automatically — simply re-run; with the PID-file fallback a stale lock is detected and overwritten.

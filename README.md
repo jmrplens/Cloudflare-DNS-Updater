@@ -24,7 +24,7 @@ A Bash-based script to automatically update Cloudflare DNS records with your dyn
 ## Installation
 
 ### Option A: Standalone Binaries
-Pre-compiled binaries bundle Bash and jq, so neither has to be installed on the host. `curl` and the usual command line tools (`tar`, `sed`, `grep`) are taken from the system.
+Pre-compiled binaries bundle Bash and jq, so neither has to be installed on the host. The HTTP client (curl, GNU Wget or PowerShell, see below) and the usual command line tools (`tar`, `sed`, `grep`) are taken from the system.
 
 1.  **Download** the latest release for your OS from the [Releases Page](../../releases).
     *   **Linux**: `cf-updater-linux-x86_64` (Intel/AMD) or `cf-updater-linux-aarch64` (ARM/Raspberry Pi)
@@ -39,7 +39,7 @@ If you prefer to run the script directly, ensure you have the required dependenc
 
 **Dependencies:**
 *   [Bash](https://www.gnu.org/software/bash/) (4.0+)
-*   [Curl](https://curl.se/)
+*   One HTTP client: [curl](https://curl.se/), [GNU Wget](https://www.gnu.org/software/wget/) 1.15 or later, or [PowerShell](https://learn.microsoft.com/powershell/scripting/install/installing-powershell). BusyBox wget is not used; the [installation guide](https://docs.jmrp.io/Cloudflare-DNS-Updater/installation/#http-client) says why, and what each client can do.
 *   [JQ](https://jqlang.github.io/jq/)
 
 **Setup:**

@@ -72,7 +72,7 @@ Si ya mantienes tu DNS con un script propio de cron + curl, esto es lo que añad
 | Varios registros | Agrupados en una sola llamada a la API | Una petición por registro |
 | Escribe solo si hay cambios | Sí | Normalmente en cada ejecución, salvo que añadas estado |
 | Notificaciones | Telegram y Discord | Ninguna |
-| Dependencias | Bash + jq opcional (los binarios incluyen ambos) + curl | curl más tu propio código |
+| Dependencias | Bash + jq opcional (los binarios incluyen ambos) + curl, GNU Wget o PowerShell | curl más tu propio código |
 
 Para un actualizador multiproveedor, [ddclient](https://github.com/ddclient/ddclient) es una alternativa común en Perl; esta herramienta se centra en Cloudflare con actualizaciones por lotes y detección de IPv6 desde la interfaz.
 

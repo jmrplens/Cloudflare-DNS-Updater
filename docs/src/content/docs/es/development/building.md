@@ -11,7 +11,7 @@ src/            módulos del programa
 ├── cloudflare.sh    interacción con la API de Cloudflare
 ├── config.sh        parseo de la configuración YAML
 ├── ip.sh            detección de IP (interfaz local + servicios externos)
-├── network.sh       wrapper HTTP sobre curl/wget/PowerShell
+├── network.sh       wrapper HTTP sobre curl, GNU Wget o PowerShell
 ├── logger.sh        logging a consola y fichero, redacción de secretos
 └── notifications.sh Telegram / Discord
 

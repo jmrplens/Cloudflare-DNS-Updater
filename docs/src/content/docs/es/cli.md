@@ -24,7 +24,7 @@ El lanzador del código fuente (`cloudflare-dns-updater.sh`) usa siempre el `clo
 | Código | Significado |
 | --- | --- |
 | `0` | Éxito: registros actualizados o ya al día. |
-| `1` | Error: otra instancia en ejecución, dependencia ausente (`curl`), configuración inexistente o inválida, ninguna IP detectada, o fallo en la API de Cloudflare. |
+| `1` | Error: otra instancia en ejecución, ningún cliente HTTP utilizable (curl, GNU Wget o PowerShell), configuración inexistente o inválida, ninguna IP detectada, o fallo en la API de Cloudflare. |
 
 ## Concurrencia
 
