@@ -61,7 +61,7 @@ const featureList = [
 	'Runs from source on Linux, macOS, and Windows under Git Bash, MSYS2 or WSL, plus standalone binaries for Linux and macOS that bundle bash and jq',
 ];
 const softwareRequirements =
-	'A Cloudflare zone and an API token with Edit zone DNS permission. From source: Bash 4+, curl and (recommended) jq. Standalone binaries (Linux and macOS) bundle bash and jq, and take curl and tar from the host.';
+	'A Cloudflare zone and an API token with Edit zone DNS permission. From source: Bash 4+, an HTTP client (curl, GNU Wget 1.15 or later, or PowerShell) and (recommended) jq. Standalone binaries (Linux and macOS) bundle bash and jq, and take the HTTP client and tar from the host.';
 
 // --- Canonical identity --------------------------------------------------
 // The `#person` entity is no longer restated here; it is fetched from its

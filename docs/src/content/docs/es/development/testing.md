@@ -19,7 +19,7 @@ Los tests están escritos con [bashunit](https://bashunit.com) y viven en `tests
 ./lib/bashunit tests/ --filter "cache_lookup"
 ```
 
-Los tests son funciones Bash normales llamadas `test_*`. Nunca necesitan red: los comandos externos y los helpers `http_request`/`http_get` se sustituyen con `bashunit::mock` y `bashunit::spy`.
+Los tests son funciones Bash normales llamadas `test_*`. Nunca necesitan red: los comandos externos y los helpers `http_request`/`http_get` se sustituyen con `bashunit::mock` y `bashunit::spy`. Los caminos de cada cliente de `src/network.sh` se ejecutan contra ejecutables `curl`, `wget`, `wget2` y `pwsh` de prueba, en un `PATH` que no tiene nada más, así que los tests ven lo que recibe cada cliente en su línea de comandos, por su entrada estándar y en el fichero de arranque de wget; los tests que ejecutan el script real de PowerShell se saltan donde `pwsh` no está instalado.
 
 ```bash
 function test_public_ipv4_from_first_service() {

@@ -43,3 +43,8 @@ exposure:
 - Restrict the config file to your user: `chmod 600 cloudflare-dns.yaml`. The
   program warns on startup if the file is world-readable.
 - Secrets are redacted from `--debug` output and logs.
+- No secret goes on the command line of the HTTP client, where other users of
+  the machine could read it in the process list: the API token, the Telegram
+  bot token and the Discord webhook URL reach curl and PowerShell on their
+  standard input, and GNU Wget through its standard input and a temporary
+  file only your user can read.

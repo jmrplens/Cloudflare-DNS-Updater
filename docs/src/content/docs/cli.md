@@ -24,7 +24,7 @@ The source launcher (`cloudflare-dns-updater.sh`) always uses the `cloudflare-dn
 | Code | Meaning |
 | --- | --- |
 | `0` | Success — records updated or already up to date. |
-| `1` | Error: another instance is running, missing dependency (`curl`), missing/invalid config, no IP detected, or the Cloudflare API request failed. |
+| `1` | Error: another instance is running, no usable HTTP client (curl, GNU Wget or PowerShell), missing/invalid config, no IP detected, or the Cloudflare API request failed. |
 
 ## Concurrency
 

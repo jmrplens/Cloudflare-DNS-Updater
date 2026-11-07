@@ -19,7 +19,7 @@ Tests are written with [bashunit](https://bashunit.com) and live in `tests/`, on
 ./lib/bashunit tests/ --filter "cache_lookup"
 ```
 
-Tests are plain Bash functions named `test_*`. Network access is never required: external commands and the `http_request`/`http_get` helpers are replaced with `bashunit::mock` and `bashunit::spy`.
+Tests are plain Bash functions named `test_*`. Network access is never required: external commands and the `http_request`/`http_get` helpers are replaced with `bashunit::mock` and `bashunit::spy`. The client paths of `src/network.sh` run against stub `curl`, `wget`, `wget2` and `pwsh` executables on a `PATH` that holds nothing else, so the tests see what each client gets on its command line, on its standard input and in wget's startup file; the tests that run the real PowerShell script are skipped where `pwsh` is not installed.
 
 ```bash
 function test_public_ipv4_from_first_service() {

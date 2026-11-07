@@ -72,7 +72,7 @@ If you already keep DNS updated with a hand-written cron + curl script, here is 
 | Multiple records | Batched into a single API call | One request per record |
 | Writes only on change | Yes | Usually every run, unless you add state |
 | Notifications | Telegram and Discord | None |
-| Dependencies | Bash + optional jq (binaries bundle both) + curl | curl plus your own glue |
+| Dependencies | Bash + optional jq (binaries bundle both) + curl, GNU Wget or PowerShell | curl plus your own glue |
 
 For a multi-provider updater, [ddclient](https://github.com/ddclient/ddclient) is a common Perl alternative; this tool focuses on Cloudflare with batched updates and IPv6-from-interface detection.
 

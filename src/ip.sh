@@ -209,16 +209,19 @@ is_valid_ipv6() {
 }
 
 # Get Public IPv4
+# The next service is asked whenever an answer is not an address: a service
+# that fails can answer with an error page (curl and PowerShell print its
+# body) or with nothing (GNU Wget drops it), and either must move on.
 get_public_ipv4() {
 	local ip=""
 	# Try icanhazip
 	ip=$(http_get "https://icanhazip.com" 4)
 
-	if [[ -z "$ip" ]]; then
+	if ! is_valid_ipv4 "$ip"; then
 		# Try ifconfig.co
 		ip=$(http_get "https://ifconfig.co" 4)
 	fi
-	if [[ -z "$ip" ]]; then
+	if ! is_valid_ipv4 "$ip"; then
 		# Try ipify
 		ip=$(http_get "https://api.ipify.org" 4)
 	fi
@@ -262,10 +265,11 @@ get_public_ipv6() {
 	# 2. Fallback to External Services
 	log_debug "Fallback to external IPv6 detection..."
 
-	# Try icanhazip
+	# Try icanhazip (any answer that is not an IPv6 address moves on, as
+	# for IPv4)
 	ip=$(http_get "https://icanhazip.com" 6)
 
-	if [[ -z "$ip" ]]; then
+	if ! is_valid_ipv6 "$ip"; then
 		# Try ifconfig.co
 		ip=$(http_get "https://ifconfig.co" 6)
 	fi

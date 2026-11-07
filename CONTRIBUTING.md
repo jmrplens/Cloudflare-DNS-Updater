@@ -22,7 +22,7 @@ To fully work on this project, you will need the following tools:
 
 ### Core Dependencies
 *   `bash` (4.0+)
-*   `curl`
+*   `curl` (the program itself also runs with GNU Wget or PowerShell, but `tools/install-bashunit.sh` and `tools/build-all.sh` download with curl)
 *   `jq`
 
 ### Dev Tools (for Building & Validating)
@@ -67,7 +67,7 @@ To create the standalone binaries (like `cf-updater-linux-x86_64`), we use `tool
 3.  Compiles `tools/launcher.c`. This C program acts as a self-extracting runner: it extracts the tools to a temp dir and executes the script.
 4.  Appends a `.tar.gz` payload of the tools+script to the compiled C binary.
 
-`curl` and the usual command line tools (`tar`, `sed`, `grep`) are taken from the host.
+The HTTP client (curl, GNU Wget or PowerShell) and the usual command line tools (`tar`, `sed`, `grep`) are taken from the host.
 
 **To build both Linux targets (x86_64 and aarch64):**
 ```bash
@@ -99,6 +99,8 @@ Unit tests are written with [bashunit](https://bashunit.com) and live in `tests/
 ```
 
 Tests are plain Bash functions named `test_*`. External commands and functions (e.g. `curl`, `http_request`) are replaced with `bashunit::mock`/`bashunit::spy` — tests never hit the network. `./tools/validate.sh` also runs the suite when bashunit is installed, and CI runs it on every push/PR via `.github/workflows/test.yml`.
+
+The client paths of `src/network.sh` run against stub `curl`, `wget`, `wget2` and `pwsh` executables on a `PATH` that holds nothing else, so the tests see what each client gets on its command line, on its standard input and in wget's startup file; the tests that run the real PowerShell script are skipped where `pwsh` is not installed.
 
 ### Manual Testing
 
