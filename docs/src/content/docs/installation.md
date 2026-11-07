@@ -76,6 +76,8 @@ When there is none, the program stops before doing anything else, and says what 
 
 PowerShell has no way to pick IPv4 or IPv6 for a request, so it asks the host names of those services that only answer on one family, and skips `ifconfig.co`, which has none. Nothing in the program needs curl in particular.
 
+None of the three gets the URL or the headers of a request on its command line, where any user of the machine can read them in the process list: your API token travels in a header, and the Telegram bot token and the Discord webhook token are part of their URLs. curl and PowerShell read them on their standard input. GNU Wget reads the URL on its standard input and the headers from a temporary file that only your user can read, deleted when the request ends; that file stands in for `~/.wgetrc` during the request, and GNU Wget still reads the system-wide `/etc/wgetrc`. Only fixed options and the request body (the record contents, the notification text) go on a command line.
+
 ### BusyBox wget
 
 The `wget` of Alpine, BusyBox images and many routers is BusyBox's, and the program does not use it: it cannot force IPv4 or IPv6, it drops the body of an error response (where Cloudflare says what went wrong), and several of its builds do not check TLS certificates, which would hand your API token to anyone on the path. Install curl (`apk add curl` on Alpine) or GNU Wget (`apk add wget`) next to it.

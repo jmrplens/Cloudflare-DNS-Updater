@@ -367,12 +367,15 @@ function test_launcher_names_busybox_wget_when_it_is_the_only_client() {
 }
 
 # A GNU Wget that answers like the IP services and the Cloudflare API, and
-# writes down every request it was asked to send.
+# writes down every request it was asked to send: its arguments, the URL it
+# read on stdin and the headers in the startup file $WGETRC names.
 # shellcheck disable=SC2016 # stub code
 GNU_WGET_STUB='wget() {
 	[[ "$1" == "--version" ]] && { echo "GNU Wget 1.21.4 built on linux-gnu."; return 0; }
-	printf "%s\n" "$*" >>"$WGET_LOG"
-	local url="${*: -1}"
+	local url headers=""
+	IFS= read -r url
+	[[ -f "$WGETRC" ]] && headers=$(<"$WGETRC")
+	printf "ARGS: %s\nURL: %s\nRC: %s\n" "$*" "$url" "${headers//$'"'"'\n'"'"'/; }" >>"$WGET_LOG"
 	case " $* " in
 	*" -6 "*) return 4 ;;
 	esac
@@ -408,8 +411,14 @@ CFG
 	assert_same 0 "$status"
 	assert_contains "Detected IPv4: 198.51.100.7" "$out"
 	assert_contains "Successfully updated 1 records!" "$out"
-	assert_contains "--method=GET --header=Authorization: Bearer token-1" "$requests"
-	assert_contains '--method=POST --header=Authorization: Bearer token-1 --header=Content-Type: application/json --body-data={"puts":[{"id":"rec-1","type":"A","name":"home.example.com","content":"198.51.100.7","ttl":1,"proxied":false}]}' "$requests"
+	assert_contains "ARGS: -q -O - --content-on-error --method=GET --dns-timeout=10 --connect-timeout=10 --read-timeout=30 --tries=1 -i -
+URL: https://api.cloudflare.com/client/v4/zones/zone-1/dns_records?per_page=5000&type=A&page=1
+RC: header = Authorization: Bearer token-1; header = Content-Type: application/json" "$requests"
+	assert_contains 'ARGS: -q -O - --content-on-error --method=POST --body-data={"puts":[{"id":"rec-1","type":"A","name":"home.example.com","content":"198.51.100.7","ttl":1,"proxied":false}]} --dns-timeout=10 --connect-timeout=10 --read-timeout=30 --tries=1 -i -
+URL: https://api.cloudflare.com/client/v4/zones/zone-1/dns_records/batch
+RC: header = Authorization: Bearer token-1; header = Content-Type: application/json' "$requests"
+	# The token never reached a command line
+	assert_not_contains "token-1" "$(grep '^ARGS:' <<<"$requests")"
 }
 
 function test_monolith_refuses_without_an_http_client() {

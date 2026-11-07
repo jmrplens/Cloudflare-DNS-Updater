@@ -19,6 +19,14 @@
 # body of an HTTP error response (where Cloudflare says what went wrong),
 # and several of its builds do not check TLS certificates at all, which
 # would hand the API token to anyone on the path.
+#
+# No client gets the URL or the headers of a request on its command line,
+# where any user of the machine can read them (ps, /proc/PID/cmdline): the
+# API token travels in a header, the Telegram bot token and the Discord
+# webhook token in the URL. curl and PowerShell read them from stdin, wget
+# reads the URL from stdin and the headers from a file only this user can
+# read. Only fixed options and the body (record contents, notification
+# text) go on a command line.
 
 # The version line of the wget (or wget2) on PATH, or nothing when there is
 # none. Usage: _http_wget_version [NAME]
@@ -153,6 +161,28 @@ exit 0
 PS
 _HTTP_PS_SCRIPT="${_HTTP_PS_SCRIPT//$'\n'/ }"
 
+# One value in curl's config syntax: in double quotes, with \ and "
+# escaped. curl turns \\ and \" back into \ and ", and keeps the rest.
+_http_curl_quote() {
+	local value="$1"
+	value=${value//\\/\\\\}
+	value=${value//\"/\\\"}
+	printf '"%s"' "$value"
+}
+
+# Creates an empty file only this user can read and write, and prints its
+# path. mktemp makes it with mode 600 on every system; the umask covers one
+# that would not.
+_http_private_file() {
+	local file
+	if file=$(umask 077 && mktemp 2>/dev/null) && [[ -f "$file" ]]; then
+		printf '%s\n' "$file"
+		return 0
+	fi
+	echo "Error: cannot create a temporary file in ${TMPDIR:-/tmp} for the request headers." >&2
+	return 1
+}
+
 # Send one request with whichever client http_detect_client chose.
 # Usage: http_send PROFILE FAMILY METHOD URL BODY [HEADER...]
 #   PROFILE  api: 10 s to connect, 30 s for the whole exchange
@@ -168,9 +198,19 @@ http_send() {
 	local h status
 	local -a cmd
 
+	# The URL and each header travel on a line of their own (curl's config,
+	# wget's startup file, PowerShell's stdin), so a line break in one would
+	# add a line the caller never wrote.
+	for h in "$url" "${headers[@]}"; do
+		if [[ "$h" == *[$'\n\r']* ]]; then
+			echo "Error: a request URL or header contains a line break." >&2
+			return 1
+		fi
+	done
+
 	case "$HTTP_CLIENT" in
 	curl | curl.exe)
-		# The exact command lines the program has always run. Timeouts
+		# The URL and the headers go in a config on stdin (-K -). Timeouts
 		# keep a hung API from blocking the whole run (this script
 		# usually runs unattended via cron).
 		cmd=("$HTTP_CLIENT" "-s")
@@ -179,13 +219,17 @@ http_send() {
 			cmd+=("--max-time" "10")
 		else
 			cmd+=("--connect-timeout" "10" "--max-time" "30" "-X" "$method")
-			for h in "${headers[@]}"; do
-				cmd+=("-H" "$h")
-			done
 			[[ -n "$body" ]] && cmd+=("-d" "$body")
 		fi
-		cmd+=("$url")
-		"${cmd[@]}"
+		cmd+=("-K" "-")
+		{
+			printf 'url = %s\n' "$(_http_curl_quote "$url")"
+			for h in "${headers[@]}"; do
+				printf 'header = %s\n' "$(_http_curl_quote "$h")"
+			done
+		} | "${cmd[@]}"
+		# curl's status, not that of the writer
+		return "${PIPESTATUS[1]}"
 		;;
 
 	wget | wget2)
@@ -199,19 +243,29 @@ http_send() {
 			cmd+=("--timeout=10" "--tries=1")
 		else
 			cmd+=("--content-on-error" "--method=$method")
-			for h in "${headers[@]}"; do
-				cmd+=("--header=$h")
-			done
 			[[ -n "$body" ]] && cmd+=("--body-data=$body")
 			cmd+=("--dns-timeout=10" "--connect-timeout=10" "--read-timeout=30" "--tries=1")
 		fi
-		cmd+=("$url")
-		"${cmd[@]}"
-		status=$?
-		# 8 is "the server issued an error response": a response did
-		# arrive, which curl -s reports as success.
-		((status == 8)) && status=0
-		return "$status"
+		cmd+=("-i" "-")
+		# The URL goes on stdin (-i -). The headers go in a private startup
+		# file, named in $WGETRC for GNU Wget and in $WGET2RC for Wget2. It
+		# takes the place of ~/.wgetrc (or Wget2's own) for this request;
+		# GNU Wget still reads the system-wide /etc/wgetrc. The subshell
+		# removes the file however the request ends, Ctrl-C and kill
+		# included: bash runs the EXIT trap on those too.
+		(
+			rc=$(_http_private_file) || exit 1
+			trap 'rm -f "$rc"' EXIT
+			for h in "${headers[@]}"; do
+				printf 'header = %s\n' "$h"
+			done >"$rc"
+			printf '%s\n' "$url" | WGETRC="$rc" WGET2RC="$rc" "${cmd[@]}"
+			status=${PIPESTATUS[1]}
+			# 8 is "the server issued an error response": a response did
+			# arrive, which curl -s reports as success.
+			((status == 8)) && status=0
+			exit "$status"
+		)
 		;;
 
 	pwsh | pwsh.exe | powershell.exe)
