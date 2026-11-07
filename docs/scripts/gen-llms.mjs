@@ -94,7 +94,7 @@ const header = `# Cloudflare-DNS-Updater
 
 > Open source dynamic DNS (DDNS) updater for Cloudflare, written in Bash. It keeps the A (IPv4) and AAAA (IPv6) records of a Cloudflare zone pointed at the machine's current public IP.
 
-Cloudflare-DNS-Updater v${version} runs from source (Bash 4+, curl, jq recommended) or as standalone binaries for Linux, macOS and Windows that bundle bash, curl and jq. All record changes are pushed in a single batched Cloudflare API call with automatic pagination; IPv6 detection prefers the stable global address on the local interface before falling back to external services. Optional Telegram and Discord notifications. MIT licensed.
+Cloudflare-DNS-Updater v${version} runs from source (Bash 4+, curl, jq recommended) on Linux, macOS, and Windows under Git Bash, MSYS2 or WSL, or as standalone binaries for Linux and macOS that bundle bash and jq and take curl from the host. All record changes are pushed in a single batched Cloudflare API call with automatic pagination; IPv6 detection prefers the stable global address on the local interface before falling back to external services. Optional Telegram and Discord notifications. MIT licensed.
 
 Quick start:
 

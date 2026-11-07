@@ -11,7 +11,7 @@ Thank you for your interest in contributing! This document provides technical de
     *   `config.sh`: Configuration parsing.
     *   `logger.sh`: Logging utilities.
 *   `tools/`: Build and validation scripts.
-    *   `build-all.sh`: Main build orchestrator for all platforms.
+    *   `build-all.sh`: Main build orchestrator for the Linux and macOS binaries.
     *   `bundle.sh`: Combines `src/` files into a single script.
     *   `launcher.c`: C wrapper for creating standalone binaries.
 *   `cloudflare-dns-updater.sh`: A dev-friendly wrapper to run the code from source without building.
@@ -30,7 +30,7 @@ To fully work on this project, you will need the following tools:
 *   **shfmt**: For code formatting.
 *   **yamllint**: For validating `config.yaml` and GitHub workflows.
 *   **actionlint**: For validating GitHub Actions workflows.
-*   **GCC / MinGW**: For compiling the C launcher (required for `build-all.sh`).
+*   **GCC**: For compiling the C launcher (required for `build-all.sh`).
 
 ## ✅ Validation
 
@@ -48,7 +48,7 @@ This script performs:
 
 ## 🏗️ Build System
 
-This project uses a custom build system to generate "standalone" binaries that run on systems without pre-installed dependencies.
+This project uses a custom build system to generate "standalone" binaries for Linux and macOS that carry their own Bash and jq. There is no Windows binary: on Windows the program runs from source under Git Bash, MSYS2 or WSL.
 
 ### 1. Monolith Generation
 The project is split into multiple files in `src/`. To distribute it as a single script, we "bundle" it:
@@ -59,15 +59,17 @@ The project is split into multiple files in `src/`. To distribute it as a single
 This creates `dist/cloudflare-dns-updater-monolith.sh`.
 
 ### 2. Standalone Binaries
-To create the dependency-free binaries (like `cf-updater-linux-x86_64`), we use `tools/build-all.sh`.
+To create the standalone binaries (like `cf-updater-linux-x86_64`), we use `tools/build-all.sh`.
 
 **How it works:**
-1.  Downloads static versions of `bash`, `curl`, `jq`, and `busybox` for the target architecture.
+1.  Downloads static versions of `bash` and `jq` for the target architecture and checks each against a recorded SHA-256.
 2.  Bundles them into a directory structure along with the script.
 3.  Compiles `tools/launcher.c`. This C program acts as a self-extracting runner: it extracts the tools to a temp dir and executes the script.
 4.  Appends a `.tar.gz` payload of the tools+script to the compiled C binary.
 
-**To build for all platforms:**
+`curl` and the usual command line tools (`tar`, `sed`, `grep`) are taken from the host.
+
+**To build both Linux targets (x86_64 and aarch64):**
 ```bash
 ./tools/build-all.sh --all
 ```
