@@ -162,6 +162,23 @@ function fake_http_get_garbage() {
 	echo "<html>service error</html>"
 }
 
+# curl -s and PowerShell print the body of an HTTP error status; GNU Wget
+# prints nothing. Either way the next service must be asked.
+function fake_http_get_first_service_error_page() {
+	case "$1" in
+	*icanhazip*) echo "<html><body>503 upstream down</body></html>" ;;
+	*ifconfig.co*) echo "192.0.2.66" ;;
+	*) echo "" ;;
+	esac
+}
+
+function fake_http_get_two_error_pages() {
+	case "$1" in
+	*ipify*) echo "192.0.2.77" ;;
+	*) echo "<html><body>500 Internal Server Error</body></html>" ;;
+	esac
+}
+
 function test_public_ipv4_from_first_service() {
 	bashunit::mock http_get fake_http_get_first_service_ok
 	assert_same "192.0.2.55" "$(get_public_ipv4)"
@@ -174,6 +191,16 @@ function test_public_ipv4_falls_back_to_second_service() {
 
 function test_public_ipv4_falls_back_to_third_service() {
 	bashunit::mock http_get fake_http_get_third_service_ok
+	assert_same "192.0.2.77" "$(get_public_ipv4)"
+}
+
+function test_public_ipv4_asks_the_next_service_after_an_error_page() {
+	bashunit::mock http_get fake_http_get_first_service_error_page
+	assert_same "192.0.2.66" "$(get_public_ipv4)"
+}
+
+function test_public_ipv4_reaches_the_third_service_after_two_error_pages() {
+	bashunit::mock http_get fake_http_get_two_error_pages
 	assert_same "192.0.2.77" "$(get_public_ipv4)"
 }
 
@@ -195,4 +222,35 @@ function test_public_ipv6_external_fallback() {
 	bashunit::mock get_default_interface true
 	bashunit::mock http_get fake_http_get_ipv6_ok
 	assert_same "2001:db8::abcd" "$(get_public_ipv6)"
+}
+
+function fake_http_get_ipv6_error_page_then_ok() {
+	case "$1" in
+	*icanhazip*) echo "<html><body>503 upstream down</body></html>" ;;
+	*ifconfig.co*) echo "2001:db8::66" ;;
+	*) echo "" ;;
+	esac
+}
+
+function fake_http_get_ipv6_wrong_family_then_ok() {
+	# What a one-family host name gives over a path of the other family
+	case "$1" in
+	*icanhazip*) echo "192.0.2.10" ;;
+	*ifconfig.co*) echo "2001:db8::66" ;;
+	*) echo "" ;;
+	esac
+}
+
+function test_public_ipv6_asks_the_next_service_after_an_error_page() {
+	NET_INTERFACE=""
+	bashunit::mock get_default_interface true
+	bashunit::mock http_get fake_http_get_ipv6_error_page_then_ok
+	assert_same "2001:db8::66" "$(get_public_ipv6)"
+}
+
+function test_public_ipv6_asks_the_next_service_after_an_ipv4_answer() {
+	NET_INTERFACE=""
+	bashunit::mock get_default_interface true
+	bashunit::mock http_get fake_http_get_ipv6_wrong_family_then_ok
+	assert_same "2001:db8::66" "$(get_public_ipv6)"
 }

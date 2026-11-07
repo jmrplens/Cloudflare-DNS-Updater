@@ -21,7 +21,7 @@ Another instance holds the lock (`/tmp/cloudflare-dns-updater.lock`). Normal und
 
 ## "Could not detect Public IPv4/IPv6"
 
-- IPv4 is detected via external services (`icanhazip.com`, `ifconfig.co`, `api.ipify.org`) — check outbound HTTPS connectivity.
+- IPv4 is detected via external services, asked in this order until one answers with an address: `icanhazip.com`, `ifconfig.co`, `api.ipify.org`. A service that answers with an error page or with nothing is passed over. The message means none of them gave an address, so check outbound HTTPS connectivity.
 - IPv6 is first read from a local interface. If your interface has no global IPv6, external detection is tried next. Set `options.interface` explicitly if the auto-detected interface is wrong.
 - No IPv6 at all? Set `ip_type: "ipv4"` on your domains so AAAA lookups are skipped.
 
